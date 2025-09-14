@@ -1,63 +1,95 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<div class="grid dashboard-grid">
-  <div class="grid" style="grid-template-columns:1fr;gap:var(--space-4)">
-    <section class="card row" style="justify-content:space-between">
-      <div>
-        <h2 style="margin:0">Consumo do mês</h2>
-        <div id="usage-stats">
-          {% include "dashboard/_usage_stats.html" %}
-        </div>
-      </div>
-      <form hx-post="{% url 'billing:simulate_usage' %}" hx-target="#usage-stats" hx-swap="outerHTML">
-        {% csrf_token %}
-        <button class="btn primary">Simular Consumo</button>
+<style>
+  :root{
+    --g2: 12px; --g3: 16px; --g4: 24px; --g5: 32px;
+  }
+  .kpis{display:grid; gap:var(--g3); grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+  .badge{border:1px solid var(--border); border-radius:999px; padding:2px 8px; color:var(--muted);}
+  .table{width:100%; border-collapse:separate; border-spacing:0; min-width:720px;}
+  .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
+  .table th,.table td{padding:10px 12px; border-bottom:1px solid var(--border);}  
+</style>
+
+<section>
+  <header style="margin-bottom:var(--g4);">
+    <h1>Resumo de Uso & Cobrança</h1>
+    <div class="filters">
+      <input type="month" id="period" name="period" value="{{ current_month }}"
+             hx-get="{% url 'billing:kpis' %}"
+             hx-include="#period"
+             hx-target="#kpis" hx-swap="outerHTML">
+    </div>
+  </header>
+
+  <div id="kpis" class="kpis"
+       hx-get="{% url 'billing:kpis' %}?start={{ period_start }}&end={{ period_end }}"
+       hx-trigger="load" hx-include="#period" hx-swap="outerHTML">
+    <div class="card">Carregando KPIs…</div>
+  </div>
+
+  <div class="card" style="margin-top:var(--g4);">
+    <h2>Prévia de cobrança</h2>
+    <div class="table-wrap" role="region" aria-label="Prévia de cobrança rolável">
+      <div id="preview"
+           hx-get="{% url 'billing:preview' %}?start={{ period_start }}&end={{ period_end }}"
+           hx-trigger="load from:#period changed"
+           hx-include="#period"
+           hx-swap="innerHTML">Calculando…</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:var(--g4);">
+    <div class="row" style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Eventos recentes</h2>
+      <form hx-get="{% url 'metering:events' %}" hx-target="#events" hx-swap="outerHTML" hx-include="#period">
+        <select name="type" class="select">
+          <option value="">Todos</option>
+          <option value="publish">Publicação</option>
+          <option value="appointment_confirmed">Agendamento confirmado</option>
+          <option value="link_add">Link adicionado</option>
+          <option value="gallery_add">Item de galeria</option>
+        </select>
+        <button class="btn">Filtrar</button>
       </form>
-    </section>
+    </div>
+    <div class="table-wrap" role="region" aria-label="Eventos recentes rolável">
+      <div id="events" hx-get="{% url 'metering:events' %}" hx-trigger="load from:#period changed" hx-include="#period" hx-swap="outerHTML">Carregando…</div>
+    </div>
+  </div>
 
-    <section class="card">
-      <h2 style="margin-top:0">Faturas</h2>
-      <div>
-        {% for inv in invoices %}
-          <div class="row" style="justify-content:space-between;padding:10px 0;border-top:1px solid var(--border)">
-            <div>
-              <div class="font-medium">{{ inv.period_start }} — {{ inv.period_end }}</div>
-              <div class="muted">Status: {{ inv.status }}</div>
-            </div>
-            <div style="text-align:right">
-              <div class="font-medium">{{ inv.amount_cents }}¢</div>
-              {% if inv.hosted_invoice_url %}
-                <a class="muted" href="{{ inv.hosted_invoice_url }}" target="_blank">Ver no Stripe</a>
-              {% endif %}
-            </div>
+  <div class="card" style="margin-top:var(--g4);">
+    <h2>Checagens de integridade</h2>
+    <button class="btn"
+            hx-post="{% url 'billing:self_checks' %}"
+            hx-include="#period"
+            hx-target="#checks" hx-swap="outerHTML">Rodar checagens</button>
+    <div class="table-wrap" role="region" aria-label="Checagens de integridade rolável">
+      <div id="checks" class="help">Clique para validar o metering.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:var(--g4);">
+    <h2>Pagamentos realizados</h2>
+    <div>
+      {% for inv in paid_invoices %}
+        <div class="row" style="justify-content:space-between;padding:10px 0;border-top:1px solid var(--border)">
+          <div>
+            <div class="font-medium">{{ inv.period_start }} — {{ inv.period_end }}</div>
+            <div class="muted">Status: {{ inv.status }}</div>
           </div>
-        {% empty %}
-          <div class="muted">Nenhuma fatura ainda.</div>
-        {% endfor %}
-      </div>
-    </section>
+          <div style="text-align:right">
+            <div class="font-medium">{{ inv.amount_cents }}¢</div>
+            {% if inv.hosted_invoice_url %}
+              <a class="muted" href="{{ inv.hosted_invoice_url }}" target="_blank" rel="noopener">Ver no Stripe</a>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="muted">Nenhum pagamento realizado ainda.</div>
+      {% endfor %}
+    </div>
   </div>
-
-  <div class="grid" style="grid-template-columns:1fr;gap:var(--space-4)">
-    <section class="card">
-      <h2 style="margin-top:0">Conta</h2>
-      {% if profile and profile.is_active %}
-        <div class="muted" style="margin-bottom:8px">Status: Ativa</div>
-        <a href="{% url 'billing:cancel' %}">Cancelar conta</a>
-      {% else %}
-        <div class="muted">Conta inativa.</div>
-      {% endif %}
-    </section>
-
-    <section class="card">
-      <h2 style="margin-top:0">Pagamento</h2>
-      {% include "billing/_card_info.html" with profile=profile %}
-
-      <div class="row" style="justify-content:flex-end;margin-top:12px">
-        <a class="btn" href="{% url 'billing:payment_method' %}">Gerenciar cartão</a>
-      </div>
-    </section>
-  </div>
-</div>
+</section>
 {% endblock %}

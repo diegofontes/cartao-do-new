@@ -9,4 +9,8 @@ urlpatterns = [
     path("attach-payment-method/", views.attach_payment_method_view, name="attach_payment_method"),
     path("cancel/", views.cancel_view, name="cancel"),
     path("simulate-usage/", views.simulate_usage, name="simulate_usage"),
+    # New billing endpoints (HTMX)
+    path("preview", views.preview_view, name="preview"),
+    path("kpis", views.kpis_view, name="kpis"),
+    path("self-checks", views.self_checks_view, name="self_checks"),
 ]

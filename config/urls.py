@@ -23,6 +23,7 @@ urlpatterns = [
         name="signup",
     ),
     path("billing/", include("apps.billing.urls")),
+    path("metering/", include("apps.metering.urls")),
     path("stripe/", include("apps.billing.webhooks")),  # /stripe/webhook/
     path("", RedirectView.as_view(pattern_name="dashboard:index", permanent=False)),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/?$", card_public.card_public, name="card_public_main"),

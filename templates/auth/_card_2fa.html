@@ -1,3 +1,12 @@
+{% load static %}
+<div class="center mb-4">
+  <img id="logo"
+       src="{% static 'img/logo-cap-v1-dark.png' %}"
+       data-logo-dark="{% static 'img/logo-cap-icon.png' %}"
+       data-logo-ligh="{% static 'img/logo-cap-v1-dark.png' %}"
+       alt="Logo"
+       style="height:154px">
+</div>
 <header class="row" style="justify-content:space-between">
   <div class="row"><strong>Verificação 2FA</strong></div>
   <a class="muted" href="{% url 'accounts:auth_login' %}">Trocar conta</a>
@@ -9,7 +18,7 @@
 {% endif %}
 <form method="post" action="{% url 'accounts:auth_login_2fa' %}" hx-post="{% url 'accounts:auth_login_2fa' %}" hx-target="#auth-card" hx-swap="innerHTML">
   {% csrf_token %}
-  <label>
+  <label class="label-input">
     <span>Código enviado para {{ email }}</span>
     <input class="input" name="code" inputmode="numeric" maxlength="6" pattern="^\d{6}$" placeholder="000000" required>
   </label>

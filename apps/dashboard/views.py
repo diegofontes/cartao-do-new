@@ -19,14 +19,17 @@ def home(request):
 def index(request):
     today = timezone.localdate()
     start = today.replace(day=1)
-    month_events = UsageEvent.objects.filter(user=request.user, created_at__date__gte=start)
-    month_units = sum(e.units for e in month_events)
-    invoices = Invoice.objects.filter(user=request.user).order_by("-created_at")[:12]
+    period_start = start.isoformat()
+    period_end = today.isoformat()
+    current_month = today.strftime("%Y-%m")
     prof = CustomerProfile.objects.filter(user=request.user).first()
+    paid_invoices = Invoice.objects.filter(user=request.user, status="paid").order_by("-created_at")[:12]
     return render(request, "dashboard/index.html", {
-        "month_units": month_units,
-        "invoices": invoices,
         "profile": prof,
+        "period_start": period_start,
+        "period_end": period_end,
+        "current_month": current_month,
+        "paid_invoices": paid_invoices,
     })
 
 

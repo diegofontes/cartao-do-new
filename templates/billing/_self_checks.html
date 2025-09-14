@@ -1,0 +1,19 @@
+<table class="table">
+  <thead>
+    <tr>
+      <th>Checagem</th>
+      <th>Status</th>
+      <th>Detalhe</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in checks %}
+    <tr>
+      <td>{{ c.label }}</td>
+      <td>{% if c.status == 'OK' %}✅{% else %}⚠️{% endif %}</td>
+      <td class="muted">{{ c.detail }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+

@@ -1,3 +1,12 @@
+{% load static %}
+<div class="center mb-4">
+  <img id="logo"
+       src="{% static 'img/logo-cap-v1-dark.png' %}"
+       data-logo-dark="{% static 'img/logo-cap-icon.png' %}"
+       data-logo-ligh="{% static 'img/logo-cap-v1-dark.png' %}"
+       alt="Logo"
+       style="height:154px">
+</div>
 <header class="row" style="justify-content:space-between">
   <div class="row"><strong>Criar conta</strong></div>
   <a class="muted" href="{% url 'accounts:auth_login' %}">Entrar</a>
@@ -9,11 +18,11 @@
 {% endif %}
 <form method="post" action="{% url 'accounts:auth_signup_post' %}" hx-post="{% url 'accounts:auth_signup_post' %}" hx-target="#auth-card" hx-swap="innerHTML">
   {% csrf_token %}
-  <label>
+  <label class="label-input">
     <span>E-mail</span>
     <input class="input" type="email" name="email" autocomplete="email" required>
   </label>
-  <label>
+  <label class="label-input">
     <span>Senha</span>
     <input class="input" type="password" name="password" autocomplete="new-password" required>
   </label>

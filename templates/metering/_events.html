@@ -1,0 +1,39 @@
+<table class="table">
+  <thead>
+    <tr>
+      <th>Data/Hora</th>
+      <th>Recurso</th>
+      <th>Evento</th>
+      <th>Qtd</th>
+      <th>Preço unit.</th>
+      <th>Subtotal</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.occurred_at|date:"d/m/Y H:i" }}</td>
+      <td><span class="badge">{{ r.resource_type }}</span></td>
+      <td>{{ r.event_type }}</td>
+      <td>{{ r.quantity }}</td>
+      <td>{{ r.unit_price }}</td>
+      <td>{{ r.subtotal }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="muted">Nenhum evento.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="row" style="justify-content:space-between; margin-top: var(--g3)">
+  {% if page.has_previous %}
+    <a class="btn" hx-get="?page={{ page.previous_page_number }}{% if etype %}&type={{ etype }}{% endif %}&period={{ period }}" hx-target="#events" hx-swap="outerHTML">◀ Anterior</a>
+  {% else %}
+    <span></span>
+  {% endif %}
+  <div class="muted">Página {{ page.number }} de {{ page.paginator.num_pages }}</div>
+  {% if page.has_next %}
+    <a class="btn" hx-get="?page={{ page.next_page_number }}{% if etype %}&type={{ etype }}{% endif %}&period={{ period }}" hx-target="#events" hx-swap="outerHTML">Próxima ▶</a>
+  {% else %}
+    <span></span>
+  {% endif %}
+</div>
