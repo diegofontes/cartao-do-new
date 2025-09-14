@@ -1,0 +1,30 @@
+{% load static %}
+
+<section class="card">
+  <h2 style="margin-top:0">Redes sociais</h2>
+  <form hx-post="{% url 'cards:add_social_link' card.id %}" hx-target="#social-links" hx-swap="innerHTML" class="row stack-mobile" style="gap:10px;margin-bottom:10px">
+    {% csrf_token %}
+    <select name="platform" class="select" required>
+      <option value="">Escolha…</option>
+      {% for key,label in platforms %}
+        <option value="{{ key }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+    <input name="handle_or_url" class="input" placeholder="@usuario ou URL" required />
+    <input name="label" class="input" placeholder="Rótulo (opcional)" />
+    <button class="btn">Adicionar</button>
+  </form>
+  <ul class="grid" style="grid-template-columns:1fr;gap:8px">
+    {% for l in links %}
+      <li class="row" style="gap:10px;align-items:center">
+        {% with icon=l.platform %}
+          <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-{{ icon }}"></use></svg>
+        {% endwith %}
+        <a href="{{ l.url }}" target="_blank" class="underline">{{ l.label|default:l.platform }}</a>
+        <button class="btn ghost" hx-post="{% url 'cards:delete_social_link' l.id %}" hx-confirm="Excluir link social?" hx-target="#social-links">Excluir</button>
+      </li>
+    {% empty %}
+      <li class="muted">Nenhuma rede social.</li>
+    {% endfor %}
+  </ul>
+</section>

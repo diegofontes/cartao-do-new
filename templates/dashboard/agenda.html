@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Agenda{% endblock %}
+{% block head %}
+  {% load static %}
+  <style>
+    :root{--slot-h:56px}
+    .agenda{display:grid;grid-template-columns:280px 1fr;gap:24px}
+    .agenda-top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:16px 0}
+    .agenda-side{background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px}
+    .agenda-main{position:relative;overflow:auto;border:1px solid var(--border);border-radius:12px}
+    .week-grid{display:grid;grid-template-columns:60px 1fr;min-height:calc(24*var(--slot-h))}
+    .hours-col{border-right:1px solid var(--border)}
+    .hours-col div{height:calc(2*var(--slot-h));padding-right:6px;text-align:right;color:var(--fg-muted);font-size:12px}
+    .days-cols{position:relative}
+    .events-layer{display:grid;grid-template-columns:repeat(7, 1fr);grid-template-rows:repeat(48, var(--slot-h));position:relative}
+    .event{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden}
+    .event.pending{border-style:dashed}
+    .event.confirmed{background:#f2f3f4}
+    .event.denied{opacity:.55;text-decoration:line-through}
+    /* Sidebar (slideover) for event details */
+    .slideover{position:fixed;inset:0 0 0 auto;width:min(420px,100%);background:var(--bg);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:var(--space-4);z-index:1000;display:flex;flex-direction:column;gap:12px}
+    .slideover header{display:flex;justify-content:space-between;align-items:center}
+    .slideover .body{flex:1;overflow:auto}
+    .slideover .actions{display:flex;gap:12px;justify-content:flex-end}
+    /* Responsive: stack sections on mobile, default to day view via JS */
+    @media (max-width:1024px){
+      .agenda{grid-template-columns:1fr}
+      .agenda-top{flex-direction:column;align-items:stretch;gap:12px}
+    }
+  </style>
+{% endblock %}
+{% block breadcrumb %}Agenda{% endblock %}
+{% block content %}
+<section id="agenda-page" class="agenda">
+  <header class="agenda-top">
+    <div class="row">
+      <button class="btn" hx-get="{% url 'dashboard:agenda' %}?view={{ view }}&date={{ prev }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">◀</button>
+      <button class="btn" hx-get="{% url 'dashboard:agenda' %}?view={{ view }}&date={{ today }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">Hoje</button>
+      <button class="btn" hx-get="{% url 'dashboard:agenda' %}?view={{ view }}&date={{ next }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">▶</button>
+      <strong style="margin-left:8px">{{ header_range_label }}</strong>
+    </div>
+    <div class="row">
+      <select class="select" name="view" hx-trigger="change" hx-get="{% url 'dashboard:agenda' %}?date={{ anchor }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">
+        <option value="day" {% if view == 'day' %}selected{% endif %}>Dia</option>
+        <option value="week" {% if view == 'week' %}selected{% endif %}>Semana</option>
+        <option value="month" {% if view == 'month' %}selected{% endif %}>Mês</option>
+      </select>
+      <span class="muted">Fuso: {{ tz_label }}</span>
+    </div>
+  </header>
+
+  <aside class="agenda-side">
+    <div id="filters">
+      <label class="muted">Status</label>
+      <select class="select" name="status"
+              hx-get="{% url 'dashboard:agenda' %}"
+              hx-vals='{"view":"{{ view }}","date":"{{ anchor }}"}'
+              hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">
+        <option value="" {% if not request.GET.status %}selected{% endif %}>Todos</option>
+        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pendentes</option>
+        <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmados</option>
+        <option value="denied" {% if request.GET.status == 'denied' %}selected{% endif %}>Negados</option>
+      </select>
+    </div>
+  </aside>
+
+  <div id="agenda-root" class="agenda-main">
+    {% if view == 'month' %}
+      <div class="card" style="border:0;background:transparent">
+        <div class="row" style="gap:12px; padding:8px 12px; border-bottom:1px solid var(--border); justify-content:space-between">
+          <div style="flex:1; text-align:center" class="muted">SEG</div>
+          <div style="flex:1; text-align:center" class="muted">TER</div>
+          <div style="flex:1; text-align:center" class="muted">QUA</div>
+          <div style="flex:1; text-align:center" class="muted">QUI</div>
+          <div style="flex:1; text-align:center" class="muted">SEX</div>
+          <div style="flex:1; text-align:center" class="muted">SAB</div>
+          <div style="flex:1; text-align:center" class="muted">DOM</div>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(7,1fr); gap:1px; background:var(--border)">
+          {% for week in month_weeks %}
+            {% for d in week %}
+              <div style="min-height:120px;background:var(--bg);padding:8px">
+                <div class="muted" style="font-size:12px;opacity:{% if d.in_month %}1{% else %}.5{% endif %}">{{ d.label }}</div>
+                {% if d.events %}
+                  <div class="grid" style="gap:6px;margin-top:6px">
+                    {% for ev in d.events %}
+                      <div class="row" style="gap:6px;align-items:center">
+                        <span class="pill" style="padding:2px 6px;font-size:11px">{{ ev.time }}</span>
+                        <span style="font-size:12px">{{ ev.service }}</span>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="week-grid"
+           hx-get="{% url 'dashboard:agenda_events' %}?start={{ range_start_iso }}&end={{ range_end_iso }}&view={{ view }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+           hx-trigger="load, agenda:refresh from:body"
+           hx-target="#events-layer" hx-swap="innerHTML">
+        <div class="hours-col">
+          {% for h in hours %}
+            <div>{{ h }}:00</div>
+          {% endfor %}
+        </div>
+        <div class="days-cols">
+          <div class="row" style="gap:12px; padding:8px 12px; border-bottom:1px solid var(--border); justify-content:space-between">
+            {% for d in days %}
+              <div style="flex:1; text-align:center" class="muted">{{ d.label }}</div>
+            {% endfor %}
+          </div>
+          <div id="events-layer" class="events-layer" style="grid-template-columns:repeat({{ days|length }}, 1fr)"><!-- events --></div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <aside id="sidebar" aria-live="polite"></aside>
+</section>
+<script>
+  // Default to day view on mobile if not already
+  (function(){
+    try{
+      var isMobile = window.matchMedia('(max-width: 1024px)').matches;
+      var currentView = '{{ view }}';
+      if(isMobile && currentView !== 'day'){
+        var url = '{% url 'dashboard:agenda' %}?view=day&date={{ anchor }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}';
+        htmx.ajax('GET', url, { target: '#agenda-page', swap: 'outerHTML' });
+      }
+    }catch(_){/* noop */}
+  })();
+</script>
+{% endblock %}

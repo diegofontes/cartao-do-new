@@ -1,0 +1,34 @@
+<div class="slideover" role="dialog" aria-modal="true" aria-labelledby="ev-title">
+  <header>
+    <div>
+      <h3 id="ev-title" style="margin:0">{{ ap.service.name }}</h3>
+      <p class="muted" style="margin:4px 0 0">{{ start_local }} – {{ end_local }} ({{ tz_label }})</p>
+    </div>
+    <button class="btn" type="button" aria-label="Fechar" onclick="(function(){var sb=document.getElementById('sidebar'); if(sb) sb.innerHTML='';})()">✕</button>
+  </header>
+  <div class="body">
+    <p><strong>Cliente:</strong> {{ ap.user_name }}{% if ap.user_phone %} — {{ ap.user_phone }}{% endif %}</p>
+    <p class="muted">{{ ap.service.type }} • {{ ap.service.card.title }}</p>
+    {% if ap.form_answers_json %}<pre class="muted" style="white-space:pre-wrap">{{ ap.form_answers_json }}</pre>{% endif %}
+  </div>
+  <footer class="actions">
+    {% if ap.status == 'pending' %}
+      <form method="post" action="{% url 'dashboard:agenda_event_deny' ap.id %}" hx-post="{% url 'dashboard:agenda_event_deny' ap.id %}" hx-target="#sidebar" hx-swap="innerHTML">
+        {% csrf_token %}
+        <button class="btn">Negar</button>
+      </form>
+      <form method="post" action="{% url 'dashboard:agenda_event_approve' ap.id %}" hx-post="{% url 'dashboard:agenda_event_approve' ap.id %}" hx-target="#sidebar" hx-swap="innerHTML">
+        {% csrf_token %}
+        <button class="btn primary">Aprovar</button>
+      </form>
+    {% else %}
+      <span class="muted">Status: {{ ap.status }}</span>
+    {% endif %}
+  </footer>
+</div>
+<script>
+(function(){
+  function esc(e){ if(e.key==='Escape'){ var sb=document.getElementById('sidebar'); if(sb) sb.innerHTML=''; }}
+  document.addEventListener('keydown', esc, { once: true });
+})();
+</script>

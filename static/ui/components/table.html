@@ -1,0 +1,39 @@
+<section class="card" aria-labelledby="tbl-title">
+  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+    <h2 id="tbl-title">Tabela</h2>
+    <div class="row">
+      <button class="btn">
+        <svg aria-hidden="true" width="16" height="16"><use href="./icons.svg#icon-plus"></use></svg>
+        Novo
+      </button>
+    </div>
+  </div>
+  <div class="row" style="margin-bottom:var(--space-3)">
+    <div class="pill">Filtro A</div>
+    <div class="pill">Filtro B</div>
+    <button class="btn ghost" hx-get="/filters/clear" hx-trigger="click" hx-target="#table" aria-label="Limpar filtros">Limpar</button>
+  </div>
+  <div id="table">
+    <table class="table" role="table" aria-describedby="tbl-title">
+      <thead>
+        <tr>
+          <th class="row-check"><input class="checkbox" type="checkbox" aria-label="Selecionar tudo" /></th>
+          <th aria-sort="none">Nome</th>
+          <th aria-sort="none">Status</th>
+          <th class="actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody hx-get="/table" hx-trigger="load" hx-target="#table" hx-swap="outerHTML">
+        <tr>
+          <td colspan="4" class="empty">Carregando…</td>
+        </tr>
+      </tbody>
+    </table>
+    <nav class="row" style="justify-content:flex-end;gap:6px;margin-top:var(--space-3)" aria-label="Paginação">
+      <a class="btn ghost" hx-get="/table?page=1" hx-target="#table" hx-swap="outerHTML">1</a>
+      <a class="btn ghost" hx-get="/table?page=2" hx-target="#table" hx-swap="outerHTML">2</a>
+      <a class="btn ghost" hx-get="/table?page=3" hx-target="#table" hx-swap="outerHTML">3</a>
+    </nav>
+  </div>
+</section>
+

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Cartão{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'public/styles.css' %}">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="{% static 'public/viewer.js' %}"></script>
+  </head>
+  <body>
+    <main id="main" class="container">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

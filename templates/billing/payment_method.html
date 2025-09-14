@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Forma de Pagamento{% endblock %}
+{% block head %}
+<script src="https://js.stripe.com/v3/"></script>
+{% endblock %}
+{% block content %}
+<section class="card" style="max-width:640px;margin-inline:auto">
+  <h1 style="margin-top:0">Forma de Pagamento</h1>
+
+  <div id="pm-section" style="margin-top:var(--space-3)">
+    {% include "billing/_card_info.html" with profile=profile %}
+  </div>
+
+  <hr style="margin:var(--space-4) 0">
+  <h2 style="margin:0 0 var(--space-2) 0">Cadastrar / Atualizar Cartão</h2>
+  <form id="card-form" class="grid" style="grid-template-columns:1fr;gap:12px">
+    <div id="card-element" style="padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg)"></div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn primary" id="btn-save-card">Salvar cartão</button>
+    </div>
+  </form>
+</section>
+<script>
+(function(){
+  function getCookie(name){
+    const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return m ? m.pop() : '';
+  }
+  let mounted = false;
+  let stripe, card;
+  async function init(){
+    const form = document.getElementById('card-form');
+    const container = document.getElementById('card-element');
+    if (!form || !container) return;
+    if (mounted && card && container.children.length > 0) return; // already mounted
+    if (!window.Stripe || !"{{ pk }}") return;
+    stripe = Stripe("{{ pk }}");
+    const elements = stripe.elements();
+    card = elements.create('card');
+    card.mount(container);
+    mounted = true;
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-card');
+      btn && (btn.disabled = true);
+      try{
+        const resp = await fetch("{% url 'billing:create_setup_intent' %}", { credentials: 'same-origin' });
+        const data = await resp.json();
+        const {setupIntent, error} = await stripe.confirmCardSetup(data.clientSecret, { payment_method: { card, billing_details: {} } });
+        if (error){ alert(error.message); return; }
+        const fd = new FormData();
+        fd.append('payment_method_id', setupIntent.payment_method);
+        const attach = await fetch("{% url 'billing:attach_payment_method' %}", { method:'POST', headers:{'X-CSRFToken': getCookie('csrftoken')}, credentials:'same-origin', body: fd });
+        const html = await attach.text();
+        const pm = document.getElementById('pm-section');
+        if (pm) pm.innerHTML = html;
+      } finally {
+        btn && (btn.disabled = false);
+      }
+    }, { once: true }); // prevent double handler on re-init
+  }
+  document.addEventListener('DOMContentLoaded', init);
+  // Re-initialize after HTMX swaps (hx-boost navigation)
+  document.body.addEventListener('htmx:afterSwap', function(e){
+    if (e.target && (e.target.id === 'main' || (e.target.closest && e.target.closest('#main')))) {
+      setTimeout(init, 0);
+    }
+  });
+})();
+</script>
+{% endblock %}

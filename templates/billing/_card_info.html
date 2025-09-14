@@ -1,0 +1,32 @@
+{% if profile and profile.default_payment_method %}
+  <div>
+    <div class="credit-card" aria-label="Cartão de crédito cadastrado"
+         style="background: radial-gradient(120% 120% at 80% 0%, rgba(255,255,255,.12) 0%, rgba(255,255,255,0) 45%), linear-gradient(135deg, #111 0%, #23262b 100%); color:#fff; border-radius:16px; padding:16px; box-shadow: var(--shadow);">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div style="width:42px;height:28px;border-radius:6px;background:linear-gradient(90deg,#d9b56b,#b78d35);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)"></div>
+        <div class="muted" style="color:#e5e7eb">Cartão</div>
+      </div>
+      <div style="font-size:22px;letter-spacing:2px;margin:16px 0 8px 0">•••• •••• •••• ••••</div>
+      <div class="row" style="justify-content:space-between;align-items:end">
+        <div>
+          <div class="muted" style="font-size:11px;color:#cbd5e1">Titular</div>
+          <div style="font-size:14px">{{ profile.user.get_full_name|default:user.username|default:"Conta" }}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted" style="font-size:11px;color:#cbd5e1">Válido</div>
+          <div style="font-size:14px">••/••</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="card" style="background:var(--bg-elev);">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:600;margin-bottom:4px">Nenhum cartão cadastrado</div>
+        <div class="muted">Cadastre um cartão para ativar a cobrança automática.</div>
+      </div>
+      <a class="btn primary" href="{% url 'billing:payment_method' %}">Cadastrar cartão</a>
+    </div>
+  </div>
+{% endif %}

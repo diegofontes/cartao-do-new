@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block breadcrumb %}Cartões{% endblock %}
+{% load static %}
+{% block content %}
+<section class="card">
+  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+    <h1 style="margin:0">Meus Cards</h1>
+    <a href="{% url 'cards:create' %}" class="btn">
+      <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-plus"></use></svg>
+      Novo Card
+    </a>
+  </div>
+  <ul class="grid" style="grid-template-columns:1fr;gap:10px">
+    {% for c in cards %}
+      <li class="row" style="justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg)">
+        <div class="row" style="gap:10px;align-items:center">
+          {% if c.avatar_w64 %}
+            <img src="{% url 'media:card_avatar_private' c.id 'w64' %}?v={{ c.avatar_rev }}" alt="Avatar" width="32" height="32" style="border-radius:6px;object-fit:cover" />
+          {% else %}
+            <div style="width:32px;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--bg-elev)"></div>
+          {% endif %}
+          <div>
+            <a href="{% url 'cards:detail' c.id %}" class="underline">{{ c.title }}</a>
+            <span class="muted">({{ c.status }})</span>
+          </div>
+        </div>
+
+        <!-- Mobile actions: dropdown with ellipsis icon -->
+        <details class="dropdown mobile-viewer">
+          <summary class="btn" aria-haspopup="menu" aria-expanded="false" aria-label="Mais ações">
+            <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-ellipsis"></use></svg>
+          </summary>
+          <div class="menu" role="menu">
+            {% if c.status == 'published' and c.nickname %}
+              <a role="menuitem" href="{{ viewer_base }}/@{{ c.nickname }}" target="_blank" rel="noopener">Visualizar</a>
+            {% endif %}
+            <a role="menuitem" href="{% url 'cards:edit' c.id %}">Editar</a>
+            <form role="none" method="post" action="{% url 'cards:delete' c.id %}" hx-post="{% url 'cards:delete' c.id %}" hx-confirm="Excluir este card?" hx-target="#main" class="inline">
+              {% csrf_token %}
+              <button role="menuitem" style="width:100%;text-align:left">Excluir</button>
+            </form>
+            <a role="menuitem" href="{% url 'cards:detail' c.id %}">Abrir</a>
+          </div>
+        </details>
+      </li>
+    {% empty %}
+      <li class="muted">Nenhum card ainda.</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

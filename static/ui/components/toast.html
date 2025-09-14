@@ -1,0 +1,12 @@
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="true"></div>
+<script>
+  window.toast = function(msg){
+    const c = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(()=>{ t.remove(); }, 3500);
+  }
+</script>
+

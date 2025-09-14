@@ -1,0 +1,16 @@
+<div class="panel" id="panel-slots" style="grid-column:1/-1">
+  {% if slots %}
+  <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+    {% for s in slots %}
+      {% with start=s.start_at_utc end=s.end_at_utc %}
+      <label class="link-btn" style="display:flex;align-items:center;gap:8px;cursor:pointer;width:100%">
+        <input type="radio" name="start_at_utc" value="{{ start }}" style="accent-color:#111" />
+        <span>{{ start|slice:"11:16" }}</span>
+      </label>
+      {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="help">Sem horários disponíveis nessa data.</div>
+  {% endif %}
+</div>

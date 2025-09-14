@@ -1,0 +1,27 @@
+<tbody>
+  <tr>
+    <td class="row-check"><input class="checkbox" type="checkbox" aria-label="Selecionar" /></td>
+    <td>Item A</td>
+    <td><span class="pill">Ativo</span></td>
+    <td class="actions">
+      <a class="btn ghost" hx-get="/item/1/modal" hx-target="#modal" hx-swap="innerHTML" onclick="openModal()">
+        <svg aria-hidden="true" width="16" height="16"><use href="./icons.svg#icon-edit"></use></svg>
+        Editar
+      </a>
+      <button class="btn ghost" hx-post="/item/1/delete" hx-confirm="Confirmar exclusão?">
+        <svg aria-hidden="true" width="16" height="16"><use href="./icons.svg#icon-trash"></use></svg>
+        Excluir
+      </button>
+    </td>
+  </tr>
+  <tr>
+    <td class="row-check"><input class="checkbox" type="checkbox" aria-label="Selecionar" /></td>
+    <td>Item B</td>
+    <td><span class="pill">Pendente</span></td>
+    <td class="actions">
+      <a class="btn ghost" hx-get="/item/2/modal" hx-target="#modal" hx-swap="innerHTML" onclick="openModal()">Editar</a>
+      <button class="btn ghost" hx-post="/item/2/delete" hx-confirm="Confirmar exclusão?">Excluir</button>
+    </td>
+  </tr>
+</tbody>
+

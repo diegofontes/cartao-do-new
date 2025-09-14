@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block breadcrumb %}Cartões / {{ card.title }}{% endblock %}
+{% block content %}
+<div id="card-header">
+  {% include 'cards/_card_header.html' %}
+</div>
+<div class="grid card-detail-grid" style="gap:var(--space-4);margin-top:var(--space-4)">
+  <div id="social-links" style="grid-column:1/-1" hx-get="{% url 'cards:social_links_partial' card.id %}" hx-trigger="load"></div>
+  <div id="addresses" hx-get="{% url 'cards:addresses_partial' card.id %}" hx-trigger="load"></div>
+  <div id="links" hx-get="{% url 'cards:links_partial' card.id %}" hx-trigger="load"></div>
+  <div id="gallery" style="grid-column:1/-1" hx-get="{% url 'cards:gallery_partial' card.id %}" hx-trigger="load"></div>
+  <div id="services" style="grid-column:1/-1" hx-get="{% url 'scheduling:services_partial' card.id %}" hx-trigger="load"></div>
+</div>
+{% endblock %}

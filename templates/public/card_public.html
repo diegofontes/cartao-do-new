@@ -1,0 +1,70 @@
+{% extends 'public/base_public.html' %}
+{% load static %}
+{% block title %}@{{ card.nickname }}{% endblock %}
+{% block content %}
+<main class="card-viewer">
+  <section class="header">
+    {% if card.avatar_w128 %}
+      <img class="avatar" src="{% url 'media:image_public' path=card.avatar_w128.name %}" alt="Avatar de {{ card.title }}" width="96" height="96" />
+    {% endif %}
+    <div class="title-wrap">
+      <h1 class="title">{{ card.title }}</h1>
+      <div class="nickname">@{{ card.nickname }}</div>
+    </div>
+  </section>
+
+  {% if card.description %}
+  <section class="desc"><p>{{ card.description }}</p></section>
+  {% endif %}
+
+  {% with links_len=links|length gallery_len=gallery|length services_len=services|length %}
+  {% if links_len or gallery_len or services_len %}
+  <section class="tabs">
+    <div class="tablist" role="tablist">
+      {% if links_len %}
+      <button role="tab" aria-controls="panel-links" aria-selected="true" class="tab is-active"
+              hx-get="{% url 'tabs_links' card.nickname %}" hx-target="#panel-links" hx-swap="outerHTML">Links</button>
+      {% endif %}
+      {% if gallery_len %}
+      <button role="tab" aria-controls="panel-gallery" class="tab"
+              hx-get="{% url 'tabs_gallery' card.nickname %}" hx-target="#panel-gallery" hx-swap="outerHTML">Galeria</button>
+      {% endif %}
+      {% if services_len %}
+      <button role="tab" aria-controls="panel-services" class="tab"
+              hx-get="{% url 'tabs_services' card.nickname %}" hx-target="#panel-services" hx-swap="outerHTML">Serviços</button>
+      {% endif %}
+    </div>
+
+    {% if links_len %}
+      <div id="panel-links" role="tabpanel" class="panel">
+        {% include 'public/tabs_links.html' %}
+      </div>
+    {% endif %}
+    {% if gallery_len %}
+      <div id="panel-gallery" role="tabpanel" hidden class="panel">
+        {% include 'public/tabs_gallery.html' %}
+      </div>
+    {% endif %}
+    {% if services_len %}
+      <div id="panel-services" role="tabpanel" hidden class="panel">
+        {% include 'public/tabs_services.html' %}
+      </div>
+    {% endif %}
+  </section>
+  {% endif %}
+  {% endwith %}
+
+  {% if socials|length %}
+  <nav class="socials" aria-label="Redes sociais">
+    {% for s in socials %}
+      <a class="social" href="{{ s.url }}" target="_blank" rel="noopener">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-{{ s.platform }}"></use></svg>
+        <span class="sr-only">{{ s.platform }}</span>
+      </a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  <aside id="slideover" aria-live="polite"></aside>
+</main>
+{% endblock %}

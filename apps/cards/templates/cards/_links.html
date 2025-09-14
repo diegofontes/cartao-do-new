@@ -1,0 +1,21 @@
+<section class="card">
+  <h2 style="margin-top:0">Links</h2>
+  <form hx-post="{% url 'cards:add_link' card.id %}" hx-target="#links" class="row stack-mobile" style="gap:10px;margin-bottom:10px">
+    {% csrf_token %}
+    <input name="label" placeholder="Rótulo" class="input" required />
+    <input name="url" placeholder="https://" class="input" required />
+    <button class="btn">Adicionar</button>
+  </form>
+  <ul class="grid" style="grid-template-columns:1fr;gap:8px">
+    {% for l in links %}
+      <li class="row" style="gap:8px;align-items:center">
+        <a href="{{ l.url }}" target="_blank" class="underline">{{ l.label }}</a>
+        <button hx-post="{% url 'cards:delete_link' l.id %}"
+                hx-confirm="Confirmar exclusão deste link?"
+                hx-target="#links" class="btn ghost">Excluir</button>
+      </li>
+    {% empty %}
+      <li class="muted">Nenhum link.</li>
+    {% endfor %}
+  </ul>
+</section>

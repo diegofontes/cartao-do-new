@@ -1,0 +1,53 @@
+<section class="card" style="max-width:720px">
+  <h4 style="margin-top:0">{{ item|default_if_none:"Nova regra" }}</h4>
+  <form 
+    method="post"
+    hx-post="{% if item %}{% url 'scheduling:availability_save' card.id service.id item.id %}{% else %}{% url 'scheduling:availability_create' card.id service.id %}{% endif %}"
+    hx-target="#availability"
+    hx-swap="innerHTML"
+    class="grid" style="grid-template-columns:1fr 1fr;gap:12px"
+  >
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <label class="field">
+      <span>Tipo</span>
+      {{ form.rule_type }}
+      <small class="help">Semanal: por dia da semana. Data específica: para exceções (feriado/bloqueio). Feriado: bloqueia o dia todo.</small>
+      {{ form.rule_type.errors }}
+    </label>
+    <label class="field">
+      <span>Dia da semana</span>
+      {{ form.weekday }}
+      <small class="help">0=Seg, 1=Ter, … 6=Dom. Usado em regras semanais.</small>
+      {{ form.weekday.errors }}
+    </label>
+    <label class="field">
+      <span>Início</span>
+      {{ form.start_time }}
+      <small class="help">Hora local do serviço. Deixe vazio para dia inteiro (exceto semanal).</small>
+      {{ form.start_time.errors }}
+    </label>
+    <label class="field">
+      <span>Fim</span>
+      {{ form.end_time }}
+      <small class="help">Hora local do serviço. Deve ser após o início.</small>
+      {{ form.end_time.errors }}
+    </label>
+    <label class="field">
+      <span>Data</span>
+      {{ form.date }}
+      <small class="help">Obrigatória para regra por data ou feriado.</small>
+      {{ form.date.errors }}
+    </label>
+    <label class="field">
+      <span>Timezone (opcional)</span>
+      {{ form.timezone }}
+      <small class="help">Se vazio, usa o fuso do serviço.</small>
+      {{ form.timezone.errors }}
+    </label>
+    <div class="row" style="grid-column:1/-1;justify-content:flex-end;margin-top:var(--space-2)">
+      <button class="btn primary">Salvar</button>
+      <button type="button" hx-get="{% url 'scheduling:availability_partial' card.id service.id %}" hx-target="#availability" class="btn">Cancelar</button>
+    </div>
+  </form>
+</section>

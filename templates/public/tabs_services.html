@@ -1,0 +1,16 @@
+<div id="panel-services" role="tabpanel" class="panel">
+  <ul class="svc-list">
+    {% for s in services %}
+    <li class="svc-card">
+      <div class="svc-info">
+        <strong>{{ s.name }}</strong>
+        <span class="nickname">{{ s.type }} • {{ s.duration_minutes }}min</span>
+      </div>
+      <button class="tab" hx-get="{% url 'public_service_sidebar' card.nickname s.id %}" hx-target="#slideover" hx-swap="innerHTML">Agendar</button>
+    </li>
+    {% empty %}
+    <li class="nickname">Sem serviços.</li>
+    {% endfor %}
+  </ul>
+</div>
+

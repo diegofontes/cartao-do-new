@@ -1,0 +1,8 @@
+<div id="panel-links" role="tabpanel" class="panel">
+  {% for b in links %}
+    <a class="link-btn" href="{{ b.url }}" target="_blank" rel="noopener">{{ b.label }}</a>
+  {% empty %}
+    <div class="nickname">Nenhum link.</div>
+  {% endfor %}
+</div>
+

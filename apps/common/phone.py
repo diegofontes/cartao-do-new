@@ -1,0 +1,22 @@
+import hashlib
+import secrets
+import phonenumbers
+
+
+def to_e164(raw: str, default_region: str = "BR") -> str:
+    try:
+        n = phonenumbers.parse(raw, default_region)
+    except phonenumbers.NumberParseException:
+        raise ValueError("Telefone inválido")
+    if not phonenumbers.is_valid_number(n):
+        raise ValueError("Telefone inválido")
+    return phonenumbers.format_number(n, phonenumbers.PhoneNumberFormat.E164)
+
+
+def gen_code(n: int = 6) -> str:
+    return f"{secrets.randbelow(10**n):0{n}d}"
+
+
+def hash_code(code: str) -> str:
+    return hashlib.sha256(code.encode()).hexdigest()
+

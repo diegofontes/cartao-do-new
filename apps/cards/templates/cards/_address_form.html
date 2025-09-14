@@ -1,0 +1,38 @@
+<form id="addr-form"
+      class="card"
+      hx-post="{% url 'cards:add_address' card.id %}"
+      hx-target="#addresses"
+      hx-swap="innerHTML">
+  {% csrf_token %}
+  <h3 style="margin-top:0">Novo endereço</h3>
+  <div class="grid grid-2col-mobile" style="gap:12px">
+    <label class="field" style="grid-column:1/-1">
+      <span>Rótulo</span>
+      <input name="label" class="input" required />
+    </label>
+    <label class="field">
+      <span>CEP</span>
+      <input name="cep" id="cep" class="input" inputmode="numeric" pattern="^\d{5}-?\d{3}$"
+             hx-get="{% url 'cards:cep_lookup' %}"
+             hx-trigger="blur changed delay:300ms"
+             hx-target="#addr-fields"
+             hx-swap="innerHTML"
+             aria-describedby="cep-help" required />
+      <small id="cep-help" class="help">Digite CEP no formato 00000-000.</small>
+    </label>
+  </div>
+  <div id="addr-fields">
+    {% include 'cards/_address_fields.html' %}
+  </div>
+  <div class="row" style="justify-content:flex-end;margin-top:var(--space-3)">
+    <button class="btn primary">Salvar</button>
+    <button type="button" class="btn" onclick="document.getElementById('address-form').innerHTML=''; var b=document.getElementById('btn-new-address'); if(b) b.focus();">Cancelar</button>
+  </div>
+  <script>
+  (function(){
+    const form = document.getElementById('addr-form');
+    form.addEventListener('keydown', function(e){ if(e.key==='Escape'){ e.preventDefault(); document.getElementById('address-form').innerHTML=''; var b=document.getElementById('btn-new-address'); if(b) b.focus(); }});
+  })();
+  </script>
+  <div class="htmx-indicator" aria-hidden="true">Carregando…</div>
+</form>

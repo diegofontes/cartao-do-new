@@ -1,0 +1,28 @@
+<header class="row" style="justify-content:space-between">
+  <div class="row"><strong>Entrar</strong></div>
+  <a class="muted" href="{% url 'accounts:auth_signup' %}">Criar conta</a>
+</header>
+{% if messages %}
+  <div aria-live="polite">
+    {% for m in messages %}<div class="help">{{ m }}</div>{% endfor %}
+  </div>
+{% endif %}
+<form method="post" action="{% url 'accounts:auth_login_post' %}" hx-post="{% url 'accounts:auth_login_post' %}" hx-target="#auth-card" hx-swap="innerHTML">
+  {% csrf_token %}
+  <label>
+    <span>E-mail</span>
+    <input class="input" type="email" name="email" value="{{ email|default:'' }}" autocomplete="username" required>
+  </label>
+  <label>
+    <span>Senha</span>
+    <input class="input" type="password" name="password" autocomplete="current-password" required>
+  </label>
+  <label class="row" style="gap:8px">
+    <input type="checkbox" name="remember_device"> <span>Lembrar este dispositivo</span>
+  </label>
+  <button class="btn primary" type="submit">Entrar</button>
+  <div class="row" style="justify-content:space-between; margin-top:8px">
+    <a class="muted" href="{% url 'accounts:auth_signup' %}">Criar conta</a>
+    <a class="muted" href="{% url 'accounts:auth_forgot' %}">Esqueci minha senha</a>
+  </div>
+</form>

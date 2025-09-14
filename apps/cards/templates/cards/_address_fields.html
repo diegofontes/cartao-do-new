@@ -1,0 +1,30 @@
+{% if error %}
+  <div class="error" role="alert">{{ error }}</div>
+{% endif %}
+<div class="grid grid-2col-mobile" style="gap:12px;margin-top:var(--space-2)">
+  <label class="field" style="grid-column:1/-1">
+    <span>Logradouro</span>
+    <input name="logradouro" class="input" value="{{ logradouro|default:'' }}" />
+  </label>
+  <label class="field">
+    <span>Número</span>
+    <input name="numero" class="input" />
+  </label>
+  <label class="field">
+    <span>Complemento</span>
+    <input name="complemento" class="input" />
+  </label>
+  <label class="field">
+    <span>Bairro</span>
+    <input name="bairro" class="input" value="{{ bairro|default:'' }}" />
+  </label>
+  <label class="field">
+    <span>Cidade</span>
+    <input name="cidade" class="input" value="{{ cidade|default:'' }}" />
+  </label>
+  <label class="field">
+    <span>UF</span>
+    <input name="uf" class="input" maxlength="2" value="{{ uf|default:'' }}" />
+  </label>
+  <input type="hidden" name="pais" value="BR" />
+</div>

@@ -1,0 +1,21 @@
+<header class="row" style="justify-content:space-between">
+  <div class="row"><strong>Verifique seu e-mail</strong></div>
+  <a class="muted" href="{% url 'accounts:auth_login' %}">Entrar</a>
+</header>
+<div class="help">Enviamos um código para {{ email }}.</div>
+{% if messages %}
+  <div aria-live="polite">
+    {% for m in messages %}<div class="help">{{ m }}</div>{% endfor %}
+  </div>
+{% endif %}
+<form method="post" action="{% url 'accounts:auth_signup_verify' %}" hx-post="{% url 'accounts:auth_signup_verify' %}" hx-target="#auth-card" hx-swap="innerHTML">
+  {% csrf_token %}
+  <label>
+    <span>Código</span>
+    <input class="input" name="code" inputmode="numeric" maxlength="6" pattern="^\d{6}$" required>
+  </label>
+  <div class="row" style="gap:8px">
+    <button class="btn primary" type="submit">Validar</button>
+    <button class="btn" hx-post="{% url 'accounts:auth_code_resend' %}" hx-include="closest form" hx-target="closest #auth-card" hx-swap="innerHTML" type="button">Reenviar código</button>
+  </div>
+</form>

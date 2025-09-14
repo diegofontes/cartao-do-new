@@ -1,0 +1,5 @@
+<div class="row" id="filters" hx-trigger="filters:changed from:body" hx-get="/table" hx-target="#table" hx-swap="outerHTML">
+  <button class="btn pill" onclick="dispatchEvent(new CustomEvent('filters:changed',{bubbles:true}))">Aplicar filtros</button>
+  <button class="btn ghost" onclick="dispatchEvent(new CustomEvent('filters:changed',{bubbles:true}))">Limpar</button>
+</div>
+

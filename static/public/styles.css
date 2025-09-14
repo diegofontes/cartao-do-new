@@ -1,0 +1,70 @@
+:root{
+  --bg:#ffffff; --bg-elev:#f6f7f8;
+  --fg:#111; --fg-muted:#666; --border:#e6e6e8;
+  --shadow:0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08);
+  --radius:14px; --gap-1:8px; --gap-2:12px; --gap-3:16px; --gap-4:24px; --gap-5:32px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,system-ui}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.row{display:flex;align-items:center;gap:var(--gap-2)}
+.field{display:flex;flex-direction:column;gap:6px}
+.input,.select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;-webkit-appearance:none;appearance:none}
+.input:focus, .select:focus, textarea:focus{outline:2px solid #111;outline-offset:2px}
+.btn{border:1px solid var(--border);border-radius:12px;padding:10px 14px;background:#fff}
+.btn:hover{background:var(--bg-elev)}
+.btn.primary{background:#111;color:#fff;border-color:#111}
+.btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(1)}
+.box{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--bg-elev)}
+.help{color:var(--fg-muted)}
+.error{color:#111;background:#f3f3f3;border:1px solid var(--border);padding:8px 10px;border-radius:10px}
+
+.card-viewer{max-width:880px;margin:0 auto;padding:var(--gap-5)}
+.header{display:flex;align-items:center;gap:var(--gap-4)}
+.avatar{width:96px;height:96px;border-radius:16px;box-shadow:var(--shadow);object-fit:cover}
+.title{font-size:2rem;line-height:1.2;margin:0}
+.nickname{color:var(--fg-muted);margin-top:4px}
+.desc{margin-top:var(--gap-4);color:var(--fg-muted)}
+.socials{display:flex;gap:var(--gap-2);margin:var(--gap-4) 0}
+.social{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--border);border-radius:12px}
+
+.tabs{margin-top:var(--gap-5)}
+.tablist{display:flex;gap:var(--gap-2);background:var(--bg-elev);padding:6px;border-radius:12px}
+.tab{padding:10px 14px;border-radius:10px;border:1px solid transparent}
+.tab.is-active,.tab:focus{background:#fff;border-color:var(--border);box-shadow:var(--shadow)}
+.panel{margin-top:var(--gap-4)}
+
+.link-btn{display:block;width:100%;text-align:center;padding:14px 16px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--gap-3)}
+.svc-list{display:grid;gap:var(--gap-3);padding-left: 0px; list-style: none;}
+.svc-card{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elev)}
+
+.slideover{position:fixed;inset:0 0 0 auto;width:min(420px,100%);background:var(--bg);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:var(--gap-4)}
+.slideover{display:flex;flex-direction:column;padding:0}
+.slideover-header{padding:var(--gap-4) var(--gap-4) var(--gap-2)}
+.slideover-body{padding:0 var(--gap-4);overflow:auto}
+.slideover-footer{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:var(--gap-3) var(--gap-4);display:flex;gap:12px;justify-content:flex-end}
+
+/* Top-centered toast for booking result */
+.toasts-top{position:fixed;top:16px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:10px;z-index:1000}
+.toast-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:10px 14px;box-shadow:var(--shadow);min-width:260px;max-width:90vw;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toast-msg{color:var(--fg)}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+@media (max-width:640px){
+  .header{flex-direction:column;align-items:flex-start}
+  .avatar{width:72px;height:72px}
+}
+
+/* Visibility helpers aligned with dashboard */
+.mobile-viewer{display:none}
+.desktop-viewer{display:inline-flex}
+@media (max-width:1024px){
+  .mobile-viewer{display:inline-flex !important}
+  .desktop-viewer{display:none !important}
+}

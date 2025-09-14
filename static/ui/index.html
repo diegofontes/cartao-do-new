@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard UI — Grayscale</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="./theme.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Pular para conteúdo</a>
+    <div class="layout">
+      <!-- Sidebar -->
+      <!--#include file="./components/sidebar.html" -->
+      <div class="main">
+        <!-- Topbar -->
+        <!--#include file="./components/topbar.html" -->
+        <main id="main" class="container">
+          <!-- KPIs -->
+          <!--#include file="./partials/kpis.html" -->
+          <!-- Table -->
+          <!--#include file="./components/table.html" -->
+          <!-- Form Controls -->
+          <!--#include file="./components/form-controls.html" -->
+        </main>
+      </div>
+    </div>
+    <!-- Modal/Toasts/Icons -->
+    <!--#include file="./components/modal.html" -->
+    <!--#include file="./components/toast.html" -->
+    <div aria-hidden="true"> <!-- Sprite in DOM for <use> -->
+      <!--#include file="./icons.svg" -->
+    </div>
+  </body>
+  <!-- Notes:
+    - Replace hx-get URLs with your Django endpoints.
+    - CSRF header is attached automatically if csrftoken cookie exists.
+    - Keep grayscale palette and AA contrast when customizing.
+  -->
+</html>
+

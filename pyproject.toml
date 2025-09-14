@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "django-stripe-paygo"
+version = "0.1.0"
+description = "Exemplo completo: Django 5 + Stripe (cobrança mensal por consumo) + Celery/Redis + HTMX + Tailwind + Pytest + Taskipy"
+authors = ["cartao.do demo <demo@example.com>"]
+readme = "README.md"
+packages = [{include = "apps"}, {include = "config"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+Django = "^5.0"
+django-htmx = "^1.18.0"
+stripe = "^9.8.0"
+celery = "^5.3.6"
+redis = "^5.0.4"
+django-redis = "^5.4.0"
+python-dotenv = "^1.0.1"
+Pillow = "^10.4.0"
+phonenumbers = "^8.13.40"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+pytest-django = "^4.8.0"
+taskipy = "^1.12.2"
+ruff = "^0.5.7"
+django-tailwind = "^3.8.0"
+
+[tool.taskipy.tasks]
+redis = "docker run -p 6379:6379 --name redis -d redis:7-alpine"
+stripe-listen = "stripe listen --forward-to localhost:8000/stripe/webhook/"
+viewer = "python manage.py runserver 9000 --settings=config.settings_viewer"
+dev = "python manage.py runserver"
+worker = "celery -A config worker -l info"
+beat = "celery -A config beat -l info"
+lint = "ruff ."
+test = "pytest -q"
+tw-init = "python manage.py tailwind init"
+tw-install = "python manage.py tailwind install"
+tw-build = "python manage.py tailwind build"
+tw-dev = "python manage.py tailwind start"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["migrations"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["tests/test_*.py", "tests/*_test.py"]
+addopts = "-ra"

@@ -1,0 +1,47 @@
+<section class="card">
+  <h2 style="margin-top:0">Galeria</h2>
+  {% if errors %}
+    <div class="error" role="alert">{{ errors|join:', ' }}</div>
+  {% endif %}
+  <form id="gallery-upload"
+        hx-post="{% url 'cards:add_gallery_item' card.id %}"
+        hx-encoding="multipart/form-data"
+        hx-target="#gallery"
+        hx-swap="innerHTML">
+    {% csrf_token %}
+    <div id="dropzone" tabindex="0" role="button" aria-label="Enviar imagens"
+         style="padding:16px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-elev);margin-bottom:10px">
+      <input type="file" id="files" name="files" accept="image/*" multiple hidden>
+      <p>Arraste e solte imagens aqui ou <button type="button" class="btn ghost" data-open-file>clique para selecionar</button></p>
+      <div class="htmx-indicator">Enviando…</div>
+    </div>
+  </form>
+  <script>
+  (function(){
+    const dz = document.currentScript.previousElementSibling.querySelector('#dropzone');
+    const form = document.getElementById('gallery-upload');
+    const input = form.querySelector('#files');
+    // Clique no botão com data-open-file é tratado globalmente em theme.js
+    // Submit when a file is selected via the dialog
+    input.addEventListener('change', ()=>{ if(input.files && input.files.length){ htmx.trigger('#gallery-upload','submit'); }});
+    ['dragenter','dragover'].forEach(ev=>{ dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('is-drag'); }); });
+    ['dragleave','drop'].forEach(ev=>{ dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('is-drag'); }); });
+    dz.addEventListener('drop', e=>{ const files = Array.from(e.dataTransfer.files||[]); if(!files.length) return; input.files = e.dataTransfer.files; htmx.trigger('#gallery-upload','submit'); });
+  })();
+  </script>
+  <ul class="grid" style="grid-template-columns:1fr;gap:8px" id="gallery-list">
+    {% for it in items %}
+      <li class="row" style="gap:8px;align-items:center">
+        {% if it.thumb_w256 %}
+          <img src="{% url 'media:gallery_private' it.id 'w256' %}" alt="{{ it.caption|default:'imagem' }}" width="128" height="128" loading="lazy" style="border-radius:8px;object-fit:cover" />
+        {% endif %}
+        <a href="{% url 'media:gallery_private' it.id 'w768' %}" target="_blank" class="underline">{{ it.caption|default:"arquivo" }}</a>
+        <button hx-post="{% url 'cards:delete_gallery_item' it.id %}"
+                hx-confirm="Confirmar exclusão desta imagem?"
+                hx-target="#gallery" class="btn ghost">Excluir</button>
+      </li>
+    {% empty %}
+      <li class="muted">Nenhuma imagem.</li>
+    {% endfor %}
+  </ul>
+</section>

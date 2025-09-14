@@ -1,0 +1,91 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Página de Login - Cartão Do</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Habilita suporte ao modo escuro via classe
+    tailwind.config = {
+      darkMode: 'class'
+    }
+
+    // Alterna entre claro/escuro e troca o logo
+    function toggleTheme() {
+      const root = document.documentElement;
+      const logo = document.getElementById("logo");
+
+      root.classList.toggle("dark");
+
+      if (root.classList.contains("dark")) {
+        logo.src = "{% static 'img/logo-cap-v1.png'  %}"; // versão clara
+      } else {
+        logo.src = "{% static 'img/logo-cap-v1-dark.png'  %}"; // versão negativa
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen transition-colors duration-500">
+
+  <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 transition-colors duration-500">
+    
+    <!-- Logo -->
+    <div class="flex justify-center mb-1">
+      <img id="logo" src="{% static 'img/logo-cap-v1.png'  %}" alt="Cartão Do" class="h-24 transition-all duration-500">
+    </div>
+
+    <!-- Título -->
+    <h2 class="text-2xl font-bold text-center text-gray-800 dark:text-gray-100 mb-6">
+      Bem-vindo ao Cartão Do
+    </h2>
+
+    <!-- Formulário -->
+    <form method="post"  class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">E-mail</label>
+        <input type="username" id="username" name="username" required
+          class="mt-1 w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2" />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
+        <input type="password" id="password" name="password" required
+          class="mt-1 w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2" />
+      </div>
+
+      <!-- Botão de login -->
+      <button type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+        Entrar
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="my-6 flex items-center">
+      <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+      <span class="px-3 text-sm text-gray-500 dark:text-gray-400">ou</span>
+      <div class="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+    </div>
+
+    <a class="text-blue-600 underline" href="{% url 'accounts:signup' %}">Crie uma conta</a>
+
+    <!-- Links -->
+    <div class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+      <a href="#" class="hover:underline">Política de Privacidade</a> •
+      <a href="#" class="hover:underline">Termos de Uso</a>
+    </div>
+
+    <!-- Alternar Tema -->
+    <div class="mt-6 flex justify-center">
+      <button onclick="toggleTheme()" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+        Alternar Tema
+      </button>
+    </div>
+  </div>
+
+</body>
+</html>

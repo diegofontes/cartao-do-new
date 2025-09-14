@@ -1,0 +1,46 @@
+{% load static %}
+<section class="card">
+  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+    <h2 style="margin:0">Serviços</h2>
+    <a hx-get="{% url 'scheduling:service_form_new' card.id %}" hx-target="#service-form" class="btn">
+      <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-plus"></use></svg>
+      Novo serviço
+    </a>
+  </div>
+  <ul class="grid" style="grid-template-columns:1fr;gap:10px">
+    {% for s in services %}
+      <li style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg)">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div>
+            <div class="font-medium">{{ s.name }}</div>
+            <div class="muted" style="font-size:12px">{{ s.duration_minutes }} min • {{ s.type }} • {{ s.timezone }}</div>
+          </div>
+          <div class="row desktop-viewer" style="gap:10px">
+            <a hx-get="{% url 'scheduling:service_form_edit' card.id s.id %}" hx-target="#service-form" class="btn ghost">Editar</a>
+            <button hx-post="{% url 'scheduling:service_delete' card.id s.id %}"
+                    hx-confirm="Confirmar exclusão do serviço?"
+                    hx-target="#services"
+                    class="btn ghost">Excluir</button>
+            <a hx-get="{% url 'scheduling:availability_partial' card.id s.id %}" hx-target="#availability" class="btn ghost">Disponibilidade</a>
+          </div>
+          <details class="dropdown mobile-viewer">
+            <summary class="btn" aria-haspopup="menu" aria-expanded="false" aria-label="Mais ações">
+              <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-ellipsis"></use></svg>
+            </summary>
+            <div class="menu" role="menu">
+              <a role="menuitem" hx-get="{% url 'scheduling:service_form_edit' card.id s.id %}" hx-target="#service-form">Editar</a>
+              <button role="menuitem" hx-post="{% url 'scheduling:service_delete' card.id s.id %}"
+                      hx-confirm="Confirmar exclusão do serviço?"
+                      hx-target="#services">Excluir</button>
+              <a role="menuitem" hx-get="{% url 'scheduling:availability_partial' card.id s.id %}" hx-target="#availability">Disponibilidade</a>
+            </div>
+          </details>
+        </div>
+      </li>
+    {% empty %}
+      <li class="muted">Nenhum serviço ainda.</li>
+    {% endfor %}
+  </ul>
+  <div id="service-form" style="margin-top:var(--space-4)"></div>
+  <div id="availability" style="margin-top:var(--space-6)"></div>
+</section>

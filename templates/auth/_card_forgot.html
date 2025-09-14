@@ -1,0 +1,17 @@
+<header class="row" style="justify-content:space-between">
+  <div class="row"><strong>Recuperar conta</strong></div>
+  <a class="muted" href="{% url 'accounts:auth_login' %}">Voltar ao login</a>
+</header>
+{% if messages %}
+  <div aria-live="polite">
+    {% for m in messages %}<div class="help">{{ m }}</div>{% endfor %}
+  </div>
+{% endif %}
+<form method="post" action="{% url 'accounts:auth_forgot_post' %}" hx-post="{% url 'accounts:auth_forgot_post' %}" hx-target="#auth-card" hx-swap="innerHTML">
+  {% csrf_token %}
+  <label>
+    <span>E-mail</span>
+    <input class="input" type="email" name="email" autocomplete="email" required>
+  </label>
+  <button class="btn primary" type="submit">Enviar código</button>
+</form>

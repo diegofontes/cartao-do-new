@@ -1,0 +1,35 @@
+<form class="card" aria-labelledby="fc-title" hx-post="/form" hx-target="#form-status">
+  <h2 id="fc-title" style="margin-top:0">Controles de Formulário</h2>
+  <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+    <label class="field">
+      <span>Texto</span>
+      <input class="input" name="t" required />
+      <span class="help">Ajuda</span>
+    </label>
+    <label class="field">
+      <span>Email</span>
+      <input type="email" class="input" name="e" required />
+    </label>
+    <label class="field">
+      <span>Número</span>
+      <input type="number" class="input" name="n" />
+    </label>
+    <label class="field">
+      <span>Seleção</span>
+      <select class="select" name="s"><option>A</option><option>B</option></select>
+    </label>
+    <label class="field" style="grid-column:1/-1">
+      <span>Textarea</span>
+      <textarea class="textarea" name="x" rows="3"></textarea>
+    </label>
+    <label class="row">
+      <input class="checkbox" type="checkbox" name="c" />
+      <span>Concordo</span>
+    </label>
+  </div>
+  <div class="row" style="justify-content:flex-end;margin-top:var(--space-3)">
+    <button class="btn primary">Enviar</button>
+    <div id="form-status" class="muted"></div>
+  </div>
+</form>
+

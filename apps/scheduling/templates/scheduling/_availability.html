@@ -1,0 +1,37 @@
+{% load static %}
+{% load scheduling_extras %}
+<section class="card">
+  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+    <h3 style="margin:0">Disponibilidade: {{ service.name }}</h3>
+    <a hx-get="{% url 'scheduling:availability_form_new' card.id service.id %}"
+       hx-target="#availability-form" class="btn">
+       <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-plus"></use></svg>
+       Nova regra
+    </a>
+  </div>
+  <ul class="grid" style="grid-template-columns:1fr;gap:10px">
+    {% for it in items %}
+      <li style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg)">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <div>
+            <div class="font-medium">{{ it.rule_type }}{% if it.rule_type == 'weekly' %} • {{ it.weekday|weekday_name }}{% endif %}{% if it.date %} • {{ it.date }}{% endif %}</div>
+            <div class="muted" style="font-size:12px">
+              {% if it.start_time and it.end_time %} {{ it.start_time }} - {{ it.end_time }} {% else %}dia inteiro{% endif %}
+              {% if it.timezone %} • {{ it.timezone }} {% endif %}
+            </div>
+          </div>
+          <div class="row" style="gap:10px">
+            <a hx-get="{% url 'scheduling:availability_form_edit' card.id service.id it.id %}" hx-target="#availability-form" class="btn ghost">Editar</a>
+            <button hx-post="{% url 'scheduling:availability_delete' card.id service.id it.id %}"
+                    hx-confirm="Confirmar exclusão desta regra?"
+                    hx-target="#availability"
+                    class="btn ghost">Excluir</button>
+          </div>
+        </div>
+      </li>
+    {% empty %}
+      <li class="muted">Nenhuma regra ainda.</li>
+    {% endfor %}
+  </ul>
+  <div id="availability-form" style="margin-top:var(--space-4)"></div>
+</section>

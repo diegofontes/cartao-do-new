@@ -1,0 +1,44 @@
+{% load static %}
+<section class="card row" style="justify-content:space-between;align-items:center">
+  <div class="row" style="gap:12px;align-items:center">
+    {% if card.avatar_w128 %}
+      <img src="{% url 'media:card_avatar_private' card.id 'w128' %}?v={{ card.avatar_rev }}" alt="Avatar de {{ card.title }}" width="64" height="64" style="border-radius:10px;object-fit:cover" />
+    {% else %}
+      <div style="width:64px;height:64px;border:1px solid var(--border);border-radius:10px;background:var(--bg-elev)"></div>
+    {% endif %}
+    <div>
+      <h1 style="margin:0">{{ card.title }}</h1>
+      <div class="muted">Status: {{ card.status }}</div>
+    </div>
+  </div>
+  <!-- Ações desktop -->
+  <div class="row" style="gap:8px; display:none" id="card-header">
+    <form id="avatar-form" method="post" action="{% url 'cards:upload_avatar' card.id %}" enctype="multipart/form-data" hx-post="{% url 'cards:upload_avatar' card.id %}" hx-target="#card-header" hx-swap="outerHTML" class="row" style="gap:8px">
+      {% csrf_token %}
+      <input id="avatar-file" type="file" name="avatar" accept="image/*" class="input" required onchange="this.form.requestSubmit()" />
+      <button class="btn">Trocar avatar</button>
+    </form>
+  </div>
+
+  <!-- Ações mobile: dropdown -->
+  <details class="dropdown mobile-viewer">
+    <summary class="btn" aria-haspopup="menu" aria-expanded="false" aria-label="Mais ações">
+      <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-ellipsis"></use></svg>
+    </summary>
+    <div class="menu" role="menu">
+      <button role="menuitem" type="button" data-open-file="#avatar-file">Trocar avatar</button>
+      <a role="menuitem" href="{% url 'cards:edit' card.id %}">Editar</a>
+      {% if card.status != 'published' %}
+        <button role="menuitem" hx-get="{% url 'cards:publish_modal' card.id %}" hx-target="#publish-modal" hx-swap="innerHTML">Publicar</button>
+      {% endif %}
+      {% if card.status == 'published' and card.nickname %}
+        <a role="menuitem" href="{{ viewer_base }}/@{{ card.nickname }}" target="_blank" rel="noopener">Visualizar</a>
+      {% endif %}
+      <form role="none" method="post" action="{% url 'cards:delete' card.id %}" hx-post="{% url 'cards:delete' card.id %}" hx-confirm="Excluir este card? Isso removerá seus conteúdos." hx-target="#main" class="inline">
+        {% csrf_token %}
+        <button role="menuitem" style="width:100%;text-align:left">Excluir</button>
+      </form>
+    </div>
+  </details>
+</section>
+<div id="publish-modal"></div>

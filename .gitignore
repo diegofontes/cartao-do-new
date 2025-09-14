@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Envs
+.env
+.env.*
+*.env
+.python-version
+venv/
+.venv/
+
+# Django
+db.sqlite3
+*.sqlite3
+*.sqlite
+*.db
+media/
+uploads/
+*.log
+logs/
+celerybeat-schedule
+
+# Static build artifacts (keep committed source assets under static/)
+static/**/*.map
+theme/static/css/dist/
+theme/static_src/node_modules/
+theme/static_src/.cache/
+theme/static_src/dist/
+
+# Coverage / test
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.tox/
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Redis / Celery (if present locally)
+dump.rdb
+celerybeat.pid
+
+# Local scripts and artifacts
+*.bak
+*.tmp
+*.swp
+*.swo
+*.orig
+

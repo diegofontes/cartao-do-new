@@ -1,0 +1,11 @@
+{% load static %}
+<div id="dlg-footer" class="slideover-footer">
+  <button class="btn" type="button" onclick="document.getElementById('slideover').innerHTML=''">Cancelar</button>
+  <button class="btn primary"
+          hx-post="/{% if nickname %}@{{ nickname }}{% endif %}/appointments"
+          hx-include="#booking-form"
+          hx-target="#slideover"
+          hx-swap="innerHTML"
+          {% if not form_valid %}disabled{% endif %}>Confirmar</button>
+</div>
+

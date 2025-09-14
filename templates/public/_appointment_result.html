@@ -1,0 +1,29 @@
+<div id="viewer-toasts" class="toasts-top"></div>
+<script>
+(function(){
+  // Close slideover contents
+  var slide = document.getElementById('slideover');
+  if (slide) slide.innerHTML = '';
+  // Build toast
+  var host = document.getElementById('viewer-toasts');
+  if (!host){ host = document.createElement('div'); host.id='viewer-toasts'; host.className='toasts-top'; document.body.appendChild(host); }
+  var toast = document.createElement('div');
+  toast.className = 'toast-card';
+  var msg = document.createElement('div');
+  msg.className = 'toast-msg';
+  msg.innerHTML = `
+    {% if ok %}
+      {% if duplicate %}Agendamento já realizado.{% else %}Agendamento confirmado.{% endif %}
+    {% else %}
+      Não foi possível agendar.
+    {% endif %}
+  `;
+  var btn = document.createElement('button');
+  btn.className = 'btn';
+  btn.setAttribute('aria-label','Fechar');
+  btn.textContent = 'Fechar';
+  btn.addEventListener('click', function(){ toast.remove(); });
+  toast.appendChild(msg); toast.appendChild(btn); host.appendChild(toast);
+  setTimeout(function(){ toast.remove(); }, 5000);
+})();
+</script>

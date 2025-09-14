@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="grid dashboard-grid">
+  <div class="grid" style="grid-template-columns:1fr;gap:var(--space-4)">
+    <section class="card row" style="justify-content:space-between">
+      <div>
+        <h2 style="margin:0">Consumo do mês</h2>
+        <div id="usage-stats">
+          {% include "dashboard/_usage_stats.html" %}
+        </div>
+      </div>
+      <form hx-post="{% url 'billing:simulate_usage' %}" hx-target="#usage-stats" hx-swap="outerHTML">
+        {% csrf_token %}
+        <button class="btn primary">Simular Consumo</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2 style="margin-top:0">Faturas</h2>
+      <div>
+        {% for inv in invoices %}
+          <div class="row" style="justify-content:space-between;padding:10px 0;border-top:1px solid var(--border)">
+            <div>
+              <div class="font-medium">{{ inv.period_start }} — {{ inv.period_end }}</div>
+              <div class="muted">Status: {{ inv.status }}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="font-medium">{{ inv.amount_cents }}¢</div>
+              {% if inv.hosted_invoice_url %}
+                <a class="muted" href="{{ inv.hosted_invoice_url }}" target="_blank">Ver no Stripe</a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="muted">Nenhuma fatura ainda.</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr;gap:var(--space-4)">
+    <section class="card">
+      <h2 style="margin-top:0">Conta</h2>
+      {% if profile and profile.is_active %}
+        <div class="muted" style="margin-bottom:8px">Status: Ativa</div>
+        <a href="{% url 'billing:cancel' %}">Cancelar conta</a>
+      {% else %}
+        <div class="muted">Conta inativa.</div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2 style="margin-top:0">Pagamento</h2>
+      {% include "billing/_card_info.html" with profile=profile %}
+
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
+        <a class="btn" href="{% url 'billing:payment_method' %}">Gerenciar cartão</a>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

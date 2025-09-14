@@ -1,0 +1,26 @@
+<div class="modal open" role="dialog" aria-modal="true" aria-labelledby="pub-title" style="display:block">
+  <div class="card" style="max-width:520px;margin:20px auto">
+    <h3 id="pub-title" style="margin-top:0">Publicar cartão</h3>
+    {% if not has_pm %}
+      <div class="box" role="alert">É necessário cadastrar um cartão de crédito antes de publicar. <a class="underline" href="{% url 'billing:payment_method' %}">Adicionar cartão</a></div>
+    {% endif %}
+    <form hx-post="{% url 'cards:publish' card.id %}" hx-target="#publish-modal" hx-swap="innerHTML" class="grid" style="grid-template-columns:1fr;gap:10px">
+      {% csrf_token %}
+      <label class="field">
+        <span>Nickname público</span>
+        <input name="nickname" id="nickname" class="input" pattern="^[a-z0-9_.]{3,32}$" required
+               hx-get="{% url 'cards:check_nickname' %}"
+               hx-trigger="change, keyup changed delay:300ms"
+               hx-target="#nick-feedback" hx-swap="innerHTML"
+               placeholder="seu_nome" />
+        <div id="nick-feedback" class="help"></div>
+        <small class="help">Use apenas letras minúsculas, números, ponto e underline. 3–32 caracteres.</small>
+      </label>
+      <div class="row" style="justify-content:flex-end;gap:10px">
+        <button class="btn primary" {% if not has_pm %}disabled{% endif %}>Publicar</button>
+        <button type="button" class="btn" onclick="document.getElementById('publish-modal').innerHTML='';">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+

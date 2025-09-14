@@ -1,0 +1,20 @@
+<header class="topbar" role="banner">
+  <nav aria-label="Breadcrumb" class="row" style="flex:1">
+    <a href="#">Início</a>
+    <span class="muted">/</span>
+    <strong>Dashboard</strong>
+  </nav>
+  <form class="row" role="search" aria-label="Busca global" hx-get="/search" hx-target="#results" hx-push-url="true">
+    <svg aria-hidden="true" width="18" height="18"><use href="./icons.svg#icon-search"></use></svg>
+    <input name="q" class="input" placeholder="Buscar" aria-label="Buscar" />
+    <div id="spinner" class="spinner htmx-indicator" aria-hidden="true"></div>
+  </form>
+  <button type="button" class="btn ghost" aria-label="Alternar tema" onclick="toggleTheme()">
+    <svg aria-hidden="true" width="18" height="18"><use href="./icons.svg#icon-moon"></use></svg>
+  </button>
+  <button type="button" class="btn" aria-haspopup="menu" aria-expanded="false">
+    <svg aria-hidden="true" width="18" height="18"><use href="./icons.svg#icon-user"></use></svg>
+    <span class="nav-label">Usuário</span>
+  </button>
+</header>
+

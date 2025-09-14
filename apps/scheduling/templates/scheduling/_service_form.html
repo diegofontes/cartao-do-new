@@ -1,0 +1,71 @@
+<section class="card" style="max-width:720px">
+  <h3 style="margin-top:0">{{ service|default_if_none:"Novo serviço" }}</h3>
+  <form 
+    method="post" 
+    hx-post="{% if service %}{% url 'scheduling:service_save' card.id service.id %}{% else %}{% url 'scheduling:service_create' card.id %}{% endif %}" 
+    hx-target="#services" 
+    hx-swap="innerHTML"
+    class="grid grid-2col-mobile" style="gap:12px"
+  >
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <label class="field">
+      <span>Nome</span>
+      {{ form.name }}
+      {{ form.name.errors }}
+    </label>
+    <label class="field">
+      <span>Timezone</span>
+      {{ form.timezone }}
+      {{ form.timezone.errors }}
+    </label>
+    <label class="field">
+      <span>Duração (min)</span>
+      {{ form.duration_minutes }}
+      {{ form.duration_minutes.errors }}
+    </label>
+    <label class="field">
+      <span>Tipo</span>
+      {{ form.type }}
+      {{ form.type.errors }}
+    </label>
+    <label class="field" style="grid-column:1/-1">
+      <span>Descrição</span>
+      {{ form.description }}
+      {{ form.description.errors }}
+    </label>
+    <label class="field" style="grid-column:1/-1">
+      <span>Link de vídeo (template)</span>
+      {{ form.video_link_template }}
+      {{ form.video_link_template.errors }}
+    </label>
+    <label class="field">
+      <span>Buffer antes (min)</span>
+      {{ form.buffer_before }}
+    </label>
+    <label class="field">
+      <span>Buffer depois (min)</span>
+      {{ form.buffer_after }}
+    </label>
+    <label class="field">
+      <span>Lead time (min)</span>
+      {{ form.lead_time_min }}
+    </label>
+    <label class="field">
+      <span>Cancelamento (min)</span>
+      {{ form.cancel_min }}
+    </label>
+    <label class="field">
+      <span>Reagendamento (min)</span>
+      {{ form.resched_min }}
+    </label>
+    <label class="row" style="align-items:center;gap:6px">
+      <span>Ativo</span>
+      {{ form.is_active }}
+    </label>
+    <div class="row" style="grid-column:1/-1;justify-content:flex-end;margin-top:var(--space-2)">
+      <button class="btn primary">Salvar</button>
+      <button type="button" class="btn" hx-get="{% url 'scheduling:services_partial' card.id %}" hx-target="#services">Cancelar</button>
+    </div>
+  </form>
+</section>

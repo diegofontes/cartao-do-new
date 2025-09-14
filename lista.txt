@@ -1,0 +1,5 @@
+Postgres: exclusão por range (tstzrange) para evitar overbooking; migração específica (exclusion constraint) quando migrarmos para Postgres.
+Uploads: configurar storage S3, validações de MIME e thumbnails.
+
+Rigor extra nos slots (quebrar janelas por buffers internos e step configurável)?
+Implementar upload seguro (MIME/size) e storage S3?
