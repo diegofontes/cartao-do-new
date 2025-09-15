@@ -1,7 +1,9 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-viewer-key")
 DEBUG = True
@@ -14,6 +16,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_htmx",
+    "apps.notifications",
     "apps.cards",
     "apps.scheduling",
     "apps.media",
@@ -88,3 +91,12 @@ LOGGING = {
         "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },
 }
+
+# Celery for Viewer: run tasks eagerly to avoid broker requirement in dev
+CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_ALWAYS_EAGER = True  # execute .delay() inline in this process
+
+# Ensure notifications stay in DEV mode on viewer unless overridden
+os.environ.setdefault("NOTIF_DEV_MODE", "1")

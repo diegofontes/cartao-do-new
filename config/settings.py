@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.cards",
     "apps.scheduling",
     "apps.metering",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [

@@ -13,6 +13,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from apps.common.mail import MailMessage, default_mail_provider
+from apps.notifications.api import enqueue
 from apps.common.rate_limit import rate_limit
 from .models import EmailChallenge, TrustedDevice
 
@@ -95,14 +96,18 @@ def login_start(request: HttpRequest) -> HttpResponse:
     # Create 2FA challenge
     challenge, code = EmailChallenge.create_for(user, EmailChallenge.PURPOSE_LOGIN)
 
-    # DEV mail: print to console
+    # Enfileira notificação de 2FA por e-mail
     logger.info("2FA code generated for user_id=%s purpose=login", user.id)
-    default_mail_provider.send(
-        MailMessage(
-            to=user.email,
-            subject="2FA Login Code",
-            body=f"Code: {code}",
-        )
+    try:
+        ip = request.META.get('REMOTE_ADDR')
+    except Exception:
+        ip = None
+    enqueue(
+        type='email',
+        to=user.email,
+        template_code='login_2fa',
+        payload={'code': code, 'name': user.first_name, 'ip': ip, 'ttl_min': 10},
+        idempotency_key=f'login2fa:{challenge.id}'
     )
 
     request.session["pending_2fa_user_id"] = str(user.id)
@@ -336,7 +341,17 @@ def code_resend(request: HttpRequest) -> HttpResponse:
         return HttpResponse("Aguarde antes de reenviar.", status=429)
 
     ch, code = EmailChallenge.create_for(user, purpose)
-    default_mail_provider.send(MailMessage(to=user.email, subject=f"{purpose} code", body=f"Code: {code}"))
+    if purpose == EmailChallenge.PURPOSE_LOGIN:
+        enqueue(
+            type='email',
+            to=user.email,
+            template_code='login_2fa',
+            payload={'code': code, 'name': user.first_name, 'ttl_min': 10},
+            idempotency_key=f'login2fa:{ch.id}'
+        )
+    else:
+        # mantém fluxo atual para signup/reset por enquanto
+        default_mail_provider.send(MailMessage(to=user.email, subject=f"{purpose} code", body=f"Code: {code}"))
 
     # Return the current form unchanged (HTMX will just keep it)
     # Optionally we could re-render the form with a timer indicator

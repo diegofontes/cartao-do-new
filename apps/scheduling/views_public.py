@@ -9,6 +9,7 @@ from .slots import generate_slots
 from django.core.cache import cache
 from django.utils import timezone
 from apps.common.phone import to_e164, gen_code, hash_code
+from apps.notifications.api import enqueue
 import logging
 import datetime as dt
 
@@ -113,7 +114,17 @@ def public_send_code(request, nickname: str, id: str):
     if cache.get(cooldown_key):
         return render(request, "public/_verify_block.html", {"error": "Aguarde antes de reenviar.", "card": card, "service": service})
     code = gen_code(6)
-    log.info("[DEV SMS] code %s for %s", code, phone)
+    # Enfileira SMS de verificação (dev mode imprime no console)
+    try:
+        enqueue(
+            type='sms',
+            to=phone,
+            template_code='booking_phone_verify',
+            payload={'code': code, 'ttl_min': 5},
+            idempotency_key=f'phoneverify:{sk}:{hash_code(code)}'
+        )
+    except Exception as e:
+        log.warning("failed to enqueue SMS verify: %s", e)
     pv_key = f"pv:data:{sk}:{phone}"
     cache.set(pv_key, {"code": hash_code(code), "attempts": 5, "exp": timezone.now() + dt.timedelta(minutes=5)}, 300)
     cache.set(cooldown_key, 1, 60)

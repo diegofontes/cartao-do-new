@@ -5,6 +5,7 @@ from django.views.generic import RedirectView
 from django.urls import re_path
 from apps.cards import views_public as card_public
 from apps.media import urls as media_urls
+from apps.notifications import urls as notif_urls
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -12,6 +13,7 @@ urlpatterns = [
     path("img/", include((media_urls, "media"), namespace="media")),
     path("cards/", include("apps.cards.urls")),
     path("api/", include("apps.scheduling.urls")),
+    path("api/", include((notif_urls, "notifications"), namespace="notifications")),
     path("auth/", include("apps.accounts.auth_urls")),
     path("accounts/", include("apps.accounts.urls")),
     # Global alias to satisfy `{% url 'logout' %}` if used without namespace
