@@ -27,6 +27,8 @@ class Card(BaseModel):
     nickname = models.CharField(max_length=32, blank=True, null=True, db_index=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     published_at = models.DateTimeField(blank=True, null=True)
+    # Comma-separated order for public tabs (links,gallery,services)
+    tabs_order = models.CharField(max_length=64, default="links,gallery,services")
 
     class Meta:
         constraints = [

@@ -4,7 +4,7 @@
   {% load static %}
   <style>
     :root{--slot-h:56px}
-    .agenda{display:grid;grid-template-columns:280px 1fr;gap:24px}
+    .agenda{display:grid;grid-template-columns:280px 1fr;gap:24px;min-height:0}
     .agenda-top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:16px 0}
     .agenda-side{background:var(--bg-elev);border:1px solid var(--border);border-radius:12px;padding:16px}
     .agenda-main{position:relative;overflow:auto;border:1px solid var(--border);border-radius:12px}
@@ -131,6 +131,57 @@
         htmx.ajax('GET', url, { target: '#agenda-page', swap: 'outerHTML' });
       }
     }catch(_){/* noop */}
+  })();
+
+  // Size agenda-main to viewport and scroll to current time
+  (function(){
+    function sizeAgendaMain(){
+      try{
+        var root = document.getElementById('agenda-root');
+        if(!root) return;
+        var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+        var rect = root.getBoundingClientRect();
+        var bottomPad = 12; // small breathing room
+        var h = Math.max(240, vh - rect.top - bottomPad);
+        root.style.height = h + 'px';
+        root.style.maxHeight = h + 'px';
+      }catch(_){/* noop */}
+    }
+    function scrollToNow(){
+      try{
+        var root = document.getElementById('agenda-root');
+        if(!root) return;
+        var view = '{{ view }}';
+        if(view === 'month') return; // not applicable
+        var events = document.getElementById('events-layer');
+        if(!events) return;
+        var slotHStr = getComputedStyle(document.documentElement).getPropertyValue('--slot-h').trim();
+        var slotH = parseFloat(slotHStr) || 56; // px per half-hour
+        var now = new Date();
+        var minutes = now.getHours()*60 + now.getMinutes();
+        var halfSlots = minutes / 30;
+        var y = halfSlots * slotH; // offset within events grid
+        var topGap = events.getBoundingClientRect().top - root.getBoundingClientRect().top;
+        var target = topGap + y - (root.clientHeight * 0.4); // show a bit above current time
+        root.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+      }catch(_){/* noop */}
+    }
+    function recalibrate(){ sizeAgendaMain(); scrollToNow(); }
+    // Initial
+    document.addEventListener('DOMContentLoaded', recalibrate);
+    // On resize and after HTMX swaps (content replaced)
+    window.addEventListener('resize', sizeAgendaMain);
+    document.body.addEventListener('htmx:afterSwap', function(e){
+      if(e && e.target && (e.target.id === 'agenda-page' || e.target.id === 'events-layer')){
+        setTimeout(recalibrate, 0);
+      }
+    });
+    // Also when events layer loads (htmx triggers load on it)
+    document.addEventListener('htmx:afterOnLoad', function(e){
+      if(e && e.target && e.target.id === 'events-layer'){
+        setTimeout(scrollToNow, 0);
+      }
+    });
   })();
 </script>
 {% endblock %}

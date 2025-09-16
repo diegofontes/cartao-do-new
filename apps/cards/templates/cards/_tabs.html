@@ -1,0 +1,34 @@
+<section class="card">
+  <div class="row" style="justify-content:space-between;align-items:center; margin-bottom:var(--space-2)">
+    <h2 style="margin:0">Ordem das abas</h2>
+  </div>
+  <form class="" hx-post="{% url 'cards:set_tabs_order' card.id %}" hx-target="#tabs">
+    {% csrf_token %}
+    <label class="field" style="min-width:260px">
+      <select name="tabs_order" class="select">
+        {% with opt="links,gallery,services" %}
+        <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Links, Galeria, Serviços</option>
+        {% endwith %}
+        {% with opt="links,services,gallery" %}
+        <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Links, Serviços, Galeria</option>
+        {% endwith %}
+        {% with opt="gallery,links,services" %}
+        <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Galeria, Links, Serviços</option>
+        {% endwith %}
+        {% with opt="gallery,services,links" %}
+        <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Galeria, Serviços, Links</option>
+        {% endwith %}
+        {% with opt="services,links,gallery" %}
+        <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Serviços, Links, Galeria</option>
+        {% endwith %}
+        {% with opt="services,gallery,links" %}
+        <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Serviços, Galeria, Links</option>
+        {% endwith %}
+      </select>
+    </label>
+    <div class="actions" style="margin-top:var(--space-2);display:flex; justify-content:flex-end">
+      <button type="submit" class="btn">Salvar</button>
+    </div>
+  </form>
+  <p class="help" style="margin-top:var(--space-2)">Afeta apenas a visualização pública do cartão.</p>
+</section>

@@ -187,8 +187,12 @@ def signup_start(request: HttpRequest) -> HttpResponse:
 
     email = _normalize_email(request.POST.get("email", ""))
     password = (request.POST.get("password", "") or "").strip()
+    agree = request.POST.get("agree_terms") in ("on", "true", "1", "yes")
     if not email or not password:
         messages.error(request, "Informe e-mail e senha válidos.")
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", {}, status=400)
+    if not agree:
+        messages.error(request, "Você precisa aceitar a Política de Privacidade e os Termos de Uso.")
         return render_card(request, "auth/signup.html", "auth/_card_signup.html", {}, status=400)
 
     if User.objects.filter(email__iexact=email).exists():

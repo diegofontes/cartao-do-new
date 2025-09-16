@@ -40,7 +40,7 @@
     </div>
   </div>
 
-  <div class="card" style="margin-top:var(--g4);">
+  <!-- <div class="card" style="margin-top:var(--g4);">
     <div class="row" style="display:flex;justify-content:space-between;align-items:center;">
       <h2>Eventos recentes</h2>
       <form hx-get="{% url 'metering:events' %}" hx-target="#events" hx-swap="outerHTML" hx-include="#period">
@@ -57,9 +57,9 @@
     <div class="table-wrap" role="region" aria-label="Eventos recentes rolável">
       <div id="events" hx-get="{% url 'metering:events' %}" hx-trigger="load from:#period changed" hx-include="#period" hx-swap="outerHTML">Carregando…</div>
     </div>
-  </div>
+  </div> -->
 
-  <div class="card" style="margin-top:var(--g4);">
+  <!-- <div class="card" style="margin-top:var(--g4);">
     <h2>Checagens de integridade</h2>
     <button class="btn"
             hx-post="{% url 'billing:self_checks' %}"
@@ -68,7 +68,7 @@
     <div class="table-wrap" role="region" aria-label="Checagens de integridade rolável">
       <div id="checks" class="help">Clique para validar o metering.</div>
     </div>
-  </div>
+  </div> -->
 
   <div class="card" style="margin-top:var(--g4);">
     <h2>Pagamentos realizados</h2>
@@ -80,7 +80,7 @@
             <div class="muted">Status: {{ inv.status }}</div>
           </div>
           <div style="text-align:right">
-            <div class="font-medium">{{ inv.amount_cents }}¢</div>
+            <!-- <div class="font-medium">{{ inv.amount_cents }}</div> -->
             {% if inv.hosted_invoice_url %}
               <a class="muted" href="{{ inv.hosted_invoice_url }}" target="_blank" rel="noopener">Ver no Stripe</a>
             {% endif %}

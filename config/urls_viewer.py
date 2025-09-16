@@ -2,9 +2,14 @@ from django.urls import path, re_path, include
 from apps.media import urls as media_urls
 from apps.cards import views_public as card_public
 from apps.scheduling import views_public as booking_public
+from apps.pages import urls_public as pages_public
 
 urlpatterns = [
     path("img/", include((media_urls, "media"), namespace="media")),
+    # Legal pages in public viewer
+    path("", include((pages_public, "pages"), namespace="pages")),
+    # Auth endpoints for login/signup in the public viewer
+    path("auth/", include(("apps.accounts.auth_urls", "accounts"), namespace="accounts")),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/?$", card_public.card_public, name="card_public"),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/slots$", booking_public.public_slots, name="public_slots"),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/appointments$", booking_public.public_create_appointment, name="public_create_appointment"),

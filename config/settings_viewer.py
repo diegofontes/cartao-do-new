@@ -16,11 +16,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_htmx",
+    "apps.accounts",
     "apps.notifications",
     "apps.cards",
     "apps.scheduling",
     "apps.media",
     "apps.metering",
+    "apps.pages",
 ]
 
 MIDDLEWARE = [
@@ -75,6 +77,9 @@ VIEWER_BASE_URL = os.getenv("VIEWER_BASE_URL", "http://localhost:9000")
 # main app session/CSRF cookies running on the same domain (localhost).
 SESSION_COOKIE_NAME = os.getenv("VIEWER_SESSION_COOKIE", "viewer_sessionid")
 CSRF_COOKIE_NAME = os.getenv("VIEWER_CSRF_COOKIE", "viewer_csrftoken")
+
+# Custom user model
+AUTH_USER_MODEL = "accounts.User"
 
 # Logging for viewer profile
 LOGGING = {

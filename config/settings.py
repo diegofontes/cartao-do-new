@@ -9,6 +9,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-key")
 DEBUG = bool(int(os.getenv("DEBUG", "1")))
 ALLOWED_HOSTS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:8000").split(",")
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -27,6 +29,7 @@ INSTALLED_APPS = [
     "apps.scheduling",
     "apps.metering",
     "apps.notifications",
+    "apps.pages",
 ]
 
 MIDDLEWARE = [

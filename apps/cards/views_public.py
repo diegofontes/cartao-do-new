@@ -15,12 +15,18 @@ def card_public(request, nickname: str):
     socials = SocialLink.objects.filter(card=card, is_active=True).order_by("order", "created_at")
     gallery = GalleryItem.objects.filter(card=card).order_by("order", "created_at")
     services = SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at")
+    allowed = ("links", "gallery", "services")
+    raw_order = (card.tabs_order or "links,gallery,services")
+    tab_order = [k.strip() for k in raw_order.split(',') if k.strip() in allowed]
+    if not tab_order:
+        tab_order = ["links", "gallery", "services"]
     return render(request, "public/card_public.html", {
         "card": card,
         "links": links,
         "socials": socials,
         "gallery": gallery,
         "services": services,
+        "tab_order": tab_order,
     })
 
 def tabs_links(request, nickname: str):

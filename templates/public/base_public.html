@@ -13,5 +13,14 @@
     <main id="main" class="container">
       {% block content %}{% endblock %}
     </main>
+    <footer class="pub-footer">
+      <div class="pub-footer__inner">
+        <div class="pub-footer__brand">
+          <img src="{% static 'img/logo-cap-v1-dark-icon.png' %}" alt="SnakeUnix" width="24" height="24" />
+          <span>Desenvolvido por SnakeUnix</span>
+        </div>
+        <a class="btn primary" href="{% url 'accounts:auth_login' %}">Crie seu cartão</a>
+      </div>
+    </footer>
   </body>
 </html>

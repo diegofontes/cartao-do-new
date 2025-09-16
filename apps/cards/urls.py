@@ -30,4 +30,7 @@ urlpatterns = [
     path("<uuid:id>/social-links", views.social_links_partial, name="social_links_partial"),
     path("<uuid:id>/social-links/add", views.add_social_link, name="add_social_link"),
     path("social-links/<uuid:link_id>/delete", views.delete_social_link, name="delete_social_link"),
+    # Tabs config
+    path("<uuid:id>/tabs", views.tabs_partial, name="tabs_partial"),
+    path("<uuid:id>/tabs/save", views.set_tabs_order, name="set_tabs_order"),
 ]

@@ -14,6 +14,8 @@ urlpatterns = [
     path("cards/", include("apps.cards.urls")),
     path("api/", include("apps.scheduling.urls")),
     path("api/", include((notif_urls, "notifications"), namespace="notifications")),
+    # Legal pages
+    path("", include("apps.pages.urls")),
     path("auth/", include("apps.accounts.auth_urls")),
     path("accounts/", include("apps.accounts.urls")),
     # Global alias to satisfy `{% url 'logout' %}` if used without namespace

@@ -1,0 +1,14 @@
+{% extends 'public/base_public.html' %}
+{% block title %}{{ page.title }}{% endblock %}
+{% block content %}
+<main class="card-viewer">
+  <section class="desc">
+    <h1 class="title" style="margin-bottom:12px">{{ page.title }}</h1>
+    <div class="box">
+      {{ page.content|linebreaks }}
+    </div>
+    <p class="muted" style="margin-top:12px">Última atualização: {{ page.updated_at|date:"d/m/Y H:i" }}</p>
+  </section>
+</main>
+{% endblock %}
+

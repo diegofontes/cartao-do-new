@@ -162,7 +162,7 @@ def send_notification(self, notification_id: str):
                 raise Exception("invalid email")
             ren = render_template(n.template_code, "email", n.payload_json)
             if dev_mode:
-                log.info("DEV NOTIF [email] to %s — template=%s — subj=\"%s\"", n.to, n.template_code, ren.get("subject"))
+                log.info("DEV NOTIF [email] to %s — template=%s — body_txt=\"%s\"", n.to, n.template_code, ren.get("text"))
                 n.provider = "dev"
                 n.provider_message_id = "DEV"
                 n.status = "sent"

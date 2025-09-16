@@ -1,4 +1,5 @@
 import datetime as dt
+from zoneinfo import ZoneInfo
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
@@ -35,7 +36,20 @@ def public_slots(request, nickname: str):
     slots = generate_slots(service, the_date)
     # If HTMX request, return an HTML partial for the slots picker; else JSON
     if request.headers.get("HX-Request"):
-        return render(request, "public/_slots.html", {"slots": slots})
+        # Render labels in the service timezone for display
+        try:
+            tz = ZoneInfo(service.timezone or "UTC")
+        except Exception:
+            tz = ZoneInfo("UTC")
+        labeled = []
+        for sl in slots:
+            try:
+                sdt = dt.datetime.fromisoformat(sl["start_at_utc"])  # aware
+                label = sdt.astimezone(tz).strftime("%H:%M")
+            except Exception:
+                label = (sl.get("start_at_utc") or "")[11:16]
+            labeled.append({**sl, "label": label})
+        return render(request, "public/_slots.html", {"slots": labeled, "tz": service.timezone})
     return JsonResponse({"service": str(service.id), "date": date, "slots": slots})
 
 

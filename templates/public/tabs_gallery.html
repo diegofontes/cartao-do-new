@@ -1,10 +1,10 @@
 <div id="panel-gallery" role="tabpanel" class="panel">
-  <ul class="grid">
+  <ul class="gallery-masonry">
     {% for g in gallery %}
       {% if g.thumb_w256 %}
-      <li>
-        <a href="{% url 'media:image_public' path=g.thumb_w768.name %}" target="_blank" rel="noopener">
-          <img src="{% url 'media:image_public' path=g.thumb_w256.name %}" alt="{{ g.caption|default:'Imagem' }}" width="256" height="256" loading="lazy" />
+      <li class="gallery-item">
+        <a class="gallery-link" href="{% url 'media:image_public' path=g.thumb_w768.name %}" target="_blank" rel="noopener">
+          <img class="gallery-img" src="{% url 'media:image_public' path=g.thumb_w256.name %}" alt="{{ g.caption|default:'Imagem' }}" loading="lazy" />
         </a>
       </li>
       {% endif %}
@@ -13,4 +13,3 @@
     {% endfor %}
   </ul>
 </div>
-

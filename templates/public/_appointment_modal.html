@@ -33,6 +33,7 @@
 (function(){
   const d = document.getElementById('book-date');
   const s = document.getElementById('book-slot');
+  const tz = "{{ service.timezone|escapejs }}";
   d.addEventListener('change', async ()=>{
     if(!d.value) return;
     const url = `{% url 'public_slots' card.nickname %}?service={{ service.id }}&date=${d.value}`;
@@ -43,11 +44,10 @@
     for (const sl of (data.slots||[])){
       const opt = document.createElement('option');
       opt.value = sl.start_at_utc;
-      const t = new Date(sl.start_at_utc).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const t = new Date(sl.start_at_utc).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', timeZone: tz});
       opt.textContent = t;
       s.appendChild(opt);
     }
   });
 })();
 </script>
-

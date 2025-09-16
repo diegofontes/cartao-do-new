@@ -378,3 +378,35 @@ def delete_social_link(request, link_id):
     cid = sl.card.id
     sl.delete()
     return social_links_partial(request, cid)
+
+
+# ---- HTMX Partial: Tabs order ----
+@login_required
+def tabs_partial(request, id):
+    card = get_object_or_404(Card, id=id, owner=request.user)
+    allowed = ["links", "gallery", "services"]
+    order = [k for k in (card.tabs_order or "links,gallery,services").split(",") if k in allowed]
+    # Normalize to full permutation if missing any
+    for k in allowed:
+        if k not in order:
+            order.append(k)
+    return render(request, "cards/_tabs.html", {"card": card, "current": order})
+
+
+@login_required
+@require_POST
+def set_tabs_order(request, id):
+    card = get_object_or_404(Card, id=id, owner=request.user)
+    raw = (request.POST.get("tabs_order") or "").strip()
+    allowed = ["links", "gallery", "services"]
+    parts = [p.strip() for p in raw.split(",") if p.strip()]
+    # accept values like "links,gallery,services" or space separated
+    if not parts and raw:
+        parts = [p.strip() for p in raw.split() if p.strip()]
+    # validate permutation
+    if sorted(parts) != sorted(allowed):
+        # try from select option like "services,links,gallery"
+        return HttpResponseBadRequest("Ordem inválida")
+    card.tabs_order = ",".join(parts)
+    card.save(update_fields=["tabs_order"])
+    return tabs_partial(request, id)
