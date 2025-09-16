@@ -47,12 +47,43 @@ TEMPLATES = [
 
 WSGI_APPLICATION = None
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Database: Prefer DATABASE_URL, else use POSTGRES_* vars (UTF-8 client + UTC)
+POSTGRES_DB = os.getenv("POSTGRES_DB", "app")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "app")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "app")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "127.0.0.1")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+
+if DATABASE_URL:
+    from urllib.parse import urlparse
+
+    u = urlparse(DATABASE_URL)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": u.path.lstrip("/"),
+            "USER": u.username,
+            "PASSWORD": u.password,
+            "HOST": u.hostname,
+            "PORT": u.port or "5432",
+            "CONN_MAX_AGE": 600,
+            "OPTIONS": {"options": "-c client_encoding=UTF8 -c timezone=UTC"},
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": POSTGRES_DB,
+            "USER": POSTGRES_USER,
+            "PASSWORD": POSTGRES_PASSWORD,
+            "HOST": POSTGRES_HOST,
+            "PORT": POSTGRES_PORT,
+            "CONN_MAX_AGE": 600,
+            "OPTIONS": {"options": "-c client_encoding=UTF8 -c timezone=UTC"},
+        }
+    }
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"

@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 import stripe
 import logging
+from zoneinfo import ZoneInfo
 
 from .models import CustomerProfile, UsageEvent, Invoice, InvoiceLine
 from apps.metering.models import MeteringEvent
@@ -73,7 +74,19 @@ def attach_payment_method(user: User, payment_method_id: str):
         log.exception("[billing] Failed to retrieve Stripe customer after setting default payment method")
         default_pm = payment_method_id
     prof.default_payment_method = default_pm
-    prof.save(update_fields=["default_payment_method"])
+    # Set anchor on first successful PM attachment
+    updates = ["default_payment_method"]
+    if not prof.billing_anchor_day:
+        tz = prof.timezone or "America/Sao_Paulo"
+        local_today = timezone.now().astimezone(ZoneInfo(tz)).date()
+        prof.billing_anchor_day = local_today.day
+        prof.anchor_set_at = timezone.now()
+        updates += ["billing_anchor_day", "anchor_set_at"]
+    # Update payment method status
+    if getattr(prof, "payment_method_status", None) is not None:
+        prof.payment_method_status = "active"
+        updates.append("payment_method_status")
+    prof.save(update_fields=updates)
     log.info("[billing] Persisted default_payment_method for user_id=%s value=%s", user.id, prof.default_payment_method)
     return prof
 

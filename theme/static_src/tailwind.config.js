@@ -40,6 +40,8 @@ module.exports = {
          * and make sure the pattern below matches your project structure.
          */
         // '../../**/*.py'
+        // ignore .data na raiz do projeto
+        '!../../.data/**',
     ],
     theme: {
         extend: {},

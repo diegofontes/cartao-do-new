@@ -1,0 +1,153 @@
+// Dashboard UI helpers (agenda sizing & positioning)
+(function(){
+  function byId(id){ return document.getElementById(id); }
+
+  function sizeAgendaMain(){
+    try{
+      var root = byId('agenda-root');
+      if(!root) return;
+      var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+      var rect = root.getBoundingClientRect();
+      var bottomPad = 12; // breathing room
+      var h = Math.max(240, vh - rect.top - bottomPad);
+      root.style.height = h + 'px';
+      root.style.maxHeight = h + 'px';
+    }catch(_){/* noop */}
+  }
+
+  function scrollAgendaToNow(){
+    try{
+      var root = byId('agenda-root');
+      var page = byId('agenda-page');
+      if(!root || !page) return;
+      var currentView = page.getAttribute('data-view') || (window.__agendaView__ || 'day');
+      if(currentView === 'month') return; // not applicable
+      var events = byId('events-layer');
+      if(!events) return;
+      var slotHStr = getComputedStyle(document.documentElement).getPropertyValue('--slot-h').trim();
+      var slotH = parseFloat(slotHStr) || 56; // px per half-hour
+      var now = new Date();
+      var minutes = now.getHours()*60 + now.getMinutes();
+      var halfSlots = minutes / 30;
+      var y = halfSlots * slotH;
+      var topGap = events.getBoundingClientRect().top - root.getBoundingClientRect().top;
+      var target = topGap + y - (root.clientHeight * 0.4);
+      root.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+    }catch(_){/* noop */}
+  }
+
+  function recalibrateAgenda(){ sizeAgendaMain(); scrollAgendaToNow(); }
+
+  // Now line helpers
+  function getCurrentView(){
+    var page = byId('agenda-page');
+    return page ? (page.getAttribute('data-view') || 'day') : 'day';
+  }
+  function getEventsLayer(){ return byId('events-layer'); }
+  function ensureNowLine(){
+    try{
+      if(getCurrentView() === 'month') return; // not applicable
+      var layer = getEventsLayer();
+      if(!layer) return;
+      var line = byId('now-line');
+      if(!line){
+        line = document.createElement('div');
+        line.id = 'now-line';
+        line.setAttribute('aria-hidden', 'true');
+        layer.appendChild(line);
+      }
+      updateNowLinePosition();
+    }catch(_){/* noop */}
+  }
+  function updateNowLinePosition(){
+    try{
+      if(getCurrentView() === 'month') return; // not applicable
+      var layer = getEventsLayer();
+      var root = byId('agenda-root');
+      var line = byId('now-line');
+      if(!(layer && root && line)) return;
+      var slotHStr = getComputedStyle(document.documentElement).getPropertyValue('--slot-h').trim();
+      var slotH = parseFloat(slotHStr) || 56;
+      var now = new Date();
+      var minutes = now.getHours()*60 + now.getMinutes();
+      var halfSlots = minutes / 30;
+      var y = halfSlots * slotH; // position inside events grid
+      line.style.position = 'absolute';
+      line.style.left = 0;
+      line.style.right = 0;
+      line.style.top = y + 'px';
+      line.style.height = '2px';
+      line.style.background = 'var(--accent)';
+      line.style.opacity = '.75';
+      line.style.pointerEvents = 'none';
+    }catch(_){/* noop */}
+  }
+  function tickNowLine(){ updateNowLinePosition(); }
+
+  // Expose for hx-on or manual calls if needed
+  window.Agenda = {
+    size: sizeAgendaMain,
+    scrollToNow: scrollAgendaToNow,
+    recalibrate: recalibrateAgenda,
+    ensureNowLine: ensureNowLine,
+    updateNowLine: updateNowLinePosition
+  };
+
+  // Initial load
+  document.addEventListener('DOMContentLoaded', recalibrateAgenda);
+  window.addEventListener('resize', sizeAgendaMain);
+
+  // HTMX lifecycle hooks
+  function onAfterSwap(e){
+    try{
+      if(!e || !e.target) return;
+      if(e.target.id === 'agenda-page' || e.target.id === 'events-layer'){
+        setTimeout(function(){
+          recalibrateAgenda();
+          ensureNowLine();
+        }, 0);
+      }
+    }catch(_){/* noop */}
+  }
+  function onAfterOnLoad(e){
+    try{
+      if(!e || !e.target) return;
+      if(e.target.id === 'events-layer'){
+        setTimeout(function(){
+          scrollAgendaToNow();
+          ensureNowLine();
+        }, 0);
+      }
+    }catch(_){/* noop */}
+  }
+  function onAfterSettle(e){
+    try{
+      if(!e || !e.target) return;
+      if(e.target.id === 'agenda-page' || e.target.id === 'events-layer'){
+        setTimeout(function(){
+          recalibrateAgenda();
+          ensureNowLine();
+        }, 0);
+      }
+    }catch(_){/* noop */}
+  }
+  if (window.htmx && typeof window.htmx.on === 'function'){
+    window.htmx.on('htmx:afterSwap', onAfterSwap);
+    window.htmx.on('htmx:afterOnLoad', onAfterOnLoad);
+    window.htmx.on('htmx:afterSettle', onAfterSettle);
+  } else {
+    // If HTMX loads later, attach once it is ready
+    document.addEventListener('htmx:load', function(){
+      try{
+        window.htmx.on('htmx:afterSwap', onAfterSwap);
+        window.htmx.on('htmx:afterOnLoad', onAfterOnLoad);
+        window.htmx.on('htmx:afterSettle', onAfterSettle);
+      }catch(_){/* noop */}
+    });
+  }
+
+  // Keep the now line updated every minute
+  setInterval(tickNowLine, 60000);
+  // Ensure it exists on initial load
+  document.addEventListener('DOMContentLoaded', ensureNowLine);
+})();

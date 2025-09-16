@@ -58,3 +58,4 @@ celerybeat.pid
 *.swo
 *.orig
 
+/.data/postgres/

@@ -18,9 +18,9 @@ class Card(BaseModel):
     title = models.CharField(max_length=120)
     description = models.TextField(blank=True)
     # Processed avatar files (original JPEG + thumbs)
-    avatar = models.ImageField(upload_to="uploads/cards/avatars/", blank=True, null=True)
-    avatar_w64 = models.ImageField(upload_to="uploads/cards/avatars/", blank=True, null=True)
-    avatar_w128 = models.ImageField(upload_to="uploads/cards/avatars/", blank=True, null=True)
+    avatar = models.ImageField(upload_to="uploads/cards/avatars/", max_length=255, blank=True, null=True)
+    avatar_w64 = models.ImageField(upload_to="uploads/cards/avatars/", max_length=255, blank=True, null=True)
+    avatar_w128 = models.ImageField(upload_to="uploads/cards/avatars/", max_length=255, blank=True, null=True)
     avatar_hash = models.CharField(max_length=64, blank=True, null=True)
     avatar_rev = models.PositiveIntegerField(default=0)
     slug = models.SlugField(max_length=120)
@@ -113,9 +113,9 @@ class LinkButton(BaseModel):
 
 class GalleryItem(BaseModel):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
-    file = models.FileField(upload_to="cards/gallery/")
-    thumb_w256 = models.FileField(upload_to="cards/gallery/", blank=True, null=True)
-    thumb_w768 = models.FileField(upload_to="cards/gallery/", blank=True, null=True)
+    file = models.FileField(upload_to="cards/gallery/", max_length=255)
+    thumb_w256 = models.FileField(upload_to="cards/gallery/", max_length=255, blank=True, null=True)
+    thumb_w768 = models.FileField(upload_to="cards/gallery/", max_length=255, blank=True, null=True)
     caption = models.CharField(max_length=200, blank=True)
     order = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
 

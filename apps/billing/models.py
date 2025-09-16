@@ -8,6 +8,16 @@ class CustomerProfile(BaseModel):
     stripe_customer_id = models.CharField(max_length=80, blank=True, null=True)
     default_payment_method = models.CharField(max_length=80, blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    # Billing cycle fields
+    timezone = models.CharField(max_length=64, default="America/Sao_Paulo")
+    billing_anchor_day = models.PositiveSmallIntegerField(null=True, blank=True)
+    anchor_set_at = models.DateTimeField(null=True, blank=True)
+    last_billed_period_end = models.DateField(null=True, blank=True)
+    payment_method_status = models.CharField(
+        max_length=12,
+        choices=[("none", "None"), ("active", "Active"), ("expired", "Expired")],
+        default="none",
+    )
 
     def __str__(self):
         return f"CustomerProfile(user={self.user}, active={self.is_active})"
@@ -37,6 +47,8 @@ class Invoice(BaseModel):
     period_end = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
     hosted_invoice_url = models.URLField(blank=True, null=True)
+    # Ensure idempotency by period (user + bounds). Optional explicit key for auditability
+    idempotency_key = models.CharField(max_length=120, unique=True, null=True, blank=True)
     # created_at and updated_at come from BaseModel
 
     class Meta:

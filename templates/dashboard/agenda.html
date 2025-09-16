@@ -13,6 +13,8 @@
     .hours-col div{height:calc(2*var(--slot-h));padding-right:6px;text-align:right;color:var(--fg-muted);font-size:12px}
     .days-cols{position:relative}
     .events-layer{display:grid;grid-template-columns:repeat(7, 1fr);grid-template-rows:repeat(48, var(--slot-h));position:relative}
+    /* Now line visual */
+    #now-line{position:absolute;left:0;right:0;height:2px;background:var(--accent);opacity:.75;pointer-events:none}
     .event{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden}
     .event.pending{border-style:dashed}
     .event.confirmed{background:#f2f3f4}
@@ -31,7 +33,7 @@
 {% endblock %}
 {% block breadcrumb %}Agenda{% endblock %}
 {% block content %}
-<section id="agenda-page" class="agenda">
+<section id="agenda-page" class="agenda" data-view="{{ view }}">
   <header class="agenda-top">
     <div class="row">
       <button class="btn" hx-get="{% url 'dashboard:agenda' %}?view={{ view }}&date={{ prev }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">◀</button>
@@ -133,55 +135,6 @@
     }catch(_){/* noop */}
   })();
 
-  // Size agenda-main to viewport and scroll to current time
-  (function(){
-    function sizeAgendaMain(){
-      try{
-        var root = document.getElementById('agenda-root');
-        if(!root) return;
-        var vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
-        var rect = root.getBoundingClientRect();
-        var bottomPad = 12; // small breathing room
-        var h = Math.max(240, vh - rect.top - bottomPad);
-        root.style.height = h + 'px';
-        root.style.maxHeight = h + 'px';
-      }catch(_){/* noop */}
-    }
-    function scrollToNow(){
-      try{
-        var root = document.getElementById('agenda-root');
-        if(!root) return;
-        var view = '{{ view }}';
-        if(view === 'month') return; // not applicable
-        var events = document.getElementById('events-layer');
-        if(!events) return;
-        var slotHStr = getComputedStyle(document.documentElement).getPropertyValue('--slot-h').trim();
-        var slotH = parseFloat(slotHStr) || 56; // px per half-hour
-        var now = new Date();
-        var minutes = now.getHours()*60 + now.getMinutes();
-        var halfSlots = minutes / 30;
-        var y = halfSlots * slotH; // offset within events grid
-        var topGap = events.getBoundingClientRect().top - root.getBoundingClientRect().top;
-        var target = topGap + y - (root.clientHeight * 0.4); // show a bit above current time
-        root.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
-      }catch(_){/* noop */}
-    }
-    function recalibrate(){ sizeAgendaMain(); scrollToNow(); }
-    // Initial
-    document.addEventListener('DOMContentLoaded', recalibrate);
-    // On resize and after HTMX swaps (content replaced)
-    window.addEventListener('resize', sizeAgendaMain);
-    document.body.addEventListener('htmx:afterSwap', function(e){
-      if(e && e.target && (e.target.id === 'agenda-page' || e.target.id === 'events-layer')){
-        setTimeout(recalibrate, 0);
-      }
-    });
-    // Also when events layer loads (htmx triggers load on it)
-    document.addEventListener('htmx:afterOnLoad', function(e){
-      if(e && e.target && e.target.id === 'events-layer'){
-        setTimeout(scrollToNow, 0);
-      }
-    });
-  })();
+  // Tamanho e posicionamento são tratados por static/ui/dashboard.js
 </script>
 {% endblock %}

@@ -1,11 +1,11 @@
 {% load static %}
 <div class="center mb-4">
   <img id="logo"
-       src="{% static 'img/logo-cap-icon.png' %}"
-       data-logo-light="{% static 'img/logo-cap-icon.png' %}"
-       data-logo-dark="{% static 'img/logo-cap-v1-dark.png' %}"
+       src="{% static 'img/logo-cap-v1-dark.png' %}"
+       data-logo-dark="{% static 'img/logo-cap-icon.png' %}"
+       data-logo-ligh="{% static 'img/logo-cap-v1-dark.png' %}"
        alt="Logo"
-       style="height:48px">
+       style="height:154px">
 </div>
 <header class="row" style="justify-content:space-between">
   <div class="row"><strong>Verifique seu e-mail</strong></div>
@@ -19,7 +19,7 @@
 {% endif %}
 <form method="post" action="{% url 'accounts:auth_signup_verify' %}" hx-post="{% url 'accounts:auth_signup_verify' %}" hx-target="#auth-card" hx-swap="innerHTML">
   {% csrf_token %}
-  <label>
+  <label class="label-input">
     <span>Código</span>
     <input class="input" name="code" inputmode="numeric" maxlength="6" pattern="^\d{6}$" required>
   </label>

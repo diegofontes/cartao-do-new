@@ -14,5 +14,10 @@ app.conf.beat_schedule = {
     "close-monthly-billing": {
         "task": "apps.billing.tasks.close_monthly_billing",
         "schedule": crontab(minute=5, hour=0, day_of_month="1"),
-    }
+    },
+    "run-daily-billing": {
+        "task": "apps.billing.tasks.run_daily_billing",
+        # Run daily at 03:00 server time
+        "schedule": crontab(minute=0, hour=3),
+    },
 }

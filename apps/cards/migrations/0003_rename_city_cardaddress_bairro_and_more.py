@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cardaddress',
             name='cep',
-            field=models.CharField(default=django.utils.timezone.now, help_text='CEP no formato 00000-000', max_length=9),
+            field=models.CharField(default='00000-000', help_text='CEP no formato 00000-000', max_length=9),
             preserve_default=False,
         ),
         migrations.AddField(

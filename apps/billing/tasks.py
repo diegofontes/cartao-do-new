@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 import logging
 from .services import previous_month_bounds, create_and_pay_invoice_for_period, get_or_create_profile
+from .daily import billing_run_daily
 
 User = get_user_model()
 
@@ -30,3 +31,16 @@ def close_monthly_billing(run_for: str | None = None):
         if inv:
             counter += 1
     return {"invoices_created": counter, "period": f"{start}..{end}"}
+
+
+@shared_task
+def run_daily_billing(process_date: str | None = None):
+    """Task diária: usa data UTC (YYYY-MM-DD) opcional, idempotente por período/usuário."""
+    d = None
+    if process_date:
+        try:
+            year, month, day = map(int, process_date.split("-"))
+            d = dt.date(year, month, day)
+        except Exception:
+            d = None
+    return billing_run_daily(d)
