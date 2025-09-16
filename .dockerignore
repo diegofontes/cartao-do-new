@@ -1,0 +1,66 @@
+# VCS
+.git
+.gitignore
+.github
+
+# Python cache/bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.tox/
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment and local data
+.env
+.env.*
+.data/
+db.sqlite3
+celerybeat-schedule
+
+# Node/Tailwind (django-tailwind app)
+node_modules/
+**/node_modules/
+theme/node_modules/
+theme/.cache/
+theme/static_src/
+theme/.env
+
+# Django static/media outputs
+staticfiles/
+media/
+uploads/
+
+# Tests and docs (not needed in runtime image)
+tests/
+docs/
+
+# Docker
+docker/*.md
+docker/postgres/
+
+# Python packaging not used in Docker build
+poetry.lock
+pyproject.toml
+
+# Compose files can be excluded from context (optional)
+docker-compose*.yml
+compose*.yml

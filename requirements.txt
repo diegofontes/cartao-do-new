@@ -1,0 +1,14 @@
+Django>=5,<6
+gunicorn>=21.2
+whitenoise>=6.6
+django-htmx>=1.18.0
+stripe>=9.8.0
+celery>=5.3.6,<6
+redis>=5.0.4
+django-redis>=5.4.0
+python-dotenv>=1.0.1
+Pillow>=10.4.0
+phonenumbers>=8.13.40
+psycopg[binary]>=3.1
+django-tailwind >=3.8.0
+

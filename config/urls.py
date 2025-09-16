@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
+from django.http import HttpResponse
 from django.urls import path, include
 from django.views.generic import RedirectView
 from django.urls import re_path
@@ -14,6 +15,8 @@ urlpatterns = [
     path("cards/", include("apps.cards.urls")),
     path("api/", include("apps.scheduling.urls")),
     path("api/", include((notif_urls, "notifications"), namespace="notifications")),
+    # Healthcheck endpoint
+    path("healthz", lambda _request: HttpResponse("ok")),
     # Legal pages
     path("", include("apps.pages.urls")),
     path("auth/", include("apps.accounts.auth_urls")),
@@ -32,3 +35,6 @@ urlpatterns = [
     path("", RedirectView.as_view(pattern_name="dashboard:index", permanent=False)),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/?$", card_public.card_public, name="card_public_main"),
 ]
+
+# Custom error handlers
+handler404 = "config.views_errors.handler404"

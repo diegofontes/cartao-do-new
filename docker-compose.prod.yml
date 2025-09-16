@@ -1,0 +1,102 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: app-redis
+    restart: unless-stopped
+    ports: ["6379:6379"]
+    command: ["redis-server","--save","","--appendonly","no"]
+
+  db:
+    image: postgres:16
+    container_name: app-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      # Garante cluster em UTF-8 com locale que aceita emoji
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C.UTF-8 --lc-ctype=C.UTF-8"
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 0.0.0.0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      # Volume local dentro do repositório
+      - ./.data/postgres:/var/lib/postgresql/data
+      # Scripts de inicialização opcionais (.sql/.sh)
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+
+  dashboard:
+    build: .
+    image: local/cartao-do:latest
+    container_name: app-dashboard
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on: [redis, db]
+    ports: ["8000:8000"]
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:8000/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  viewer:
+    image: local/cartao-do:latest
+    container_name: app-viewer
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings_viewer
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    command: ["gunicorn","config.wsgi:application","-b","0.0.0.0:9000","--workers","2","--timeout","60"]
+    depends_on: [redis, db]
+    ports: ["9000:9000"]
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:9000/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    image: local/cartao-do:latest
+    container_name: app-worker
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    command: ["celery","-A","config","worker","-l","info","--concurrency","2"]
+    depends_on: [redis, db]
+
+  beat:
+    image: local/cartao-do:latest
+    container_name: app-beat
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    command: ["celery","-A","config","beat","-l","info","--scheduler","celery.beat:PersistentScheduler"]
+    volumes:
+      - ./celerybeat-schedule:/app/celerybeat-schedule
+    depends_on: [redis, db]
+
+# Observação: Postgres foi definido em compose anterior. Adicione aqui se quiser e conecte via .env.
+# Para volumes de estáticos/mídia, se necessário:
+#   - ./staticfiles:/app/staticfiles
+#   - ./media:/app/media
+

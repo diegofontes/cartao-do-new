@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.urls import path, re_path, include
 from apps.media import urls as media_urls
 from apps.cards import views_public as card_public
@@ -6,6 +7,8 @@ from apps.pages import urls_public as pages_public
 
 urlpatterns = [
     path("img/", include((media_urls, "media"), namespace="media")),
+    # Healthcheck endpoint for viewer
+    path("healthz", lambda _request: HttpResponse("ok")),
     # Legal pages in public viewer
     path("", include((pages_public, "pages"), namespace="pages")),
     # Auth endpoints for login/signup in the public viewer
@@ -22,3 +25,6 @@ urlpatterns = [
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/services/(?P<id>[0-9a-f\-]{36})/verify-code$", booking_public.public_verify_code, name="public_verify_code"),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/services/(?P<id>[0-9a-f\-]{36})/validate$", booking_public.public_validate_booking, name="public_validate_booking"),
 ]
+
+# Custom error handlers
+handler404 = "config.views_errors.handler404"
