@@ -14,6 +14,7 @@
   <hr style="margin:var(--space-4) 0">
   <h2 style="margin:0 0 var(--space-2) 0">Cadastrar / Atualizar Cartão</h2>
   <form id="card-form" class="grid" style="grid-template-columns:1fr;gap:12px">
+    {% csrf_token %}
     <div id="card-element" style="padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg)"></div>
     <div class="row" style="justify-content:flex-end">
       <button class="btn primary" id="btn-save-card">Salvar cartão</button>
@@ -44,13 +45,15 @@
       const btn = document.getElementById('btn-save-card');
       btn && (btn.disabled = true);
       try{
+        const csrfInput = document.querySelector('#card-form input[name=csrfmiddlewaretoken]');
+        const csrf = (csrfInput && csrfInput.value) || getCookie('csrftoken');
         const resp = await fetch("{% url 'billing:create_setup_intent' %}", { credentials: 'same-origin' });
         const data = await resp.json();
         const {setupIntent, error} = await stripe.confirmCardSetup(data.clientSecret, { payment_method: { card, billing_details: {} } });
         if (error){ alert(error.message); return; }
         const fd = new FormData();
         fd.append('payment_method_id', setupIntent.payment_method);
-        const attach = await fetch("{% url 'billing:attach_payment_method' %}", { method:'POST', headers:{'X-CSRFToken': getCookie('csrftoken')}, credentials:'same-origin', body: fd });
+        const attach = await fetch("{% url 'billing:attach_payment_method' %}", { method:'POST', headers:{'X-CSRFToken': csrf }, credentials:'same-origin', body: fd });
         const html = await attach.text();
         const pm = document.getElementById('pm-section');
         if (pm) pm.innerHTML = html;
