@@ -196,3 +196,11 @@ Garanta que seu app `theme` esteja gerando a saída nesse caminho (ajuste output
 
 - Este projeto é **educacional**. Antes de ir a produção, trate *idempotência*, *retries*, *observabilidade*, segurança de webhooks, etc.
 - Se preferir **metered billing** nativo, substitua a fatura manual por **Subscription + metered Price + usage_records**.
+
+
+
+
+## Daily via CLI:
+
+python manage.py billing_run_daily
+

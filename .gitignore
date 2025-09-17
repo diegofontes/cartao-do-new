@@ -19,7 +19,8 @@ db.sqlite3
 *.sqlite3
 *.sqlite
 *.db
-media/
+media
+!apps/media/
 uploads/
 *.log
 logs/
