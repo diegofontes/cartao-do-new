@@ -21,6 +21,8 @@ else:
 
 CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:8000").split(",")
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -215,4 +217,6 @@ if FORCE_SCRIPT_NAME:
     STATIC_URL = f"{FORCE_SCRIPT_NAME}/static/"
     MEDIA_URL = f"{FORCE_SCRIPT_NAME}/media/"
     LOGIN_URL = f"{FORCE_SCRIPT_NAME}/auth/login"
+    #CSRF_COOKIE_PATH = FORCE_SCRIPT_NAME or '/' 
+    #SESSION_COOKIE_PATH = FORCE_SCRIPT_NAME or '/'
     USE_X_FORWARDED_HOST = True
