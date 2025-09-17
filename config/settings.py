@@ -174,6 +174,7 @@ VIEWER_BASE_URL = os.getenv("VIEWER_BASE_URL", "http://localhost:9000")
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "/auth/login"
 
 # Nickname reservations (also used in viewer settings)
 RESERVED_NICKNAMES = {"admin", "api", "static", "media", "img", "assets", "robots", "sitemap"}
@@ -213,4 +214,5 @@ if FORCE_SCRIPT_NAME:
         FORCE_SCRIPT_NAME = f"/{FORCE_SCRIPT_NAME}"
     STATIC_URL = f"{FORCE_SCRIPT_NAME}/static/"
     MEDIA_URL = f"{FORCE_SCRIPT_NAME}/media/"
+    LOGIN_URL = f"{FORCE_SCRIPT_NAME}/auth/login"
     USE_X_FORWARDED_HOST = True

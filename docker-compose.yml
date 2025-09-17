@@ -25,3 +25,10 @@ services:
       - ./.data/postgres:/var/lib/postgresql/data
       # Scripts de inicialização opcionais (.sql/.sh)
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+
+  redis:
+    image: redis:7-alpine
+    container_name: app-redis
+    restart: unless-stopped
+    ports: ["6379:6379"]
+    command: ["redis-server","--save","","--appendonly","no"]
