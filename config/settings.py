@@ -205,3 +205,12 @@ LOGGING = {
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "true").lower() == "true"
 CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "true").lower() == "true"
 SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+
+
+FORCE_SCRIPT_NAME = os.getenv("DJANGO_FORCE_SCRIPT_NAME")
+if FORCE_SCRIPT_NAME:
+    if not FORCE_SCRIPT_NAME.startswith("/"):
+        FORCE_SCRIPT_NAME = f"/{FORCE_SCRIPT_NAME}"
+    STATIC_URL = f"{FORCE_SCRIPT_NAME}/static/"
+    MEDIA_URL = f"{FORCE_SCRIPT_NAME}/media/"
+    USE_X_FORWARDED_HOST = True
