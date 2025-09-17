@@ -1,5 +1,39 @@
-Postgres: exclusão por range (tstzrange) para evitar overbooking; migração específica (exclusion constraint) quando migrarmos para Postgres.
+
 Uploads: configurar storage S3, validações de MIME e thumbnails.
 
 Rigor extra nos slots (quebrar janelas por buffers internos e step configurável)?
+
 Implementar upload seguro (MIME/size) e storage S3?
+
+
+Constraint de idempotência (ex.: UNIQUE(resource_type,event_type,resource_id)) — implica migrar o schema e guardar resource_id nos eventos.
+
+Filtros adicionais na timeline (ex.: paginação com preservação de todos os filtros/ordenar por coluna).
+
+Exibir “Detalhes da prévia” por categoria com notas de promoções/cadências mensais (tenho a base pronta na parcial; posso expandir).
+
+
+---------------------------------------------------
+
+
+- Storage S3
+- Dia de cobrança ( tartar datas de ano bi sexto )
+- página 404 
+- Modo produçao em docker 
+
+
+----------------------------------------------------
+
+
+Webhook Twilio (status):
+Configure Twilio para POST em /api/webhooks/twilio/sms-status com assinatura.
+
+Webhook SendGrid (event):
+Aponte o Event Webhook para /api/webhooks/sendgrid/email-events
+
+
+
+exemplo de envio de sms 
+
+curl -XPOST http://localhost:8000/api/notifications -H 'Content-Type: application/json' -d '{"type":"sms","to":"+5511993306321","template_code":"login_2fa","payload":{"code":"123456"},"idempotency_key":"abc-123"}'
+
