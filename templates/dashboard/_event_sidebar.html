@@ -7,9 +7,53 @@
     <button class="btn" type="button" aria-label="Fechar" onclick="(function(){var sb=document.getElementById('sidebar'); if(sb) sb.innerHTML='';})()">✕</button>
   </header>
   <div class="body">
-    <p><strong>Cliente:</strong> {{ ap.user_name }}{% if ap.user_phone %} — {{ ap.user_phone }}{% endif %}</p>
-    <p class="muted">{{ ap.service.type }} • {{ ap.service.card.title }}</p>
-    {% if ap.form_answers_json %}<pre class="muted" style="white-space:pre-wrap">{{ ap.form_answers_json }}</pre>{% endif %}
+    <ul class="list" style="display:grid;gap:10px;padding:0;margin:0;list-style:none">
+      <li class="row" style="gap:8px;align-items:center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span class="muted">{{ ap.service.type|title }} • {{ ap.service.card.title }}</span>
+      </li>
+      <li class="row" style="gap:8px;align-items:center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span><strong>Cliente:</strong> {{ ap.user_name }}</span>
+      </li>
+      <li class="row" style="gap:8px;align-items:center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span><strong>Status:</strong> {{ ap.status }}</span>
+      </li>
+
+      {% if ap.status == 'confirmed' %}
+        <li class="row" style="gap:8px;align-items:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg>
+          <span><strong>E‑mail:</strong> <a href="mailto:{{ ap.user_email }}">{{ ap.user_email }}</a></span>
+        </li>
+        {% if ap.user_phone %}
+          {% with p=ap.user_phone|cut:" "|cut:"-"|cut:"("|cut:")"|cut:"."|cut:"/"|cut:"+" %}
+          {% with wa_msg="Olá, "|add:ap.user_name|add:" — agendamento "|add:ap.service.name|add:" em "|add:start_local %}
+          <li class="row" style="gap:8px;align-items:center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07A19.5 19.5 0 0 1 3.16 12 19.86 19.86 0 0 1 .09 3.37 2 2 0 0 1 2.06 1h3a2 2 0 0 1 2 1.72c.12.9.32 1.77.59 2.61a2 2 0 0 1-.45 2.11L6.1 8.91a16 16 0 0 0 7 7l1.47-1.1a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.61.59A2 2 0 0 1 22 16.92z"/></svg>
+            <span><strong>Telefone:</strong> {{ ap.user_phone }}</span>
+          </li>
+          <li class="row" style="gap:8px;align-items:center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16.7 11.1c.2-.6.3-1.2.3-1.9 0-3.3-2.7-6-6-6S5 5.9 5 9.2c0 1 .3 2 .8 2.8L4 18l6-1.8c.8.5 1.8.8 2.8.8 3.3 0 6-2.7 6-6 0-.3 0-.6-.1-.9"/></svg>
+            <a class="btn" target="_blank" rel="noopener" href="https://wa.me/{{ p }}?text={{ wa_msg|urlencode }}">Abrir WhatsApp</a>
+          </li>
+          {% endwith %}
+          {% endwith %}
+        {% endif %}
+      {% else %}
+        <li class="row" style="gap:8px;align-items:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          <span class="muted">Contatos serão exibidos após a aprovação.</span>
+        </li>
+      {% endif %}
+
+      {% if ap.form_answers_json %}
+        <li class="row" style="gap:8px;align-items:flex-start">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>
+          <pre class="muted" style="white-space:pre-wrap;margin:0">{{ ap.form_answers_json }}</pre>
+        </li>
+      {% endif %}
+    </ul>
   </div>
   <footer class="actions">
     {% if ap.status == 'pending' %}

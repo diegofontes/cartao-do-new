@@ -167,9 +167,17 @@ def _row_index(dtobj: dt.datetime):
 
 @login_required
 def agenda_events(request):
+    # Normalize ISO datetimes from query (handle '+' being turned into space and optional 'Z')
+    def _norm_iso(s: str | None) -> str:
+        if not s:
+            return ""
+        s = s.strip().replace(" ", "+")
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        return s
     try:
-        start = dt.datetime.fromisoformat(request.GET.get("start"))
-        end = dt.datetime.fromisoformat(request.GET.get("end"))
+        start = dt.datetime.fromisoformat(_norm_iso(request.GET.get("start")))
+        end = dt.datetime.fromisoformat(_norm_iso(request.GET.get("end")))
     except Exception:
         return HttpResponseBadRequest("invalid range")
     view = (request.GET.get("view") or "week").lower()
@@ -226,7 +234,15 @@ def agenda_event_approve(request, id):
         return HttpResponseBadRequest("invalid state")
     ap.status = "confirmed"
     ap.save(update_fields=["status"])
-    resp = render(request, "dashboard/_event_sidebar.html", {"ap": ap})
+    tz = ZoneInfo(ap.timezone or "UTC")
+    s_local = ap.start_at_utc.astimezone(tz)
+    e_local = ap.end_at_utc.astimezone(tz)
+    resp = render(request, "dashboard/_event_sidebar.html", {
+        "ap": ap,
+        "start_local": s_local.strftime("%d/%m %H:%M"),
+        "end_local": e_local.strftime("%H:%M"),
+        "tz_label": ap.timezone,
+    })
     resp["HX-Trigger"] = "agenda:refresh"
     return resp
 
@@ -240,6 +256,14 @@ def agenda_event_deny(request, id):
         return HttpResponseBadRequest("invalid state")
     ap.status = "denied"
     ap.save(update_fields=["status"])
-    resp = render(request, "dashboard/_event_sidebar.html", {"ap": ap})
+    tz = ZoneInfo(ap.timezone or "UTC")
+    s_local = ap.start_at_utc.astimezone(tz)
+    e_local = ap.end_at_utc.astimezone(tz)
+    resp = render(request, "dashboard/_event_sidebar.html", {
+        "ap": ap,
+        "start_local": s_local.strftime("%d/%m %H:%M"),
+        "end_local": e_local.strftime("%H:%M"),
+        "tz_label": ap.timezone,
+    })
     resp["HX-Trigger"] = "agenda:refresh"
     return resp

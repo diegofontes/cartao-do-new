@@ -100,7 +100,7 @@
       </div>
     {% else %}
       <div class="week-grid"
-           hx-get="{% url 'dashboard:agenda_events' %}?start={{ range_start_iso }}&end={{ range_end_iso }}&view={{ view }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+           hx-get="{% url 'dashboard:agenda_events' %}?start={{ range_start_iso|urlencode }}&end={{ range_end_iso|urlencode }}&view={{ view }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
            hx-trigger="load, agenda:refresh from:body"
            hx-target="#events-layer" hx-swap="innerHTML">
         <div class="hours-col">
