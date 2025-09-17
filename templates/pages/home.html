@@ -1,0 +1,543 @@
+{% load static %}
+
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cartão DO — Cartões digitais com agendamentos</title>
+  <meta name="description" content="Crie seu cartão digital com links, galeria e agendamentos. Publique em /@nickname e compartilhe.">
+  <link rel="canonical" href="https://cartao.do" />
+  <link rel="icon" href="/static/favicon.ico" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Cartão DO — Cartões digitais com agendamentos" />
+  <meta property="og:description" content="Crie seu cartão digital com links, galeria e agendamentos. Publique em /@nickname e compartilhe." />
+  <meta property="og:url" content="https://cartao.do" />
+  <meta property="og:image" content="{{OG_IMAGE_URL}}" />
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Cartão DO — Cartões digitais com agendamentos" />
+  <meta name="twitter:description" content="Crie seu cartão digital com links, galeria e agendamentos. Publique em /@nickname e compartilhe." />
+  <meta name="twitter:image" content="{{OG_IMAGE_URL}}" />
+
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12" integrity="" crossorigin="anonymous"></script>
+
+  <!-- CSS crítico (P/B/Cinza) -->
+  <style>
+    :root{
+      --bg:#fff; --fg:#111; --muted:#666; --elev:#f6f7f8; --border:#e6e6e8; --link:#111; --focus:#111;
+      --r:14px; --shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.08);
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{ --bg:#111; --fg:#f6f7f8; --muted:#c2c2c2; --elev:#1a1a1a; --border:#2a2a2a; --link:#f6f7f8; --focus:#fff; }
+    }
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    *,*:before,*:after{box-sizing:border-box}
+    a{color:var(--link);text-underline-offset:2px}
+    img{max-width:100%;height:auto}
+    .container{max-width:1120px;margin:0 auto;padding:0 20px}
+    .grid{display:grid;gap:20px}
+    .row{display:flex;gap:20px;flex-wrap:wrap}
+    .card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border:1px solid var(--border);border-radius:12px;background:#fff;color:#111;text-decoration:none;font-weight:600;cursor:pointer}
+    .btn.secondary{background:transparent}
+    .btn:focus{outline:2px solid var(--focus);outline-offset:2px}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .btn .spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:#999;border-radius:50%;margin-left:8px;animation:spin 0.9s linear infinite;display:none}
+    .btn.loading .spinner{display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Topbar */
+    .topbar{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border)}
+    .topbar-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800}
+    .brand .logo{width:28px;height:28px;border-radius:8px;background:var(--fg)}
+    nav a{padding:8px 10px;border-radius:8px;text-decoration:none;color:var(--fg)}
+    nav a:focus{outline:2px solid var(--focus);outline-offset:2px}
+    .menu{display:flex;gap:8px;align-items:center}
+    .hamb{display:none;appearance:none;background:transparent;border:1px solid var(--border);border-radius:10px;padding:8px}
+    .hamb svg{display:block}
+    .drawer{display:none;position:fixed;inset:64px 0 auto 0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px}
+    .drawer a{display:block;padding:12px;border-radius:10px}
+    .icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px;border:1px solid var(--border);border-radius:10px;background:transparent;color:var(--fg)}
+
+    /* Hero */
+    .hero{padding:56px 0 24px}
+    .hero .wrap{display:grid;gap:32px;grid-template-columns:1fr}
+    .kpis{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:.9rem}
+    .hero h1{font-size:clamp(2rem,3vw+1rem,3rem);line-height:1.15;margin:.3em 0}
+    .hero p{color:var(--muted);margin:.5em 0 1em}
+    .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+    .hero-media{background:var(--elev);border:1px dashed var(--border);border-radius:16px;padding:16px;display:grid;place-items:center;min-height:260px}
+
+    /* Value props */
+    .values{padding:24px 0}
+    .values .list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .pill{display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:10px 14px;background:var(--bg)}
+
+    /* Recursos grid */
+    .section{padding:56px 0}
+    .section h2{font-size:1.75rem;margin:0 0 .75rem}
+    .muted{color:var(--muted)}
+    .features{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .feature{padding:16px}
+    .feature .icon{width:28px;height:28px}
+
+    /* Como funciona */
+    .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .step{padding:16px}
+
+    /* Planos */
+    .pricing{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .price-card{padding:18px;display:flex;flex-direction:column}
+    .price-card h3{margin:.25em 0}
+    .price{font-weight:800;font-size:1.25rem;margin:.25em 0}
+    .price small{color:var(--muted);font-weight:500}
+    .price-feats{margin:.5em 0 1em;color:var(--muted)}
+    .price-card .btn{margin-top:auto}
+
+    /* Prova social */
+    .testimonials{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .logos{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+    .logo{width:92px;height:36px;border:1px dashed var(--border);border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+
+    /* FAQ */
+    .faq{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .faq details{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+    .faq summary{cursor:pointer;font-weight:600}
+
+    /* Forms */
+    form{display:grid;gap:10px}
+    label{font-weight:600}
+    input,textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--fg)}
+    input:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:2px}
+    textarea{min-height:110px;resize:vertical}
+
+    /* Footer */
+    footer{border-top:1px solid var(--border);padding:28px 0;color:var(--muted)}
+
+    /* Responsive */
+    /* Anchor offset for sticky topbar */
+    #hero, #recursos, #como-funciona, #planos, #faq, #contato{scroll-margin-top:72px}
+
+    @media (max-width:1024px){
+      .pricing{grid-template-columns:1fr}
+      .features{grid-template-columns:1fr}
+      .steps{grid-template-columns:1fr}
+      .testimonials{grid-template-columns:1fr}
+      .faq{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .hamb{display:inline-flex}
+      .menu{display:none}
+      .topbar-inner{height:56px}
+      .drawer{inset:56px 0 auto 0}
+      .container{padding:0 16px}
+      .values .list{grid-template-columns:1fr}
+      .hero{padding:32px 0 16px}
+      .hero .wrap{grid-template-columns:1fr}
+      .section{padding:40px 0}
+      .hero-cta .btn{flex:1 1 100%}
+      .two-col{grid-template-columns:1fr}
+    }
+
+    /* Toasts */
+    .toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:60}
+    .toast{min-width:280px;background:var(--bg);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:12px 14px}
+    .toast h4{margin:.2em 0;font-size:1rem}
+    .toast p{margin:0;color:var(--muted)}
+    /* Explicit theme overrides */
+    :root[data-theme="dark"]{ --bg:#111; --fg:#f6f7f8; --muted:#c2c2c2; --elev:#1a1a1a; --border:#2a2a2a; --link:#f6f7f8; --focus:#fff; }
+    :root[data-theme="light"]{ --bg:#fff; --fg:#111; --muted:#666; --elev:#f6f7f8; --border:#e6e6e8; --link:#111; --focus:#111; }
+  </style>
+
+  <!-- JSON-LD: Organization -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Organization",
+    "name":"Cartão DO",
+    "url":"https://cartao.do",
+    "logo":"{{OG_IMAGE_URL}}"
+  }
+  </script>
+  <!-- JSON-LD: Product -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Product",
+    "name":"Cartão DO",
+    "description":"Plataforma de cartões digitais com links, redes, galeria e agendamentos.",
+    "brand":"Cartão DO",
+    "url":"https://cartao.do"
+  }
+  </script>
+  <!-- JSON-LD: FAQ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type":"Question","name":"O que é um cartão digital?","acceptedAnswer":{"@type":"Answer","text":"É uma página moderna com seus links, redes, botões, galeria e agendamentos em um só lugar."}},
+      {"@type":"Question","name":"Como funciona a URL /@nickname?","acceptedAnswer":{"@type":"Answer","text":"Você escolhe um apelido e publica seu cartão em uma URL curta e pública: /@seu_nickname."}},
+      {"@type":"Question","name":"Como cobram?","acceptedAnswer":{"@type":"Answer","text":"Cobramos por cartão publicado e recursos utilizados (ex.: agendamentos confirmados)."}},
+      {"@type":"Question","name":"Posso integrar com redes sociais?","acceptedAnswer":{"@type":"Answer","text":"Sim. Adicione seus perfis e mostre botões e ícones no seu cartão."}},
+      {"@type":"Question","name":"Como funcionam os agendamentos?","acceptedAnswer":{"@type":"Answer","text":"Cadastre serviços, defina duração e disponibilidade. Seus clientes escolhem um horário e você confirma pela dashboard."}},
+      {"@type":"Question","name":"Posso cancelar quando quiser?","acceptedAnswer":{"@type":"Answer","text":"Sim, você pode cancelar a qualquer momento sem fidelidade."}}
+    ]
+  }
+  </script>
+</head>
+
+<body>
+  <a href="#planos" class="visually-hidden" style="position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden">Pular para planos</a>
+
+  <!-- Topbar -->
+  <header class="topbar" role="banner">
+    <div class="container topbar-inner">
+      <a class="brand" href="#hero" aria-label="Ir para o topo">
+          <img id="logo"
+            src="{% static 'img/logo-cap-icon.png' %}"
+            data-logo-dark="{% static 'img/logo-cap-icon.png' %}"
+            data-logo-light="{% static 'img/logo-cap-v1-dark-icon.png' %}"
+            alt="Logo"
+            width="28"
+            >
+        <span>Cartão DO</span>
+      </a>
+      <nav aria-label="Navegação principal" class="menu" id="menu">
+        <a href="#recursos">Recursos</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#planos">Planos</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contato">Contato</a>
+      </nav>
+      <a class="btn" href="/auth/login" aria-label="login">Login</a>
+      <button class="icon-btn" id="theme-toggle" aria-label="Alternar tema" aria-pressed="false" title="Alternar tema">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0-1.414 1.414M7.05 16.95l-1.414 1.414"/></svg>
+      </button>
+      <button class="hamb" id="hamb" aria-label="Abrir menu" aria-controls="drawer" aria-expanded="false">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+    <div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Menu">
+      <div class="container">
+        <a href="#recursos" data-close>Recursos</a>
+        <a href="#como-funciona" data-close>Como funciona</a>
+        <a href="#planos" data-close>Planos</a>
+        <a href="#faq" data-close>FAQ</a>
+        <a href="#contato" data-close>Contato</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" role="main">
+    <!-- Hero -->
+    <section class="hero container" id="hero">
+      <div class="wrap">
+        <div>
+          <div class="kpis" aria-label="Prova social">
+            <!-- <span aria-hidden="true">★</span>
+            <span>+3.000 cartões criados</span> -->
+          </div>
+          <h1>Seu cartão digital. Seus links. Seus agendamentos.</h1>
+          <p>Agrupe contatos, redes sociais e botões — e deixe seus clientes agendarem com você em segundos. Tudo em uma URL curta: /@seu_nickname.</p>
+          <div class="hero-cta">
+            <a class="btn" href="/auth/signup">Começar agora</a>
+            <a class="btn" href="#recursos">Ver recursos</a>
+          </div>
+        </div>
+        <div class="hero-media" aria-label="Mockup do cartão (placeholder)">
+          <svg width="100%" height="160" viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração placeholder">
+            <rect x="0" y="0" width="600" height="160" fill="none" stroke="currentColor" opacity=".2" rx="16"/>
+            <circle cx="60" cy="80" r="26" fill="currentColor" opacity=".15" />
+            <rect x="110" y="60" width="160" height="16" rx="8" fill="currentColor" opacity=".15" />
+            <rect x="110" y="84" width="220" height="12" rx="6" fill="currentColor" opacity=".1" />
+            <rect x="20" y="120" width="560" height="20" rx="10" fill="currentColor" opacity=".08" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Propostas de valor -->
+    <section class="values container" aria-labelledby="valores">
+      <h2 id="valores" class="visually-hidden" style="position:absolute;left:-9999px">Propostas de valor</h2>
+      <div class="list">
+        <div class="pill"><span aria-hidden="true">⚡</span> Rápido: crie e publique em minutos.</div>
+        <div class="pill"><span aria-hidden="true">🧩</span> Completo: links, redes, galeria e agendamentos.</div>
+        <div class="pill"><span aria-hidden="true">🔗</span> URL única: /@nickname para compartilhar.</div>
+        <div class="pill"><span aria-hidden="true">💳</span> Melhor valor do mercado </div>
+      </div>
+    </section>
+
+    <!-- Recursos -->
+    <section class="section container" id="recursos" aria-labelledby="ttl-recursos">
+      <h2 id="ttl-recursos">Recursos</h2>
+      <p class="muted">Cards com ícones monocromáticos (SVG inline).</p>
+      <div class="grid features">
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="3"/><rect x="4" y="14" width="8" height="6" rx="3"/><path d="M16 8h4M16 12h4M16 16h4"/></svg><strong>Cartões</strong></div>
+          <p class="muted">Avatar, nome, bio, redes.</p>
+        </div>
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="6" rx="2"/><rect x="3" y="13" width="12" height="6" rx="2"/></svg><strong>Botões de Links</strong></div>
+          <p class="muted">Tipo Linktree com visual de cartão.</p>
+        </div>
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/></svg><strong>Galeria</strong></div>
+          <p class="muted">Thumbnails com modal.</p>
+        </div>
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><strong>Agendamentos</strong></div>
+          <p class="muted">Serviços, duração, fuso, local/remoto/visita, slots, formulário.</p>
+        </div>
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M2 12h20"/></svg><strong>Verificação</strong></div>
+          <p class="muted">SMS/E-mail com códigos.</p>
+        </div>
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12h16M10 16h4M8 20h8"/></svg><strong>Publicação</strong></div>
+          <p class="muted">URL pública instantânea em /@nickname.</p>
+        </div>
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 10h10M7 14h6"/></svg><strong>Dashboard</strong></div>
+          <p class="muted">Agenda.</p>
+        </div>
+        <div class="card feature">
+          <div class="row" style="align-items:center"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 12h16M4 17h10"/></svg><strong>Cobrança</strong></div>
+          <p class="muted">Regras claras: por cartão, agendamento, link/galeria.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Como funciona -->
+    <section class="section container" id="como-funciona" aria-labelledby="ttl-como">
+      <h2 id="ttl-como">Como funciona</h2>
+      <div class="grid steps">
+        <div class="card step"><strong>1) Crie seu cartão.</strong><p class="muted">Comece com nome, avatar e bio.</p></div>
+        <div class="card step"><strong>2) Personalize links e galeria.</strong><p class="muted">Adicione botões, redes e imagens.</p></div>
+        <div class="card step"><strong>3) Ative agendamentos.</strong><p class="muted">Defina serviços, horários e formulário.</p></div>
+        <div class="card step"><strong>4) Publique e compartilhe.</strong><p class="muted">Sua URL curta: /@nickname.</p></div>
+      </div>
+    </section>
+
+    <!-- Planos -->
+    <section class="section container" id="planos" aria-labelledby="ttl-planos">
+      <h2 id="ttl-planos">Pague o quanto usar.</h2>
+      <p class="muted">Valores que cabem no seu bolso.</p>
+      <div class="row" style="justify-content: center;">
+
+        <article class="card price-card" aria-labelledby="p2" style="display:flex;justify-content: center;align-items: center;gap: 1rem;">
+          <span class="muted">Por utilizaçao</span>
+          <div class="price">Cobrança <small>/mês</small></div>
+          <ul class="price-feats">
+            <li>N cartões</li>
+            <li>Galeria avançada</li>
+            <li>Notificações</li>
+            <li>Links ilimitados</li>
+            <li>Agendamentos: {{PRICE_APPOINTMENT}} por agendamento confirmado</li>
+          </ul>
+          <a class="btn" href="/auth/signup">Começar</a>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Prova social -->
+    <!-- <section class="section container" aria-labelledby="ttl-social">
+      <h2 id="ttl-social">O que estão dizendo</h2>
+      <div class="grid testimonials">
+        <div class="card" style="padding:16px"><p>“Facilitou meus agendamentos.”</p><p class="muted">— Nome Sobrenome</p></div>
+        <div class="card" style="padding:16px"><p>“Cartão bonito e prático.”</p><p class="muted">— Nome Sobrenome</p></div>
+        <div class="card" style="padding:16px"><p>“URL curta que converte.”</p><p class="muted">— Nome Sobrenome</p></div>
+      </div>
+      <div class="logos" style="margin-top:18px">
+        <div class="logo">Logo</div>
+        <div class="logo">Logo</div>
+        <div class="logo">Logo</div>
+        <div class="logo">Logo</div>
+      </div>
+    </section> -->
+
+    <!-- FAQ -->
+    <section class="section container" id="faq" aria-labelledby="ttl-faq">
+      <h2 id="ttl-faq">FAQ</h2>
+      <div class="grid faq">
+        <details><summary>O que é um cartão digital?</summary><p>Uma página moderna com seus links, redes, botões, galeria e agendamentos.</p></details>
+        <details><summary>Como funciona a URL /@nickname?</summary><p>Você escolhe um apelido e publica em uma URL curta.</p></details>
+        <details><summary>Como cobram?</summary><p>Cobrança por cartão publicado e por uso (ex.: agendamentos confirmados).</p></details>
+        <details><summary>Posso integrar com redes sociais?</summary><p>Sim, adicione seus perfis e mostre ícones no cartão.</p></details>
+        <details><summary>Como funcionam os agendamentos?</summary><p>Cadastre serviços, defina horários e confirme pela dashboard.</p></details>
+        <details><summary>Posso cancelar quando quiser?</summary><p>Sim, sem fidelidade.</p></details>
+      </div>
+    </section>
+
+    <!-- Newsletter / Contato -->
+    <section class="section container" id="contato" aria-labelledby="ttl-contato">
+      <h2 id="ttl-contato">Newsletter e Contato</h2>
+      <div class="grid two-col">
+        <form class="card" style="padding:16px" aria-describedby="nl-desc" hx-post="/api/lead" hx-swap="none">
+          <input type="hidden" name="form" value="newsletter" />
+          <p id="nl-desc" class="muted">Receba novidades e lançamentos.</p>
+          <label for="nl-email">E-mail</label>
+          <input id="nl-email" name="email" type="email" autocomplete="email" required placeholder="voce@exemplo.com" />
+          <button type="submit" class="btn" aria-live="polite">Quero receber novidades <span class="spinner" aria-hidden="true"></span></button>
+        </form>
+
+        <form class="card" style="padding:16px" aria-describedby="ct-desc" hx-post="/api/lead" hx-swap="none">
+          <input type="hidden" name="form" value="contato" />
+          <p id="ct-desc" class="muted">Fale com a gente.</p>
+          <label for="ct-nome">Nome</label>
+          <input id="ct-nome" name="name" type="text" autocomplete="name" required placeholder="Seu nome" />
+          <label for="ct-email">E-mail</label>
+          <input id="ct-email" name="email" type="email" autocomplete="email" required placeholder="voce@exemplo.com" />
+          <label for="ct-msg">Mensagem</label>
+          <textarea id="ct-msg" name="message" required placeholder="Como podemos ajudar?"></textarea>
+          <button type="submit" class="btn">Enviar <span class="spinner" aria-hidden="true"></span></button>
+        </form>
+      </div>
+      <p class="muted" style="margin-top:12px">Ao enviar, você concorda com nossa <a href="/politica_de_privacidade" target="_blank" rel="noopener">Política de Privacidade</a>. LGPD: tratamos dados apenas para responder e enviar comunicações solicitadas.</p>
+    </section>
+
+    <!-- CTA final -->
+    <section class="section container" aria-label="CTA final">
+      <div class="card" style="padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <strong>Crie seu cartão hoje — leve, bonito e funcional.</strong>
+        <a class="btn" href="/auth/signup">Começar agora</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer role="contentinfo">
+    <div class="container row" style="align-items:center;justify-content:space-between">
+      <div class="row" style="align-items:center">
+          <img id="logo-footer"
+            src="{% static 'img/logo-cap-v1.png' %}"
+            data-logo-dark="{% static 'img/logo-cap-v1.png' %}"
+            data-logo-light="{% static 'img/logo-cap-v1-dark.png' %}"
+            alt="Logo"
+            width="128"
+            >
+        <span style="margin-left:8px">Cartão DO</span>
+    </div>
+      <nav aria-label="Rodapé" class="row">
+        <a href="#recursos">Recursos</a>
+        <a href="#planos">Planos</a>
+        <a href="/termos_de_uso" target="_blank" rel="noopener">Termos</a>
+        <a href="/politica_de_privacidade" target="_blank" rel="noopener">Privacidade</a>
+      </nav>
+    </div>
+    <div class="container" style="margin-top:8px">© {{YEAR}} Cartão DO</div>
+  </footer>
+
+  <!-- Toasts container (aria-live) -->
+  <div class="toasts" aria-live="polite" aria-atomic="true" id="toasts"></div>
+
+  <!-- JS: menu, smooth scroll, toasts, HTMX hooks -->
+  <script>
+    // Menu mobile (drawer)
+    (function(){
+      const hamb = document.getElementById('hamb');
+      const drawer = document.getElementById('drawer');
+      function close(){ drawer.style.display='none'; hamb.setAttribute('aria-expanded','false'); }
+      function open(){ drawer.style.display='block'; hamb.setAttribute('aria-expanded','true'); }
+      hamb?.addEventListener('click', ()=>{ drawer.style.display === 'block' ? close() : open(); });
+      drawer?.addEventListener('click', (e)=>{ if(e.target.matches('[data-close]')) close(); });
+      window.addEventListener('resize', ()=>{ if(window.innerWidth>640) close(); });
+    })();
+
+    // Smooth scroll for anchor links
+    (function(){
+      document.addEventListener('click', function(e){
+        const a = e.target.closest('a[href^="#"]');
+        if(!a) return;
+        const id = a.getAttribute('href').slice(1);
+        if(!id) return;
+        const el = document.getElementById(id);
+        if(!el) return;
+        e.preventDefault();
+        el.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    })();
+
+    // Toasts
+    function showToast(type, title, message){
+      const wrap = document.getElementById('toasts');
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.setAttribute('role','status');
+      el.innerHTML = `<h4>${title|| (type==='success'?'Pronto!':'Ops')}</h4><p>${message|| (type==='success'?'Ação concluída.':'Tente novamente mais tarde.')}</p>`;
+      wrap.appendChild(el);
+      setTimeout(()=>{ el.remove(); }, 4500);
+    }
+
+    // HTMX integration: spinner + toasts + clear forms
+    document.addEventListener('htmx:beforeRequest', function(evt){
+      const btn = evt.target.querySelector('button[type="submit"]');
+      if(btn){ btn.classList.add('loading'); btn.setAttribute('aria-busy','true'); }
+    });
+    document.addEventListener('htmx:afterRequest', function(evt){
+      const btn = evt.target.querySelector('button[type="submit"]');
+      if(btn){ btn.classList.remove('loading'); btn.removeAttribute('aria-busy'); }
+      // Fallback: parse HX-Trigger header if event not handled
+      const hdr = evt.detail.xhr.getResponseHeader('HX-Trigger');
+      if(hdr){
+        try{
+          const data = JSON.parse(hdr);
+          if(data && data.flash){ showToast(data.flash.type, data.flash.title, data.flash.message); if(data.flash.type==='success'){ evt.target.reset?.(); } }
+        }catch(_){/*ignore*/}
+      }
+    });
+    // Prefer server-sent event name "flash" (from HX-Trigger: {"flash":{...}})
+    document.body.addEventListener('flash', function(e){
+      const d = e.detail || {}; showToast(d.type, d.title, d.message);
+      // Try to clear the nearest form if success
+      if(d.type==='success'){
+        const tgt = e.target.closest ? e.target.closest('form') : null; tgt?.reset?.();
+      }
+    });
+
+    // Theme toggle (light/dark)
+    (function(){
+      const KEY = 'theme';
+      const btn = document.getElementById('theme-toggle');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      function updateLogos(theme){
+        const isDark = (theme ? theme==='dark' : prefersDark);
+        document.querySelectorAll('[data-logo-light], [data-logo-dark]').forEach(function(el){
+          const light = el.getAttribute('data-logo-light');
+          const dark = el.getAttribute('data-logo-dark');
+          if (isDark && dark){ el.setAttribute('src', dark); }
+          else if (!isDark && light){ el.setAttribute('src', light); }
+        });
+      }
+      function icon(dark){
+        return dark
+          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+          : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364 6.364-1.414-1.414M7.05 7.05 5.636 5.636m12.728 0-1.414 1.414M7.05 16.95l-1.414 1.414"/></svg>';
+      }
+      function apply(theme){
+        if(theme){ document.documentElement.setAttribute('data-theme', theme); localStorage.setItem(KEY, theme); }
+        else { document.documentElement.removeAttribute('data-theme'); localStorage.removeItem(KEY); }
+        const isDark = (theme ? theme==='dark' : prefersDark);
+        if(btn){ btn.setAttribute('aria-pressed', String(isDark)); btn.innerHTML = icon(isDark); }
+        updateLogos(theme);
+      }
+      const saved = localStorage.getItem(KEY);
+      apply(saved || (prefersDark ? 'dark' : 'light'));
+      btn && btn.addEventListener('click', function(){
+        const cur = document.documentElement.getAttribute('data-theme') || (prefersDark ? 'dark' : 'light');
+        apply(cur === 'dark' ? 'light' : 'dark');
+      });
+    })();
+  </script>
+</body>
+</html>

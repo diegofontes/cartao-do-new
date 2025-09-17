@@ -7,6 +7,7 @@ from django.urls import re_path
 from apps.cards import views_public as card_public
 from apps.media import urls as media_urls
 from apps.notifications import urls as notif_urls
+from apps.pages import views as pages_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -15,6 +16,7 @@ urlpatterns = [
     path("cards/", include("apps.cards.urls")),
     path("api/", include("apps.scheduling.urls")),
     path("api/", include((notif_urls, "notifications"), namespace="notifications")),
+    path("api/lead", pages_views.lead, name="api_lead"),
     # Healthcheck endpoint
     path("healthz", lambda _request: HttpResponse("ok")),
     # Legal pages
