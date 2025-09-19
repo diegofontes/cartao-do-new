@@ -928,6 +928,18 @@ dev = ["build", "hatch"]
 doc = ["sphinx"]
 
 [[package]]
+name = "standard-imghdr"
+version = "3.13.0"
+description = "Standard library imghdr redistribution. \"dead battery\"."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "standard_imghdr-3.13.0-py3-none-any.whl", hash = "sha256:30a1bff5465605bb496f842a6ac3cc1f2131bf3025b0da28d4877d6d4b7cc8e9"},
+    {file = "standard_imghdr-3.13.0.tar.gz", hash = "sha256:8d9c68058d882f6fc3542a8d39ef9ff94d2187dc90bd0c851e0902776b7b7a42"},
+]
+
+[[package]]
 name = "stripe"
 version = "9.12.0"
 description = "Python bindings for the Stripe API"
@@ -1088,4 +1100,4 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "d6f2e3e2ea0b4c15bfdb7e514780c3b789de80bb3ea2b5eb34ad1570a4e2ad06"
+content-hash = "8a40b892327fb0b4cfcf1ac2a0f9f6052765cefedb5a42798762697002791ebd"

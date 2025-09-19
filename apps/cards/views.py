@@ -11,6 +11,9 @@ from django.views.decorators.http import require_POST
 from django.core.cache import cache
 from .models import Card, LinkButton, CardAddress, GalleryItem, SocialLink, PLATFORM_CHOICES
 from apps.common.images import process_avatar, process_gallery
+from apps.common.validators import validate_upload
+from django.core.exceptions import ValidationError
+from .services import add_link as svc_add_link, add_address as svc_add_address, add_gallery_item as svc_add_gallery
 from apps.billing.services import has_active_payment_method
 from django.conf import settings
 import re
@@ -20,8 +23,12 @@ from django.utils.text import slugify
 @ensure_csrf_cookie
 @login_required
 def list_cards(request):
-    cards = Card.objects.filter(owner=request.user).order_by("-created_at")
-    return render(request, "cards/list.html", {"cards": cards, "viewer_base": getattr(settings, "VIEWER_BASE_URL", "http://localhost:9000")})
+    show_archived = str(request.GET.get("show_archived") or "").lower() in ("1", "true", "yes", "on")
+    qs = Card.objects.filter(owner=request.user)
+    if not show_archived:
+        qs = qs.exclude(status="archived")
+    cards = qs.order_by("-created_at")
+    return render(request, "cards/list.html", {"cards": cards, "show_archived": show_archived, "viewer_base": getattr(settings, "VIEWER_BASE_URL", "http://localhost:9000")})
 
 
 @login_required
@@ -46,6 +53,10 @@ def create_card(request):
 @login_required
 def edit_card(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        if request.method == "POST":
+            return HttpResponseForbidden("Card marked for deactivation")
+        return render(request, "cards/edit.html", {"card": card, "deactivation_blocked": True})
     if request.method == "POST":
         title = (request.POST.get("title") or "").strip()
         description = (request.POST.get("description") or "").strip()
@@ -72,6 +83,8 @@ def publish_card(request, id):
     card = get_object_or_404(Card, id=id)
     if card.owner != request.user:
         return HttpResponseForbidden("Not allowed")
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     if card.status == "published":
         return HttpResponse("already published", status=409)
     # Payment check
@@ -134,18 +147,30 @@ def links_partial(request, id):
 @require_POST
 def add_link(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     label = request.POST.get("label", "").strip()
     url = request.POST.get("url", "").strip()
     if not label or not url:
         return HttpResponseBadRequest("label and url required")
-    LinkButton.objects.create(card=card, label=label, url=url)
-    return links_partial(request, id)
+    try:
+        svc_add_link(card, label=label, url=url)
+    except ValidationError as e:
+        resp = links_partial(request, id)
+        resp.status_code = 422
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Limite atingido", "message": str(e)}})
+        return resp
+    resp = links_partial(request, id)
+    resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Feito!", "message": "Link adicionado."}})
+    return resp
 
 
 @login_required
 @require_POST
 def delete_link(request, link_id):
     link = get_object_or_404(LinkButton, id=link_id, card__owner=request.user)
+    if getattr(link.card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     card_id = link.card.id
     link.delete()
     return links_partial(request, card_id)
@@ -163,6 +188,8 @@ def addresses_partial(request, id):
 @require_POST
 def add_address(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     label = (request.POST.get("label", "") or "").strip()
     if not label:
         return HttpResponseBadRequest("label required")
@@ -170,25 +197,35 @@ def add_address(request, id):
     norm = re.sub(r"\D", "", cep)
     if not re.fullmatch(r"\d{8}", norm):
         return HttpResponseBadRequest("CEP inválido")
-    CardAddress.objects.create(
-        card=card,
-        label=label,
-        cep=f"{norm[:5]}-{norm[5:]}",
-        logradouro=(request.POST.get("logradouro", "") or "").strip(),
-        numero=(request.POST.get("numero", "") or "").strip(),
-        complemento=(request.POST.get("complemento", "") or "").strip(),
-        bairro=(request.POST.get("bairro", "") or "").strip(),
-        cidade=(request.POST.get("cidade", "") or "").strip(),
-        uf=(request.POST.get("uf", "") or "").strip().upper(),
-        pais=(request.POST.get("pais", "BR") or "BR").upper(),
-    )
-    return addresses_partial(request, id)
+    try:
+        svc_add_address(
+            card,
+            label=label,
+            cep=f"{norm[:5]}-{norm[5:]}",
+            logradouro=(request.POST.get("logradouro", "") or "").strip(),
+            numero=(request.POST.get("numero", "") or "").strip(),
+            complemento=(request.POST.get("complemento", "") or "").strip(),
+            bairro=(request.POST.get("bairro", "") or "").strip(),
+            cidade=(request.POST.get("cidade", "") or "").strip(),
+            uf=(request.POST.get("uf", "") or "").strip().upper(),
+            pais=(request.POST.get("pais", "BR") or "BR").upper(),
+        )
+    except ValidationError as e:
+        resp = addresses_partial(request, id)
+        resp.status_code = 422
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Limite atingido", "message": str(e)}})
+        return resp
+    resp = addresses_partial(request, id)
+    resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Feito!", "message": "Endereço adicionado."}})
+    return resp
 
 
 @login_required
 @require_POST
 def delete_address(request, address_id):
     addr = get_object_or_404(CardAddress, id=address_id, card__owner=request.user)
+    if getattr(addr.card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     card_id = addr.card.id
     addr.delete()
     return addresses_partial(request, card_id)
@@ -240,67 +277,84 @@ def gallery_partial(request, id):
 @require_POST
 def add_gallery_item(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     files = request.FILES.getlist("files") or ([] if request.FILES.get("file") is None else [request.FILES.get("file")])
     if not files:
         return HttpResponseBadRequest("file required")
     errors = []
     for f in files:
-        ctype = getattr(f, "content_type", "") or ""
-        size = getattr(f, "size", 0) or 0
-        if not ctype.startswith("image/"):
-            errors.append(f"Arquivo inválido: {getattr(f,'name','arquivo')} (MIME)")
-            continue
-        if size > 5 * 1024 * 1024:
-            errors.append(f"Arquivo muito grande: {getattr(f,'name','arquivo')} (>5MB)")
+        # Size check to return 413 specifically
+        max_bytes = getattr(settings, "MAX_UPLOAD_BYTES", 2 * 1024 * 1024)
+        if getattr(f, "size", 0) > max_bytes:
+            resp = render(request, "cards/_gallery.html", {"card": card, "items": GalleryItem.objects.filter(card=card).order_by("order", "created_at"), "errors": ["Arquivo excede 2MB."]})
+            resp.status_code = 413
+            resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Upload bloqueado", "message": "Arquivo excede 2MB."}})
+            return resp
+        try:
+            validate_upload(f)
+        except ValidationError as e:
+            errors.append(str(e))
             continue
         # Process and store thumbs
-        out = process_gallery(card.owner_id, f)
-        GalleryItem.objects.create(
-            card=card,
-            file=out["orig"],
-            thumb_w256=out["w256"],
-            thumb_w768=out["w768"],
-            caption=request.POST.get("caption", ""),
-        )
+        try:
+            out = process_gallery(card.owner_id, f)
+            svc_add_gallery(
+                card,
+                file=out["orig"],
+                thumb_w256=out["w256"],
+                thumb_w768=out["w768"],
+                caption=request.POST.get("caption", ""),
+            )
+        except ValidationError as e:
+            errors.append(str(e))
+            continue
     ctx = {"card": card, "items": GalleryItem.objects.filter(card=card).order_by("order", "created_at"), "errors": errors}
-    return render(request, "cards/_gallery.html", ctx)
+    resp = render(request, "cards/_gallery.html", ctx)
+    if errors:
+        resp.status_code = 422
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Upload bloqueado", "message": "; ".join(errors)}})
+    else:
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Feito!", "message": "Upload concluído."}})
+    return resp
 
 
 @login_required
 @require_POST
 def delete_gallery_item(request, item_id):
     it = get_object_or_404(GalleryItem, id=item_id, card__owner=request.user)
+    if getattr(it.card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     cid = it.card.id
     it.delete()
     return gallery_partial(request, cid)
 
 
-@login_required
-@require_POST
-def delete_card(request, id):
-    card = get_object_or_404(Card, id=id, owner=request.user)
-    card.delete()
-    # Support HTMX redirect
-    if request.headers.get("HX-Request"):
-        resp = HttpResponse("")
-        resp["HX-Redirect"] = "/cards/"
-        return resp
-    return redirect("cards:list")
+"""Delete card endpoint removed: archiving is the supported flow."""
 
 
 @login_required
 @require_POST
 def upload_avatar(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     f = request.FILES.get("avatar")
     if not f:
         return HttpResponseBadRequest("file required")
-    ctype = getattr(f, "content_type", "")
-    size = getattr(f, "size", 0)
-    if not (ctype.startswith("image/jpeg") or ctype.startswith("image/png") or ctype.startswith("image/webp")):
-        return HttpResponseBadRequest("unsupported type")
-    if size > 5 * 1024 * 1024:
-        return HttpResponseBadRequest("too large")
+    max_bytes = getattr(settings, "MAX_UPLOAD_BYTES", 2 * 1024 * 1024)
+    if getattr(f, "size", 0) > max_bytes:
+        resp = render(request, "cards/_card_header.html", {"card": card})
+        resp.status_code = 413
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Upload bloqueado", "message": "Arquivo excede 2MB."}})
+        return resp
+    try:
+        validate_upload(f)
+    except ValidationError as e:
+        resp = render(request, "cards/_card_header.html", {"card": card})
+        resp.status_code = 415 if "Tipo de arquivo" in str(e) else 422
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Upload bloqueado", "message": str(e)}})
+        return resp
     out = process_avatar(card.owner_id, f)
     card.avatar = out["orig"]
     card.avatar_w64 = out["w64"]
@@ -308,7 +362,9 @@ def upload_avatar(request, id):
     card.avatar_hash = out["hash"]
     card.avatar_rev = (card.avatar_rev or 0) + 1
     card.save(update_fields=["avatar", "avatar_w64", "avatar_w128", "avatar_hash", "avatar_rev"])
-    return render(request, "cards/_card_header.html", {"card": card})
+    resp = render(request, "cards/_card_header.html", {"card": card})
+    resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Feito!", "message": "Avatar atualizado."}})
+    return resp
 
 
 # ---- HTMX Partials: Social Links ----
@@ -359,6 +415,8 @@ def _normalize_social_url(platform: str, handle_or_url: str) -> str:
 @require_POST
 def add_social_link(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     platform = request.POST.get("platform") or ""
     handle = request.POST.get("handle_or_url") or ""
     label = request.POST.get("label") or ""
@@ -375,6 +433,8 @@ def add_social_link(request, id):
 @require_POST
 def delete_social_link(request, link_id):
     sl = get_object_or_404(SocialLink, id=link_id, card__owner=request.user)
+    if getattr(sl.card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     cid = sl.card.id
     sl.delete()
     return social_links_partial(request, cid)
@@ -397,6 +457,8 @@ def tabs_partial(request, id):
 @require_POST
 def set_tabs_order(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     raw = (request.POST.get("tabs_order") or "").strip()
     allowed = ["links", "gallery", "services"]
     parts = [p.strip() for p in raw.split(",") if p.strip()]
@@ -410,3 +472,32 @@ def set_tabs_order(request, id):
     card.tabs_order = ",".join(parts)
     card.save(update_fields=["tabs_order"])
     return tabs_partial(request, id)
+
+
+# ---- Deactivation / Reactivation ----
+@login_required
+@require_POST
+def mark_deactivation(request, id):
+    card = get_object_or_404(Card, id=id, owner=request.user)
+    if card.status != "published":
+        return HttpResponseBadRequest("only published cards can be marked")
+    if not getattr(card, "deactivation_marked", False):
+        card.deactivation_marked = True
+        card.deactivation_marked_at = timezone.now()
+        card.save(update_fields=["deactivation_marked", "deactivation_marked_at"])
+    resp = HttpResponse("")
+    resp["HX-Redirect"] = str(request.headers.get("Referer") or f"/cards/{card.id}/")
+    return resp
+
+
+@login_required
+@require_POST
+def reactivate(request, id):
+    card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        card.deactivation_marked = False
+        card.deactivation_marked_at = None
+        card.save(update_fields=["deactivation_marked", "deactivation_marked_at"])
+    resp = HttpResponse("")
+    resp["HX-Redirect"] = str(request.headers.get("Referer") or f"/cards/{card.id}/")
+    return resp

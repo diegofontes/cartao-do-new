@@ -13,4 +13,6 @@ urlpatterns = [
     path("preview", views.preview_view, name="preview"),
     path("kpis", views.kpis_view, name="kpis"),
     path("self-checks", views.self_checks_view, name="self_checks"),
+    # Post-billing archival (internal)
+    path("archive-marked-cards", views.archive_marked_cards_view, name="archive_marked_cards"),
 ]

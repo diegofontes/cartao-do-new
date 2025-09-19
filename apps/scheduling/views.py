@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+import json
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 from django.utils.dateparse import parse_date
@@ -9,6 +10,7 @@ from zoneinfo import ZoneInfo
 from .slots import generate_slots
 from .forms import SchedulingServiceForm, ServiceAvailabilityForm
 from apps.cards.models import Card
+from django.core.exceptions import ValidationError
 
 
 @login_required
@@ -69,6 +71,8 @@ def services_partial(request, card_id):
 @login_required
 def service_form(request, card_id, id=None):
     card = get_object_or_404(Card, id=card_id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     if id:
         svc = get_object_or_404(SchedulingService, id=id, card=card)
     else:
@@ -82,20 +86,35 @@ def service_save(request, card_id, id=None):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
     card = get_object_or_404(Card, id=card_id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
     if id:
         svc = get_object_or_404(SchedulingService, id=id, card=card)
         form = SchedulingServiceForm(request.POST, instance=svc)
     else:
         form = SchedulingServiceForm(request.POST)
     if form.is_valid():
-        svc = form.save(commit=False)
-        svc.card = card
-        svc.save()
+        # Enforce per-card service limit (10) with a lock
+        from django.db import transaction
+        with transaction.atomic():
+            c = Card.objects.select_for_update().get(pk=card.pk)
+            if SchedulingService.objects.filter(card=c).count() >= 10:
+                res = render(request, "scheduling/_service_form.html", {"card": card, "form": form, "service": id and (svc if id else None), "error": "Limite atingido para serviços (10)."})
+                res.status_code = 422
+                res["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Limite atingido", "message": "Limite atingido para serviços (10)."}})
+                return res
+            svc = form.save(commit=False)
+            svc.card = c
+            svc.save()
         # after save, refresh the list
         services = SchedulingService.objects.filter(card=card).order_by("-created_at")
-        return render(request, "scheduling/_services.html", {"card": card, "services": services})
+        resp = render(request, "scheduling/_services.html", {"card": card, "services": services})
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Feito!", "message": "Serviço salvo."}})
+        return resp
     # invalid -> re-render form
-    return render(request, "scheduling/_service_form.html", {"card": card, "form": form, "service": id and svc})
+    res = render(request, "scheduling/_service_form.html", {"card": card, "form": form, "service": id and (svc if id else None)})
+    res.status_code = 422
+    return res
 
 
 @login_required

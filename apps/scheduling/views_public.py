@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 def _card(nickname: str) -> Card:
-    return get_object_or_404(Card, nickname__iexact=nickname, status="published")
+    return get_object_or_404(Card, nickname__iexact=nickname, status="published", deactivation_marked=False)
 
 
 def public_slots(request, nickname: str):

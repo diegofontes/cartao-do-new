@@ -8,15 +8,15 @@
     {% endif %}
     <div>
       <h1 style="margin:0">{{ card.title }}</h1>
-      <div class="muted">Status: {{ card.status }}</div>
+      <div class="muted">Status: {{ card.status }} {% if card.deactivation_marked %}<span class="badge">Marcado para desativação</span>{% endif %}</div>
     </div>
   </div>
   <!-- Ações desktop -->
   <div class="row" style="gap:8px; display:none" id="card-header">
     <form id="avatar-form" method="post" action="{% url 'cards:upload_avatar' card.id %}" enctype="multipart/form-data" hx-post="{% url 'cards:upload_avatar' card.id %}" hx-target="#card-header" hx-swap="outerHTML" class="row" style="gap:8px">
       {% csrf_token %}
-      <input id="avatar-file" type="file" name="avatar" accept="image/*" class="input" required onchange="this.form.requestSubmit()" />
-      <button class="btn">Trocar avatar</button>
+      <input id="avatar-file" type="file" name="avatar" accept="image/*" class="input" required onchange="this.form.requestSubmit()" {% if card.deactivation_marked %}disabled{% endif %} />
+      <button class="btn" {% if card.deactivation_marked %}disabled title="Bloqueado enquanto marcado"{% endif %}>Trocar avatar</button>
     </form>
   </div>
 
@@ -26,18 +26,36 @@
       <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-ellipsis"></use></svg>
     </summary>
     <div class="menu" role="menu">
-      <button role="menuitem" type="button" data-open-file="#avatar-file">Trocar avatar</button>
-      <a role="menuitem" href="{% url 'cards:edit' card.id %}">Editar</a>
+      <button role="menuitem" type="button" data-open-file="#avatar-file" {% if card.deactivation_marked %}disabled title="Bloqueado enquanto marcado"{% endif %}>Trocar avatar</button>
+      {% if card.deactivation_marked %}
+        <span role="menuitem" class="muted">Editar (bloqueado)</span>
+      {% else %}
+        <a role="menuitem" href="{% url 'cards:edit' card.id %}">Editar</a>
+      {% endif %}
       {% if card.status != 'published' %}
         <button role="menuitem" hx-get="{% url 'cards:publish_modal' card.id %}" hx-target="#publish-modal" hx-swap="innerHTML">Publicar</button>
       {% endif %}
       {% if card.status == 'published' and card.nickname %}
-        <a role="menuitem" href="{{ viewer_base }}/@{{ card.nickname }}" target="_blank" rel="noopener">Visualizar</a>
+        {% if card.deactivation_marked %}
+          <span role="menuitem" class="muted" title="Desativado para visualização pública">Visualizar (desabilitado)</span>
+        {% else %}
+          <a role="menuitem" href="{{ viewer_base }}/@{{ card.nickname }}" target="_blank" rel="noopener">Visualizar</a>
+        {% endif %}
       {% endif %}
-      <form role="none" method="post" action="{% url 'cards:delete' card.id %}" hx-post="{% url 'cards:delete' card.id %}" hx-confirm="Excluir este card? Isso removerá seus conteúdos." hx-target="#main" class="inline">
-        {% csrf_token %}
-        <button role="menuitem" style="width:100%;text-align:left">Excluir</button>
-      </form>
+      
+      {% if card.status == 'published' %}
+        {% if card.deactivation_marked %}
+          <form role="none" method="post" action="{% url 'cards:reactivate' card.id %}" hx-post="{% url 'cards:reactivate' card.id %}" class="inline">
+            {% csrf_token %}
+            <button role="menuitem" style="width:100%;text-align:left">Reativar</button>
+          </form>
+        {% else %}
+          <form role="none" method="post" action="{% url 'cards:mark_deactivation' card.id %}" hx-post="{% url 'cards:mark_deactivation' card.id %}" class="inline">
+            {% csrf_token %}
+            <button role="menuitem" style="width:100%;text-align:left">Marcar para desativação</button>
+          </form>
+        {% endif %}
+      {% endif %}
     </div>
   </details>
 </section>

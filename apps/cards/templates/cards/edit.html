@@ -4,17 +4,19 @@
 <form method="post" class="card" style="max-width:560px">
   {% csrf_token %}
   <h1 style="margin-top:0">Editar Card</h1>
+  {% if card.deactivation_marked %}
+    <div class="box" role="alert">Este card será arquivado após o fechamento do ciclo. Você pode reativar até lá.</div>
+  {% endif %}
   <label class="field">
     <span>Título</span>
-    <input name="title" class="input" required minlength="3" value="{{ card.title }}" />
+    <input name="title" class="input" required minlength="3" value="{{ card.title }}" {% if card.deactivation_marked %}disabled{% endif %} />
   </label>
   <label class="field">
     <span>Descrição</span>
-    <textarea name="description" class="textarea" rows="3">{{ card.description }}</textarea>
+    <textarea name="description" class="textarea" rows="3" {% if card.deactivation_marked %}disabled{% endif %}>{{ card.description }}</textarea>
   </label>
   <div class="row" style="justify-content:flex-end;margin-top:var(--space-3)">
-    <button class="btn primary">Salvar</button>
+    <button class="btn primary" {% if card.deactivation_marked %}disabled title="Edição bloqueada enquanto marcado"{% endif %}>Salvar</button>
   </div>
 </form>
 {% endblock %}
-

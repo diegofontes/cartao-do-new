@@ -19,6 +19,7 @@ Pillow = "^10.4.0"
 phonenumbers = "^8.13.40"
 whitenoise = "^6.6"
 psycopg = {version = "^3.1", extras = ["binary"]}
+standard-imghdr = "3.13.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

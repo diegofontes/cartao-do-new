@@ -48,16 +48,20 @@ def billing_run_daily(process_date_utc: dt.date | None = None) -> dict:
             skipped += 1
             continue
 
-        total_cents, events = compute_metering_amount_cents(prof.user, period_start, period_end)
+        # Create invoice if there is anything to bill (appointments and/or monthly cards)
         idem = _idem_key(prof.user_id, period_start, period_end)
 
-        inv = None
-        if total_cents > 0:
-            inv = create_and_pay_invoice_for_period(prof.user, period_start, period_end)
-            if inv:
-                inv.idempotency_key = idem
-                inv.save(update_fields=["idempotency_key"])
-                created += 1
+        inv = create_and_pay_invoice_for_period(prof.user, period_start, period_end)
+        if inv:
+            inv.idempotency_key = idem
+            inv.save(update_fields=["idempotency_key"])
+            created += 1
+            # Enqueue post-billing archival for marked cards
+            try:
+                from .tasks import billing_archive_marked_cards
+                billing_archive_marked_cards.delay(str(period_end))
+            except Exception:
+                pass
         # Advance last_billed_period_end regardless of invoice existence to move the window forward
         prof.last_billed_period_end = period_end
         prof.save(update_fields=["last_billed_period_end"])
@@ -80,15 +84,11 @@ def billing_run_for_user(user_id: int, process_date_utc: dt.date | None = None) 
     period_start = prof.last_billed_period_end or (prof.anchor_set_at.date() if prof.anchor_set_at else period_end)
     if Invoice.objects.filter(user_id=user_id, period_start=period_start, period_end=period_end).exists():
         return {"ok": True, "skipped": True}
-    total_cents, _ = compute_metering_amount_cents(prof.user, period_start, period_end)
     idem = _idem_key(user_id, period_start, period_end)
-    inv = None
-    if total_cents > 0:
-        inv = create_and_pay_invoice_for_period(prof.user, period_start, period_end)
-        if inv:
-            inv.idempotency_key = idem
-            inv.save(update_fields=["idempotency_key"])
+    inv = create_and_pay_invoice_for_period(prof.user, period_start, period_end)
+    if inv:
+        inv.idempotency_key = idem
+        inv.save(update_fields=["idempotency_key"])
     prof.last_billed_period_end = period_end
     prof.save(update_fields=["last_billed_period_end"])
     return {"ok": True, "invoice": bool(inv), "period": f"{period_start}..{period_end}"}
-

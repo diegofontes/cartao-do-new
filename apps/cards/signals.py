@@ -19,12 +19,11 @@ def card_publish_metering(sender, instance: Card, **kwargs):
 
 @receiver(post_save, sender=LinkButton)
 def link_button_created(sender, instance: LinkButton, created, **kwargs):
-    if created:
-        create_event(user=instance.card.owner, resource_type="link", event_type="link_add", card=instance.card)
+    # Billing for links disabled: do not create metering events
+    return
 
 
 @receiver(post_save, sender=GalleryItem)
 def gallery_item_created(sender, instance: GalleryItem, created, **kwargs):
-    if created:
-        create_event(user=instance.card.owner, resource_type="gallery", event_type="gallery_add", card=instance.card)
-
+    # Billing for gallery disabled: do not create metering events
+    return

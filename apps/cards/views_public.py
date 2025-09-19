@@ -5,7 +5,7 @@ from apps.scheduling.models import SchedulingService
 
 
 def _get_card_by_nickname(nickname: str) -> Card:
-    q = Card.objects.filter(nickname__iexact=nickname, status="published")
+    q = Card.objects.filter(nickname__iexact=nickname, status="published", deactivation_marked=False)
     return get_object_or_404(q)
 
 

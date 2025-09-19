@@ -12,6 +12,7 @@ from .services import create_setup_intent, attach_payment_method, get_or_create_
 from .models import UsageEvent, CustomerProfile
 from apps.metering.models import MeteringEvent
 from apps.metering.utils import resolve_unit_price
+from apps.cards.models import Card
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta, time
@@ -118,17 +119,18 @@ def _fmt_brl(cents: int) -> str:
 @login_required
 def kpis_view(request):
     start, end = _parse_range(request)
-    base = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end)
-    counts = {
-        "cards_published": base.filter(resource_type="card", event_type="publish").count(),
-        "appointments_confirmed": base.filter(resource_type="appointment", event_type="appointment_confirmed").count(),
-        "links_added": base.filter(resource_type="link", event_type="link_add").count(),
-        "gallery_items": base.filter(resource_type="gallery", event_type="gallery_add").count(),
-    }
-    subtotal_expr = ExpressionWrapper(F("quantity") * F("unit_price_cents"), output_field=IntegerField())
-    total_cents = base.aggregate(total=Sum(subtotal_expr)).get("total") or 0
+    # Cards faturáveis no fechamento: published (inclui marcados)
+    cards_published = Card.objects.filter(owner=request.user, status="published").count()
+    # Agendamentos aprovados no período (per-event)
+    base = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end, resource_type="appointment", event_type="appointment_confirmed")
+    appointments_confirmed = base.count()
+    # Valores (prévia): cards monthly + appointments
+    card_unit = resolve_unit_price("card", "publish", when=end)
+    appt_unit = resolve_unit_price("appointment", "appointment_confirmed", when=end)
+    total_cents = cards_published * (card_unit or 0) + appointments_confirmed * (appt_unit or 0)
     return render(request, "billing/_kpis.html", {
-        **counts,
+        "cards_published": cards_published,
+        "appointments_confirmed": appointments_confirmed,
         "total_cents": total_cents,
         "total_brl": _fmt_brl(total_cents),
     })
@@ -137,16 +139,18 @@ def kpis_view(request):
 @login_required
 def preview_view(request):
     start, end = _parse_range(request)
-    base = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end)
-    subtotal_expr = ExpressionWrapper(F("quantity") * F("unit_price_cents"), output_field=IntegerField())
-    rows = (
-        base.values("resource_type", "event_type")
-        .annotate(events=Count("id"), subtotal_cents=Sum(subtotal_expr))
-        .order_by("resource_type", "event_type")
-    )
-    total_cents = sum((r["subtotal_cents"] or 0) for r in rows)
-    for r in rows:
-        r["subtotal_brl"] = _fmt_brl(r.get("subtotal_cents") or 0)
+    # Build two-row preview: cards monthly and appointments per-event
+    rows = []
+    cards_published = Card.objects.filter(owner=request.user, status="published").count()
+    card_unit = resolve_unit_price("card", "publish", when=end)
+    cards_subtotal = cards_published * (card_unit or 0)
+    rows.append({"resource_type": "card", "event_type": "monthly_count", "events": cards_published, "subtotal_cents": cards_subtotal, "subtotal_brl": _fmt_brl(cards_subtotal)})
+    appts = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end, resource_type="appointment", event_type="appointment_confirmed")
+    appt_count = appts.count()
+    appt_unit = resolve_unit_price("appointment", "appointment_confirmed", when=end)
+    appt_subtotal = appt_count * (appt_unit or 0)
+    rows.append({"resource_type": "appointment", "event_type": "appointment_confirmed", "events": appt_count, "subtotal_cents": appt_subtotal, "subtotal_brl": _fmt_brl(appt_subtotal)})
+    total_cents = cards_subtotal + appt_subtotal
     return render(request, "billing/_preview.html", {
         "rows": rows,
         "total_cents": total_cents,
@@ -171,25 +175,14 @@ def self_checks_view(request):
     last_ts = last_ev.occurred_at if last_ev else None
     checks.append({"label": "Último evento recebido", "status": "OK" if last_ts else "WARN", "detail": last_ts or "Nenhum evento"})
 
-    # Publicação de card
+    # Publicação de card — billing não usa mais evento publish; removido
     from apps.cards.models import Card, LinkButton, GalleryItem
     from apps.scheduling.models import Appointment
     from django.db.models import Q
 
     window_q = Q(occurred_at__gte=start - timedelta(minutes=5), occurred_at__lt=end + timedelta(minutes=5))
 
-    cards = Card.objects.filter(owner=user, status="published", published_at__gte=start, published_at__lt=end)
-    missing_cards = []
-    dup_cards = []
-    for c in cards:
-        evs = MeteringEvent.objects.filter(user=user, resource_type="card", event_type="publish", card=c).filter(window_q)
-        if not evs.exists():
-            missing_cards.append(str(c.id))
-        elif evs.count() > 1:
-            dup_cards.append(str(c.id))
-    status = "OK" if not missing_cards and not dup_cards else "WARN"
-    detail = "OK" if status == "OK" else f"Faltando: {', '.join(missing_cards)}; Duplicados: {', '.join(dup_cards)}"
-    checks.append({"label": "Card publicado → evento publish", "status": status, "detail": detail})
+    # Removido: publish events não são mais faturados
 
     # Agendamento confirmado
     appts = Appointment.objects.filter(service__card__owner=user, status="confirmed", updated_at__gte=start, updated_at__lt=end)
@@ -200,31 +193,37 @@ def self_checks_view(request):
             missing_ap.append(str(ap.id))
     checks.append({"label": "Agendamento confirmado → appointment_confirmed", "status": "OK" if not missing_ap else "WARN", "detail": "OK" if not missing_ap else f"Faltando: {', '.join(missing_ap)}"})
 
-    # Link criado
-    links = LinkButton.objects.filter(card__owner=user, created_at__gte=start, created_at__lt=end)
-    missing_links = []
-    for lb in links:
-        evs = MeteringEvent.objects.filter(user=user, resource_type="link", event_type="link_add", card=lb.card).filter(window_q)
-        if not evs.exists():
-            missing_links.append(str(lb.id))
-    checks.append({"label": "Link criado → link_add", "status": "OK" if not missing_links else "WARN", "detail": "OK" if not missing_links else f"Faltando: {', '.join(missing_links)}"})
-
-    # Item de galeria criado
-    items = GalleryItem.objects.filter(card__owner=user, created_at__gte=start, created_at__lt=end)
-    missing_g = []
-    for gi in items:
-        evs = MeteringEvent.objects.filter(user=user, resource_type="gallery", event_type="gallery_add", card=gi.card).filter(window_q)
-        if not evs.exists():
-            missing_g.append(str(gi.id))
-    checks.append({"label": "Item de galeria criado → gallery_add", "status": "OK" if not missing_g else "WARN", "detail": "OK" if not missing_g else f"Faltando: {', '.join(missing_g)}"})
+    # Removidos: link/gallery não são faturados
 
     # Integridade de preço histórico
     mismatched = []
-    evs = MeteringEvent.objects.filter(user=user, occurred_at__gte=start, occurred_at__lt=end)
+    evs = MeteringEvent.objects.filter(user=user, occurred_at__gte=start, occurred_at__lt=end, resource_type="appointment", event_type="appointment_confirmed")
     for ev in evs.only("id", "resource_type", "event_type", "occurred_at", "unit_price_cents"):
         ref = resolve_unit_price(ev.resource_type, ev.event_type, when=ev.occurred_at)
         if (ev.unit_price_cents or 0) != (ref or 0):
             mismatched.append(str(ev.id))
     checks.append({"label": "Preço aplicado compatível com regra vigente", "status": "OK" if not mismatched else "WARN", "detail": "OK" if not mismatched else f"Eventos divergentes: {', '.join(mismatched)}"})
+
+
+@login_required
+def archive_marked_cards_view(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required")
+    period_end_raw = request.GET.get("period_end") or request.POST.get("period_end")
+    if not period_end_raw:
+        return HttpResponseBadRequest("period_end required (YYYY-MM-DD)")
+    try:
+        pe = timezone.datetime.fromisoformat(period_end_raw).date()
+    except Exception:
+        return HttpResponseBadRequest("invalid period_end")
+    user_id = request.GET.get("user_id") or request.POST.get("user_id")
+    try:
+        uid = int(user_id) if user_id else None
+    except Exception:
+        uid = None
+    # Run synchronously (internal use)
+    from .tasks import run_archive_marked_cards
+    res = run_archive_marked_cards(pe, uid)
+    return JsonResponse(res)
 
     return render(request, "billing/_self_checks.html", {"checks": checks})

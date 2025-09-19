@@ -141,6 +141,10 @@ TAILWIND_APP_NAME = "theme"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Upload constraints (configurable)
+ALLOWED_IMAGE_MIME_TYPES = {"image/jpeg", "image/png"}
+MAX_UPLOAD_BYTES = 2 * 1024 * 1024  # 2MB
+
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"
 

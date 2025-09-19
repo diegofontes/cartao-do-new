@@ -27,6 +27,12 @@ class Card(BaseModel):
     nickname = models.CharField(max_length=32, blank=True, null=True, db_index=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
     published_at = models.DateTimeField(blank=True, null=True)
+    # Deactivation/archival lifecycle
+    deactivation_marked = models.BooleanField(default=False)
+    deactivation_marked_at = models.DateTimeField(blank=True, null=True)
+    archived_at = models.DateTimeField(blank=True, null=True)
+    archived_reason = models.TextField(blank=True, null=True)
+    nickname_locked_until = models.DateTimeField(blank=True, null=True)
     # Comma-separated order for public tabs (links,gallery,services)
     tabs_order = models.CharField(max_length=64, default="links,gallery,services")
 

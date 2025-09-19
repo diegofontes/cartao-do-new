@@ -10,6 +10,8 @@ from zoneinfo import ZoneInfo
 
 from .models import CustomerProfile, UsageEvent, Invoice, InvoiceLine
 from apps.metering.models import MeteringEvent
+from apps.metering.utils import resolve_unit_price
+from apps.cards.models import Card
 
 User = get_user_model()
 log = logging.getLogger(__name__)
@@ -99,9 +101,11 @@ def compute_amount_cents(units: int) -> int:
 
 
 def get_unbilled_metering_events(user: User, start: dt.date, end: dt.date):
+    # Only appointments are billable by metering now
     return (
         MeteringEvent.objects
         .filter(user=user, occurred_at__date__gte=start, occurred_at__date__lte=end)
+        .filter(resource_type="appointment", event_type="appointment_confirmed")
         .filter(invoice_line__isnull=True)
         .order_by("occurred_at")
     )
@@ -119,10 +123,12 @@ def create_and_pay_invoice_for_period(user: User, start: dt.date, end: dt.date) 
         return None  # não há cartão cadastrado, não fatura
 
     # Prefer metering aggregation; fallback to legacy usage units
-    amount_cents, events = compute_metering_amount_cents(user, start, end)
+    appt_amount_cents, events = compute_metering_amount_cents(user, start, end)
     created_items = []
-    if amount_cents > 0:
-        # Group events by (resource_type, event_type) for transparency
+    period_label = f"{start.strftime('%Y-%m-%d')} a {end.strftime('%Y-%m-%d')}"
+
+    # Appointments per-event items (grouped for transparency)
+    if appt_amount_cents > 0:
         from collections import defaultdict
         groups = defaultdict(list)
         for e in events:
@@ -131,30 +137,34 @@ def create_and_pay_invoice_for_period(user: User, start: dt.date, end: dt.date) 
             group_amount = sum(e.quantity * e.unit_price_cents for e in evs)
             if group_amount <= 0:
                 continue
-            desc = f"{rtype}:{etype} x{sum(e.quantity for e in evs)} — {start.strftime('%Y-%m-%d')} a {end.strftime('%Y-%m-%d')}"
+            desc_group = f"{rtype}:{etype} x{sum(e.quantity for e in evs)} — {period_label}"
             created_items.append(
                 stripe.InvoiceItem.create(
                     customer=prof.stripe_customer_id,
                     amount=group_amount,
                     currency=getattr(settings, "DEFAULT_CURRENCY", "usd"),
-                    description=desc,
+                    description=desc_group,
                 )
             )
-    else:
-        # Legacy usage fallback
-        units = compute_usage_units(user, start, end)
-        amount_cents = compute_amount_cents(units)
-        if amount_cents <= 0:
-            return None
-        desc = f"Consumo {start.strftime('%Y-%m-%d')} a {end.strftime('%Y-%m-%d')} ({units} unidades)"
+
+    # Monthly cards count (published at period end, includes marked for deactivation)
+    cards_count = Card.objects.filter(owner=user, status="published").count()
+    card_unit_price = resolve_unit_price("card", "publish", when=timezone.datetime.combine(end, timezone.datetime.min.time(), tzinfo=timezone.get_current_timezone()))
+    cards_amount_cents = cards_count * (card_unit_price or 0)
+    if cards_amount_cents > 0:
+        desc_cards = f"cards:monthly_count x{cards_count} — {period_label}"
         created_items.append(
             stripe.InvoiceItem.create(
                 customer=prof.stripe_customer_id,
-                amount=amount_cents,
+                amount=cards_amount_cents,
                 currency=getattr(settings, "DEFAULT_CURRENCY", "usd"),
-                description=desc,
+                description=desc_cards,
             )
         )
+
+    total_amount_cents = appt_amount_cents + cards_amount_cents
+    if total_amount_cents <= 0:
+        return None
     inv = stripe.Invoice.create(
         customer=prof.stripe_customer_id,
         collection_method="charge_automatically",
@@ -165,7 +175,7 @@ def create_and_pay_invoice_for_period(user: User, start: dt.date, end: dt.date) 
         currency=getattr(settings, "DEFAULT_CURRENCY", "usd"),
         # Usa o método padrão salvo no perfil para esta fatura
         default_payment_method=prof.default_payment_method,
-        description=desc,
+        description=f"Faturamento do período {period_label}",
     )
     # Finalize to attempt payment immediately
     inv = stripe.Invoice.finalize_invoice(inv["id"])
@@ -183,7 +193,7 @@ def create_and_pay_invoice_for_period(user: User, start: dt.date, end: dt.date) 
     invoice = Invoice.objects.create(
         user=user,
         stripe_invoice_id=inv["id"],
-        amount_cents=amount_cents,
+        amount_cents=total_amount_cents,
         currency=inv.get("currency") or getattr(settings, "DEFAULT_CURRENCY", "usd"),
         period_start=start,
         period_end=end,

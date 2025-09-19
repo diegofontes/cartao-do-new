@@ -5,10 +5,17 @@
 <section class="card">
   <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
     <h1 style="margin:0">Meus Cards</h1>
-    <a href="{% url 'cards:create' %}" class="btn">
-      <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-plus"></use></svg>
-      Novo Card
-    </a>
+    <div class="row" style="gap:8px;align-items:center">
+      {% if show_archived %}
+        <a href="{% url 'cards:list' %}" class="btn ghost">Ocultar arquivados</a>
+      {% else %}
+        <a href="{% url 'cards:list' %}?show_archived=1" class="btn ghost">Visualizar arquivados</a>
+      {% endif %}
+      <a href="{% url 'cards:create' %}" class="btn">
+        <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-plus"></use></svg>
+        Novo Card
+      </a>
+    </div>
   </div>
   <ul class="grid" style="grid-template-columns:1fr;gap:10px">
     {% for c in cards %}
@@ -22,6 +29,9 @@
           <div>
             <a href="{% url 'cards:detail' c.id %}" class="underline">{{ c.title }}</a>
             <span class="muted">({{ c.status }})</span>
+            {% if c.deactivation_marked %}
+              <span class="badge" style="margin-left:8px">Marcado para desativação</span>
+            {% endif %}
           </div>
         </div>
 
@@ -32,13 +42,30 @@
           </summary>
           <div class="menu" role="menu">
             {% if c.status == 'published' and c.nickname %}
-              <a role="menuitem" href="{{ viewer_base }}/@{{ c.nickname }}" target="_blank" rel="noopener">Visualizar</a>
+              {% if c.deactivation_marked %}
+                <span role="menuitem" class="muted" title="Desativado para visualização pública">Visualizar (desabilitado)</span>
+              {% else %}
+                <a role="menuitem" href="{{ viewer_base }}/@{{ c.nickname }}" target="_blank" rel="noopener">Visualizar</a>
+              {% endif %}
             {% endif %}
-            <a role="menuitem" href="{% url 'cards:edit' c.id %}">Editar</a>
-            <form role="none" method="post" action="{% url 'cards:delete' c.id %}" hx-post="{% url 'cards:delete' c.id %}" hx-confirm="Excluir este card?" hx-target="#main" class="inline">
-              {% csrf_token %}
-              <button role="menuitem" style="width:100%;text-align:left">Excluir</button>
-            </form>
+            {% if c.deactivation_marked %}
+              <span role="menuitem" class="muted" title="Edição bloqueada">Editar (bloqueado)</span>
+            {% else %}
+              <a role="menuitem" href="{% url 'cards:edit' c.id %}">Editar</a>
+            {% endif %}
+            {% if c.status == 'published' %}
+              {% if c.deactivation_marked %}
+                <form role="none" method="post" action="{% url 'cards:reactivate' c.id %}" hx-post="{% url 'cards:reactivate' c.id %}" class="inline">
+                  {% csrf_token %}
+                  <button role="menuitem" style="width:100%;text-align:left">Reativar</button>
+                </form>
+              {% else %}
+                <form role="none" method="post" action="{% url 'cards:mark_deactivation' c.id %}" hx-post="{% url 'cards:mark_deactivation' c.id %}" class="inline">
+                  {% csrf_token %}
+                  <button role="menuitem" style="width:100%;text-align:left">Marcar para desativação</button>
+                </form>
+              {% endif %}
+            {% endif %}
             <a role="menuitem" href="{% url 'cards:detail' c.id %}">Abrir</a>
           </div>
         </details>
