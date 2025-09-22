@@ -45,7 +45,10 @@ def create_card(request):
         while Card.objects.filter(owner=request.user, slug=candidate).exists():
             candidate = f"{base}-{i}"
             i += 1
-        card = Card.objects.create(owner=request.user, title=title, description=description, slug=candidate)
+        mode = request.POST.get("mode") or "appointment"
+        if mode not in {"appointment", "delivery"}:
+            mode = "appointment"
+        card = Card.objects.create(owner=request.user, title=title, description=description, slug=candidate, mode=mode)
         return redirect("cards:detail", id=card.id)
     return render(request, "cards/create.html")
 
@@ -60,11 +63,30 @@ def edit_card(request, id):
     if request.method == "POST":
         title = (request.POST.get("title") or "").strip()
         description = (request.POST.get("description") or "").strip()
+        mode = (request.POST.get("mode") or card.mode or "appointment").strip()
         if len(title) < 3:
             return HttpResponseBadRequest("Invalid title")
+        # Normalize mode
+        if mode not in {"appointment", "delivery"}:
+            mode = card.mode or "appointment"
+        # If switching modes, optionally normalize tabs_order defaults
+        changing_mode = (mode != (card.mode or "appointment"))
         card.title = title
         card.description = description
-        card.save(update_fields=["title", "description"])
+        card.mode = mode
+        update_fields = ["title", "description", "mode"]
+        # Adjust tabs order only if it matches the previous default or empty
+        prev_default = "links,gallery,services"
+        new_default = "menu,links,gallery"
+        current_tabs = (card.tabs_order or prev_default)
+        if changing_mode:
+            if mode == "delivery" and current_tabs in {"", prev_default}:
+                card.tabs_order = new_default
+                update_fields.append("tabs_order")
+            elif mode == "appointment" and current_tabs in {"", new_default}:
+                card.tabs_order = prev_default
+                update_fields.append("tabs_order")
+        card.save(update_fields=update_fields)
         return redirect("cards:detail", id=card.id)
     return render(request, "cards/edit.html", {"card": card})
 
@@ -444,8 +466,13 @@ def delete_social_link(request, link_id):
 @login_required
 def tabs_partial(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
-    allowed = ["links", "gallery", "services"]
-    order = [k for k in (card.tabs_order or "links,gallery,services").split(",") if k in allowed]
+    if getattr(card, "mode", "appointment") == "delivery":
+        allowed = ["menu", "links", "gallery"]
+        default_order = "menu,links,gallery"
+    else:
+        allowed = ["links", "gallery", "services"]
+        default_order = "links,gallery,services"
+    order = [k for k in (card.tabs_order or default_order).split(",") if k in allowed]
     # Normalize to full permutation if missing any
     for k in allowed:
         if k not in order:
@@ -460,7 +487,7 @@ def set_tabs_order(request, id):
     if getattr(card, "deactivation_marked", False):
         return HttpResponseForbidden("Card marked for deactivation")
     raw = (request.POST.get("tabs_order") or "").strip()
-    allowed = ["links", "gallery", "services"]
+    allowed = ["menu", "links", "gallery"] if getattr(card, "mode", "appointment") == "delivery" else ["links", "gallery", "services"]
     parts = [p.strip() for p in raw.split(",") if p.strip()]
     # accept values like "links,gallery,services" or space separated
     if not parts and raw:

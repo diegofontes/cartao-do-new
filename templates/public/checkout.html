@@ -1,0 +1,53 @@
+{% load static %}
+<div class="drawer" role="dialog" aria-modal="true">
+  <div class="drawer-content">
+    <header class="drawer-header">
+      <h3>Checkout</h3>
+      <button class="btn" onclick="this.closest('.drawer').remove()" aria-label="Fechar">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-x"></use></svg>
+      </button>
+    </header>
+    <div class="drawer-body">
+      {% if cart.items %}
+      <ul class="list">
+        {% for li in cart.items %}
+        <li class="row between">
+          <div>
+            <div class="strong">{{ li.item.name }}</div>
+            <div class="muted">R$ {{ li.unit_price_cents|floatformat:-2 }} x {{ li.qty }}</div>
+          </div>
+          <div>R$ {{ li.line_subtotal_cents|floatformat:-2 }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="row between mt-3"><div class="strong">Subtotal</div><div>R$ {{ cart.subtotal_cents|floatformat:-2 }}</div></div>
+      <form class="grid mt-3" style="grid-template-columns:1fr;gap:10px" hx-post="{% url 'delivery_checkout_submit' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+        <input type="text" name="name" placeholder="Seu nome" required />
+        <input type="tel" name="phone" placeholder="Telefone" required />
+        <input type="email" name="email" placeholder="E-mail (opcional)" />
+        <label>
+          Retirada ou entrega?
+          <select name="fulfillment" id="ff-select" onchange="document.getElementById('addr').hidden = this.value!=='delivery'">
+            <option value="pickup">Retirar</option>
+            <option value="delivery">Entrega</option>
+          </select>
+        </label>
+        <div id="addr" hidden>
+          <input type="text" name="cep" placeholder="CEP" />
+          <input type="text" name="logradouro" placeholder="Logradouro" />
+          <input type="text" name="numero" placeholder="Número" />
+          <input type="text" name="complemento" placeholder="Complemento" />
+          <input type="text" name="bairro" placeholder="Bairro" />
+          <input type="text" name="cidade" placeholder="Cidade" />
+          <input type="text" name="uf" placeholder="UF" />
+        </div>
+        <textarea name="notes" rows="3" placeholder="Observações"></textarea>
+        <button type="submit" class="btn primary">Confirmar pedido</button>
+      </form>
+      {% else %}
+      <p class="muted">Seu carrinho está vazio.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+

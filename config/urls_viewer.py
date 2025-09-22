@@ -4,6 +4,7 @@ from apps.media import urls as media_urls
 from apps.cards import views_public as card_public
 from apps.scheduling import views_public as booking_public
 from apps.pages import urls_public as pages_public
+from apps.delivery import views_public as delivery_public
 
 urlpatterns = [
     path("img/", include((media_urls, "media"), namespace="media")),
@@ -14,6 +15,17 @@ urlpatterns = [
     # Auth endpoints for login/signup in the public viewer
     path("auth/", include(("apps.accounts.auth_urls", "accounts"), namespace="accounts")),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/?$", card_public.card_public, name="card_public"),
+    # Delivery viewer endpoints
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/item/(?P<slug>[a-z0-9\-_.]{1,160})$", delivery_public.item_modal, name="delivery_item_modal"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/cart$", delivery_public.cart_drawer, name="delivery_cart"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/cart/sidebar$", delivery_public.cart_sidebar, name="delivery_cart_sidebar"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/cart/add$", delivery_public.cart_add, name="delivery_cart_add"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/cart/update$", delivery_public.cart_update, name="delivery_cart_update"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/checkout$", delivery_public.checkout_form, name="delivery_checkout_form"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/checkout/submit$", delivery_public.checkout_submit, name="delivery_checkout_submit"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/cep$", delivery_public.cep_lookup_public, name="delivery_cep_lookup"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/checkout/send-code$", delivery_public.delivery_send_code, name="delivery_send_code"),
+    re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/checkout/verify-code$", delivery_public.delivery_verify_code, name="delivery_verify_code"),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/slots$", booking_public.public_slots, name="public_slots"),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/appointments$", booking_public.public_create_appointment, name="public_create_appointment"),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/book$", booking_public.public_book_modal, name="public_book_modal"),

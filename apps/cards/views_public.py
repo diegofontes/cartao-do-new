@@ -1,7 +1,16 @@
 from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from .models import Card, LinkButton, SocialLink, GalleryItem
 from apps.scheduling.models import SchedulingService
+
+#from apps.delivery.views_public import menu_home as delivery_menu_home
+
+try:
+    # Optional import to delegate to delivery menu renderer
+    from apps.delivery.views_public import menu_home as delivery_menu_home
+except Exception:  # pragma: no cover - delivery app may not be loaded in some contexts
+    delivery_menu_home = None
 
 
 def _get_card_by_nickname(nickname: str) -> Card:
@@ -9,17 +18,21 @@ def _get_card_by_nickname(nickname: str) -> Card:
     return get_object_or_404(q)
 
 
+@ensure_csrf_cookie
 def card_public(request, nickname: str):
     card = _get_card_by_nickname(nickname)
+    print(card.mode, delivery_menu_home)
+    if getattr(card, "mode", "appointment") == "delivery" and delivery_menu_home:
+        return delivery_menu_home(request, nickname)
     links = LinkButton.objects.filter(card=card).order_by("order", "created_at")
     socials = SocialLink.objects.filter(card=card, is_active=True).order_by("order", "created_at")
     gallery = GalleryItem.objects.filter(card=card).order_by("order", "created_at")
-    services = SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at")
-    allowed = ("links", "gallery", "services")
+    services = SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at") if card.mode != "delivery" else []
+    allowed = ("links", "gallery") + (("services",) if card.mode != "delivery" else tuple())
     raw_order = (card.tabs_order or "links,gallery,services")
     tab_order = [k.strip() for k in raw_order.split(',') if k.strip() in allowed]
     if not tab_order:
-        tab_order = ["links", "gallery", "services"]
+        tab_order = ["links", "gallery"] + (["services"] if card.mode != "delivery" else [])
     return render(request, "public/card_public.html", {
         "card": card,
         "links": links,
@@ -41,5 +54,9 @@ def tabs_gallery(request, nickname: str):
 
 def tabs_services(request, nickname: str):
     card = _get_card_by_nickname(nickname)
+    if card.mode == "delivery":
+        # Services tab not available for delivery-mode cards
+        from django.http import Http404
+        raise Http404()
     services = SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at")
     return render(request, "public/tabs_services.html", {"card": card, "services": services})

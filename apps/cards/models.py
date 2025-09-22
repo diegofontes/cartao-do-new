@@ -13,6 +13,10 @@ class Card(BaseModel):
         ("published", "Published"),
         ("archived", "Archived"),
     ]
+    MODE_CHOICES = [
+        ("appointment", "Appointment"),
+        ("delivery", "Delivery"),
+    ]
 
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cards")
     title = models.CharField(max_length=120)
@@ -26,6 +30,8 @@ class Card(BaseModel):
     slug = models.SlugField(max_length=120)
     nickname = models.CharField(max_length=32, blank=True, null=True, db_index=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    # Mode determines viewer/admin features: appointment scheduling or delivery menu
+    mode = models.CharField(max_length=20, choices=MODE_CHOICES, default="appointment")
     published_at = models.DateTimeField(blank=True, null=True)
     # Deactivation/archival lifecycle
     deactivation_marked = models.BooleanField(default=False)
@@ -60,6 +66,10 @@ class Card(BaseModel):
         self.status = "published"
         self.published_at = timezone.now()
         self.save(update_fields=["status", "published_at"])
+
+    @property
+    def is_delivery(self) -> bool:
+        return self.mode == "delivery"
 
 
 class CardAddress(BaseModel):

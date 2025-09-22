@@ -1,0 +1,81 @@
+{% load static currency %}
+<div class="slideover" role="dialog" aria-modal="true" aria-labelledby="co-title">
+  <header class="slideover-header">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 id="co-title" class="title" style="font-size:1.25rem;margin:0">Finalizar pedido</h2>
+      <button class="btn" data-close-slideover aria-label="Fechar">✕</button>
+    </div>
+  </header>
+  <div class="slideover-body">
+    {% if cart.items %}
+    <div class="stack" style="gap:12px">
+      <ul class="list" style="display:flex;flex-direction:column;gap:8px">
+        {% for li in cart.items %}
+          <li class="row between">
+            <div>
+              <div class="strong">{{ li.item.name }}</div>
+              <div class="muted">{{ li.unit_price_cents|brl_cents }} x {{ li.qty }}</div>
+            </div>
+            <div>{{ li.line_subtotal_cents|brl_cents }}</div>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="row between"><div class="strong">Subtotal</div><div>{{ cart.subtotal_cents|brl_cents }}</div></div>
+      <form class="stack" style="gap:10px" hx-post="{% url 'delivery_checkout_submit' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+        {% csrf_token %}
+        <label class="field"><span>Nome</span><input class="input" type="text" name="name" required /></label>
+        <fieldset class="box" >
+          <label class="field"><span>Telefone (BR/E.164)</span>
+            <input class="input" name="phone" id="co-phone" inputmode="tel" placeholder="+55 11 9XXXX-XXXX" required />
+          </label>
+          <div id="verify-dv"  data-verified="{% if phone_verified %}true{% else %}false{% endif %}"
+               hx-post="{% url 'delivery_send_code' card.nickname %}"
+               hx-trigger="click from:#send-sms-dv"
+               hx-include="closest form"
+               hx-target="#verify-dv" hx-swap="innerHTML">
+            <button type="button" id="send-sms-dv" class="btn">Enviar código</button>
+          </div>
+        </fieldset>
+        <label class="field"><span>E-mail (opcional)</span><input class="input" type="email" name="email" /></label>
+        <label class="field">
+          <span>Retirada ou entrega?</span>
+          <select name="fulfillment" id="ff-select" class="select" onchange="document.getElementById('addr').hidden = this.value!=='delivery'">
+            <option value="pickup">Retirar</option>
+            <option value="delivery">Entrega</option>
+          </select>
+        </label>
+        <div id="addr" hidden class="stack" style="gap:8px">
+          <label class="field"><span>CEP</span>
+            <input class="input" type="text" name="cep" id="co-cep"
+                   hx-get="{% url 'delivery_cep_lookup' card.nickname %}"
+                   hx-target="#addr-fields" hx-include="#co-cep" hx-trigger="change, keyup changed delay:600ms" placeholder="00000-000" />
+          </label>
+          <div id="addr-fields">
+            {% include 'public/_checkout_addr_fields.html' %}
+          </div>
+        </div>
+        <label class="field"><span>Observações</span><textarea class="textarea" name="notes" rows="3"></textarea></label>
+        <div class="row" style="justify-content:flex-end"><button id="co-submit" class="btn primary" {% if not phone_verified %}disabled{% endif %}>Concluir pedido</button></div>
+      </form>
+    </div>
+    {% else %}
+      <p class="muted">Seu carrinho está vazio.</p>
+    {% endif %}
+  </div>
+  <script>
+    (function(){
+      function updateSubmit(){
+        var v = document.getElementById('verify-dv');
+        var ok = v && v.getAttribute('data-verified') === 'true';
+        var btn = document.getElementById('co-submit');
+        if(btn){ btn.disabled = !ok; }
+      }
+      document.addEventListener('htmx:afterSwap', function(evt){
+        if (evt?.detail?.target && evt.detail.target.id === 'verify-dv'){
+          updateSubmit();
+        }
+      });
+      updateSubmit();
+    })();
+  </script>
+</div>

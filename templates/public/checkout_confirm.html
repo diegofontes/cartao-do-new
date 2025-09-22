@@ -1,0 +1,16 @@
+{% load static %}
+<div class="drawer" role="dialog" aria-modal="true">
+  <div class="drawer-content">
+    <header class="drawer-header">
+      <h3>Pedido criado</h3>
+      <button class="btn" onclick="this.closest('.drawer').remove()" aria-label="Fechar">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-x"></use></svg>
+      </button>
+    </header>
+    <div class="drawer-body">
+      <p>Obrigado! Seu código é <strong>{{ order.code }}</strong>.</p>
+      <p>Você receberá a confirmação em breve.</p>
+    </div>
+  </div>
+</div>
+

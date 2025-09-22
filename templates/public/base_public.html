@@ -8,8 +8,25 @@
     <link rel="stylesheet" href="{% static 'public/styles.css' %}">
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <script defer src="{% static 'public/viewer.js' %}"></script>
+    <script>
+      // CSRF helper for HTMX in the public viewer (uses viewer_csrftoken cookie)
+      (function(){
+        function getCookie(name){
+          var m = document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');
+          return m ? m.pop() : '';
+        }
+        document.addEventListener('htmx:configRequest', function(evt){
+          try{
+            var token = getCookie('viewer_csrftoken') || getCookie('csrftoken');
+            if(token){ evt.detail.headers['X-CSRFToken'] = token; }
+            evt.detail.credentials = 'same-origin';
+          }catch(_){ }
+        });
+      })();
+    </script>
   </head>
   <body>
+    <div class="toasts" id="toasts"></div>
     <main id="main" class="container">
       {% block content %}{% endblock %}
     </main>
@@ -23,4 +40,33 @@
       </div>
     </footer>
   </body>
+  <script>
+    (function(){
+      function showToast(type, title, message){
+        var box = document.getElementById('toasts'); if(!box) return;
+        var el = document.createElement('div');
+        el.className = 'toast ' + (type === 'error' ? 'err' : 'ok');
+        el.innerHTML = '<div class="toast-copy"><div class="title"></div>' + (message?'<div class="msg"></div>':'') + '</div>' +
+                       '<button type="button" class="toast-close" aria-label="Fechar aviso"><span aria-hidden="true">&times;</span></button>';
+        el.querySelector('.title').textContent = title || (type==='error'?'Erro':'Sucesso');
+        if(message){ el.querySelector('.msg').textContent = message; }
+        el.querySelector('.toast-close').addEventListener('click', function(){ el.remove(); });
+        box.appendChild(el);
+        setTimeout(function(){ el.remove(); }, type==='error'?7000:5000);
+      }
+      function parseFlash(xhr){
+        var keys=['HX-Trigger','HX-Trigger-After-Settle','HX-Trigger-After-Response'];
+        for(var i=0;i<keys.length;i++){
+          var raw = xhr.getResponseHeader(keys[i]); if(!raw) continue;
+          try { var data = JSON.parse(raw); var flash = data.flash || data['flash:after'] || data['flash:response']; if(flash) return flash; } catch(e){}
+        }
+        return null;
+      }
+      document.body.addEventListener('htmx:afterRequest', function(e){
+        var xhr = e.detail && e.detail.xhr; if(!xhr) return;
+        var flash = parseFlash(xhr); if(!flash) return;
+        showToast(flash.type==='error'?'error':'ok', flash.title, flash.message);
+      });
+    })();
+  </script>
 </html>

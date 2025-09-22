@@ -1,0 +1,190 @@
+<div class="delivery-grid">
+  <!-- Formulários (coluna 1) -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+      <h2 style="margin:0">Formulários</h2>
+    </div>
+    <div class="stack" style="gap:12px">
+    <!-- Novo grupo -->
+    <form hx-post="{% url 'delivery:add_group' card.id %}" hx-target="#menu" hx-swap="innerHTML" class="stack" style="gap:6px">
+      {% csrf_token %}
+      <div class="field">
+        <span>Novo grupo</span>
+        <input type="text" name="name" placeholder="Nome do grupo" aria-label="Nome do grupo" class="input" required />
+      </div>
+      <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn primary">Adicionar</button></div>
+    </form>
+    <!-- Novo item -->
+    <form hx-post="{% url 'delivery:add_item' card.id %}" hx-encoding="multipart/form-data" enctype="multipart/form-data" hx-target="#menu" hx-swap="innerHTML" class="stack" style="gap:6px">
+      {% csrf_token %}
+      <div class="field">
+        <span>Novo item</span>
+        <select name="group_id" aria-label="Grupo" class="input" required>
+          <option value="" disabled selected>Selecione o grupo</option>
+          {% for g in groups %}
+          <option value="{{ g.id }}">{{ g.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <span>Nome</span>
+        <input type="text" name="name" placeholder="Nome" class="input" required />
+      </div>
+      <div class="field">
+        <span>Preço (centavos)</span>
+        <input type="number" name="base_price_cents" placeholder="Preço (centavos)" class="input" min="0" required />
+      </div>
+      <div class="field">
+        <span>Imagem (JPEG/PNG até 2MB)</span>
+        <input type="file" name="image" accept="image/jpeg,image/png" class="input" />
+      </div>
+      <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn">Adicionar</button></div>
+    </form>
+    <!-- Novo grupo de modificadores -->
+    <form hx-post="{% url 'delivery:add_modifier_group' card.id %}" hx-target="#menu" hx-swap="innerHTML" class="stack" style="gap:6px">
+      {% csrf_token %}
+      <div class="field">
+        <span>Novo grupo de opções</span>
+        <select name="item_id" aria-label="Item" class="input" required>
+          <option value="" disabled selected>Selecione o item</option>
+          {% for g in groups %}
+            {% for it in g.items.all %}
+              <option value="{{ it.id }}">{{ g.name }} — {{ it.name }}</option>
+            {% endfor %}
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <span>Nome do grupo</span>
+        <input type="text" name="name" placeholder="Nome do grupo" class="input" required />
+      </div>
+      <div class="field">
+        <span>Tipo</span>
+        <select name="type" class="input">
+          <option value="single">Única</option>
+          <option value="multi">Múltipla</option>
+          <option value="text">Texto</option>
+        </select>
+      </div>
+      <div class="field">
+        <span>Mínimo de escolhas</span>
+        <input type="number" name="min_choices" placeholder="Mín." class="input" min="0" />
+      </div>
+      <div class="field">
+        <span>Máximo de escolhas</span>
+        <input type="number" name="max_choices" placeholder="Máx." class="input" min="0" />
+      </div>
+      <label class="row" style="gap:4px;align-items:center"><input type="checkbox" name="required" /> obrigatório</label>
+      <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn">Adicionar</button></div>
+    </form>
+    <!-- Nova opção de modificador -->
+    <form hx-post="{% url 'delivery:add_modifier_option' card.id %}" hx-target="#menu" hx-swap="innerHTML" class="stack" style="gap:6px">
+      {% csrf_token %}
+      <div class="field">
+        <span>Nova opção</span>
+        <select name="modifier_group_id" aria-label="Grupo de opções" class="input" required>
+          <option value="" disabled selected>Selecione o grupo</option>
+          {% for g in groups %}
+            {% for it in g.items.all %}
+              {% for mg in it.modifier_groups.all %}
+                <option value="{{ mg.id }}">{{ g.name }} — {{ it.name }} — {{ mg.name }}</option>
+              {% endfor %}
+            {% endfor %}
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <span>Rótulo</span>
+        <input type="text" name="label" placeholder="Rótulo" class="input" required />
+      </div>
+      <div class="field">
+        <span>Delta (centavos)</span>
+        <input type="number" name="price_delta_cents" placeholder="Delta (centavos)" class="input" />
+      </div>
+      <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn">Adicionar</button></div>
+    </form>
+  </div>
+  </section>
+
+  <!-- Cardápio (coluna 2) -->
+  <section id="menu" class="card">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+      <h2 style="margin:0">Cardápio (Delivery)</h2>
+    </div>
+    {% if groups %}
+    <ul class="grid" style="grid-template-columns:1fr;gap:10px">
+      {% for g in groups %}
+      <li class="list-card">
+        <details open>
+          <summary class="row summary-row">
+            <h3 style="margin:0">{{ g.name }}</h3>
+            <span class="count">{{ g.items.all|length }} iten{{ g.items.all|length|pluralize:"s" }}</span>
+          </summary>
+          <div class="row" style="justify-content:flex-end; gap:6px; margin:6px 0">
+            <form hx-post="{% url 'delivery:delete_group' g.id %}" hx-target="#menu" hx-swap="innerHTML" hx-confirm="Remover grupo '{{ g.name }}' e todos os seus itens?">
+              {% csrf_token %}
+              <button class="btn ghost" title="Excluir grupo">Excluir grupo</button>
+            </form>
+          </div>
+          <div class="stack" style="gap:8px; margin-top:8px">
+            {% for it in g.items.all %}
+            <details>
+              <summary class="row item-row">
+                <div class="row" style="gap:8px;align-items:center">
+                  <strong>{{ it.name }}</strong>
+                  <span class="muted">R$ {{ it.base_price_cents|floatformat:-2 }}</span>
+                </div>
+                <div class="row" style="gap:6px">
+                  <form hx-post="{% url 'delivery:delete_item' it.id %}" hx-target="#menu" hx-swap="innerHTML" hx-confirm="Remover item '{{ it.name }}'?">
+                    {% csrf_token %}
+                    <button class="btn ghost" title="Excluir">Excluir</button>
+                  </form>
+                </div>
+              </summary>
+              <div class="stack" style="gap:6px; margin-top:8px">
+                {% for mg in it.modifier_groups.all %}
+                <details>
+                <summary class="row mod-row">
+                  <div><strong>{{ mg.name }}</strong> <span class="muted">({{ mg.type }})</span></div>
+                  <span class="count">{{ mg.options.all|length }} opção{{ mg.options.all|length|pluralize:"es" }}</span>
+                </summary>
+                <div class="row" style="justify-content:flex-end; gap:6px; margin:6px 0">
+                  <form hx-post="{% url 'delivery:delete_modifier_group' mg.id %}" hx-target="#menu" hx-swap="innerHTML" hx-confirm="Remover grupo de opções '{{ mg.name }}'?">
+                    {% csrf_token %}
+                    <button class="btn ghost" title="Excluir grupo de opções">Excluir</button>
+                  </form>
+                </div>
+                <ul style="margin:8px 4px 0 16px">
+                  {% for op in mg.options.all %}
+                  <li class="row" style="justify-content:space-between;align-items:center">
+                    <div>
+                      {{ op.label }} {% if op.price_delta_cents %}<span class="muted">+{{ op.price_delta_cents|floatformat:-2 }}</span>{% endif %}
+                    </div>
+                    <form hx-post="{% url 'delivery:delete_modifier_option' op.id %}" hx-target="#menu" hx-swap="innerHTML" hx-confirm="Remover a opção '{{ op.label }}'?">
+                      {% csrf_token %}
+                      <button class="btn ghost" title="Excluir opção">Excluir</button>
+                    </form>
+                  </li>
+                  {% empty %}
+                  <li class="muted">Sem opções.</li>
+                  {% endfor %}
+                </ul>
+                </details>
+                {% empty %}
+                <div class="muted">Sem grupos de opções.</div>
+                {% endfor %}
+              </div>
+            </details>
+            {% empty %}
+            <div class="muted">Sem itens por enquanto.</div>
+            {% endfor %}
+          </div>
+        </details>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">Nenhum grupo ainda.</p>
+    {% endif %}
+  </section>
+</div>

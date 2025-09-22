@@ -1,0 +1,15 @@
+<div id="verify-dv" class="row" style="gap:8px;align-items:center" data-verified="{% if verified %}true{% else %}false{% endif %}">
+  {% if verified %}
+    <span class="pill" style="border-color:#16a34a;color:#166534;background:color-mix(in srgb, #16a34a 18%, var(--bg))">Telefone verificado</span>
+  {% else %}
+    <input type="hidden" name="phone" value="{{ phone }}" />
+    <input class="input" type="text" name="code" placeholder="Código" maxlength="6"
+           hx-post="{% url 'delivery_verify_code' card.nickname %}"
+           hx-target="#verify-dv" hx-swap="innerHTML" hx-include="closest form" />
+    <button class="btn primary" hx-post="{% url 'delivery_send_code' card.nickname %}"
+            hx-target="#verify-dv" hx-swap="innerHTML" hx-include="closest form">Validar</button>
+    <button class="btn" hx-post="{% url 'delivery_send_code' card.nickname %}"
+            hx-target="#verify-dv" hx-swap="innerHTML" hx-include="closest form">Reenviar</button>
+    {% if error %}<span class="help" style="color:#b91c1c">{{ error }}</span>{% endif %}
+  {% endif %}
+</div>
