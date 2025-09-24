@@ -1,0 +1,26 @@
+<div id="viewer-toasts" class="toasts-top"></div>
+<script>
+(function(){
+  // Fechar sidebar/modal atual
+  var slide = document.getElementById('slideover');
+  if (slide) slide.innerHTML = '';
+  // Container de toasts no topo
+  var host = document.getElementById('viewer-toasts');
+  if (!host){ host = document.createElement('div'); host.id='viewer-toasts'; host.className='toasts-top'; document.body.appendChild(host); }
+  // Toast card
+  var toast = document.createElement('div');
+  toast.className = 'toast-card';
+  var msg = document.createElement('div');
+  msg.className = 'toast-msg';
+  msg.innerHTML = `Pedido criado. Código <strong>{{ order.code }}</strong>.`;
+  var btn = document.createElement('button');
+  btn.className = 'btn';
+  btn.setAttribute('aria-label','Fechar');
+  btn.textContent = 'Fechar';
+  btn.addEventListener('click', function(){ toast.remove(); });
+  toast.appendChild(msg);
+  toast.appendChild(btn);
+  host.appendChild(toast);
+  setTimeout(function(){ toast.remove(); }, 6000);
+})();
+</script>

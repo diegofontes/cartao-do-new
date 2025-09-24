@@ -1,0 +1,55 @@
+{% load static %}
+<div id="booking-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="item-title">
+  <div class="modal-content">
+    <header class="modal-header">
+      <h2 id="item-title">{{ item.name }}</h2>
+      <button class="btn" onclick="this.closest('.modal').remove()" aria-label="Fechar">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-x"></use></svg>
+      </button>
+    </header>
+    <div class="modal-body">
+      {% if item.image %}<img src="{% url 'media:image_public' path=item.image.name %}" alt="{{ item.name }}" class="thumb-lg" />{% endif %}
+      {% if item.description %}<p class="desc">{{ item.description }}</p>{% endif %}
+
+      <form id="menu-add-form" hx-post="{% url 'delivery_cart_add' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML" class="grid" style="grid-template-columns:1fr;gap:10px">
+        <input type="hidden" name="item_id" value="{{ item.id }}" />
+        {% for mg in modifier_groups %}
+        <fieldset class="box">
+          <legend>
+            {{ mg.name }}
+            {% if mg.required %}<span class="req">(obrigatório)</span>{% endif %}
+          </legend>
+          {% if mg.type == 'single' %}
+            {% for opt in mg.options.all %}
+            {% if opt.is_active %}
+            <label class="row">
+              <input type="radio" name="mg_{{ mg.id }}" value="{{ opt.id }}" />
+              <span>{{ opt.label }}</span>
+              {% if opt.price_delta_cents %}<span class="muted">+ R$ {{ opt.price_delta_cents|floatformat:-2 }}</span>{% endif %}
+            </label>
+            {% endif %}
+            {% endfor %}
+          {% elif mg.type == 'multi' %}
+            {% for opt in mg.options.all %}
+            {% if opt.is_active %}
+            <label class="row">
+              <input type="checkbox" name="mg_{{ mg.id }}" value="{{ opt.id }}" />
+              <span>{{ opt.label }}</span>
+              {% if opt.price_delta_cents %}<span class="muted">+ R$ {{ opt.price_delta_cents|floatformat:-2 }}</span>{% endif %}
+            </label>
+            {% endif %}
+            {% endfor %}
+          {% elif mg.type == 'text' %}
+            <input type="text" name="mg_{{ mg.id }}" maxlength="100" placeholder="Sua observação" />
+          {% endif %}
+        </fieldset>
+        {% endfor %}
+        <div class="row gap-2">
+          <label>Qtd <input type="number" name="qty" min="1" value="1" style="width:80px" /></label>
+          <button type="submit" class="btn primary">Adicionar ao carrinho</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

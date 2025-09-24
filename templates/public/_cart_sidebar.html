@@ -1,0 +1,52 @@
+{% load static currency %}
+<div class="slideover" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+  <header class="slideover-header">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2 id="cart-title" class="title" style="font-size:1.25rem;margin:0">Seu carrinho</h2>
+      <button class="btn" data-close-slideover aria-label="Fechar">✕</button>
+    </div>
+  </header>
+  <div class="slideover-body">
+    {% if cart.items %}
+      <ul class="list" style="display:flex;flex-direction:column;gap:10px">
+        {% for li in cart.items %}
+        <li class="row between" style="gap:10px;align-items:center">
+          <div class="row" style="gap:10px;align-items:center">
+            {% if li.item.image %}
+            <img class="cart-thumb" src="{% url 'media:image_public' path=li.item.image.name %}" alt="{{ li.item.name }}" />
+            {% endif %}
+            <div>
+            <div class="strong">{{ li.item.name }}</div>
+            <div class="muted">{{ li.unit_price_cents|brl_cents }} x {{ li.qty }}</div>
+            </div>
+          </div>
+          <div class="row" style="gap:6px;align-items:center">
+            <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+              <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
+              <input type="hidden" name="qty" value="{{ li.qty|add:'-1' }}" />
+              <button class="btn circle" aria-label="Diminuir">-</button>
+            </form>
+            <div class="muted" style="min-width:2ch;text-align:center">{{ li.qty }}</div>
+            <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+              <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
+              <input type="hidden" name="qty" value="{{ li.qty|add:'1' }}" />
+              <button class="btn circle" aria-label="Aumentar">+</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="row between" style="margin-top:12px">
+        <div class="strong">Subtotal</div>
+        <div>{{ cart.subtotal_cents|brl_cents }}</div>
+      </div>
+    {% else %}
+      <p class="muted">Seu carrinho está vazio.</p>
+    {% endif %}
+  </div>
+  <div class="slideover-footer">
+    <div class="row" style="justify-content:flex-end;gap:8px">
+      <a class="btn primary" hx-get="{% url 'delivery_checkout_form' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">Finalizar pedido</a>
+    </div>
+  </div>
+</div>

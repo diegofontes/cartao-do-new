@@ -2,7 +2,7 @@
 <div class="center mb-4">
   <img id="logo"
        src="{% static 'img/logo-cap-v1-dark.png' %}"
-       data-logo-dark="{% static 'img/logo-cap-icon.png' %}"
+       data-logo-dark="{% static 'img/logo-cap-v1.png' %}"
        data-logo-ligh="{% static 'img/logo-cap-v1-dark.png' %}"
        alt="Logo"
        style="height:154px">
@@ -19,11 +19,33 @@
   {% csrf_token %}
   <label class="label-input">
     <span>E-mail</span>
-    <input class="input" type="email" name="email" autocomplete="email" required>
+    <input class="input" type="email" name="email" autocomplete="email" required value="{{ email|default:'' }}">
   </label>
   <label class="label-input">
     <span>Senha</span>
     <input class="input" type="password" name="password" autocomplete="new-password" required>
+  </label>
+  <label class="label-input">
+    <span>Nome</span>
+    <input class="input" type="text" name="first_name" required value="{{ first_name|default:'' }}">
+  </label>
+  <label class="label-input">
+    <span>Sobrenome</span>
+    <input class="input" type="text" name="last_name" required value="{{ last_name|default:'' }}">
+  </label>
+  <label class="label-input">
+    <span>Data de nascimento</span>
+    <input class="input" type="text" name="birthdate" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" required value="{{ birthdate|default:'' }}">
+  </label>
+  <label class="label-input">
+    <span>Gênero</span>
+    <select class="input" name="gender" required>
+      <option value="" {% if not gender %}selected{% endif %} disabled>Selecione</option>
+      <option value="M" {% if gender == 'M' %}selected{% endif %}>Masculino</option>
+      <option value="F" {% if gender == 'F' %}selected{% endif %}>Feminino</option>
+      <option value="O" {% if gender == 'O' %}selected{% endif %}>Outro</option>
+      <option value="N" {% if gender == 'N' %}selected{% endif %}>Prefiro não informar</option>
+    </select>
   </label>
   <label class="row" style="gap:8px;align-items:flex-start;margin:8px 0">
     <input type="checkbox" name="agree_terms" required>
@@ -38,3 +60,42 @@
 <div class="terms">
   <a href="/politica_de_privacidade" target="_blank" rel="noopener">Política de Privacidade</a> • <a href="/termos_de_uso" target="_blank" rel="noopener">Termos de Uso</a>
 </div>
+<script>
+  (function() {
+    const form = document.currentScript && document.currentScript.previousElementSibling && document.currentScript.previousElementSibling.tagName === 'FORM'
+      ? document.currentScript.previousElementSibling
+      : document.querySelector('#auth-card form') || document.querySelector('form');
+    if (!form) return;
+    const input = form.querySelector('input[name="birthdate"]');
+    if (!input) return;
+    function maskDate(value) {
+      const d = value.replace(/\D/g, '').slice(0, 8);
+      let out = '';
+      if (d.length <= 2) {
+        out = d;
+      } else if (d.length <= 4) {
+        out = d.slice(0,2) + '/' + d.slice(2);
+      } else {
+        out = d.slice(0,2) + '/' + d.slice(2,4) + '/' + d.slice(4);
+      }
+      return out;
+    }
+    input.addEventListener('input', function() {
+      const prev = this.value;
+      const caret = this.selectionStart || 0;
+      const digitsBefore = prev.slice(0, caret).replace(/\D/g, '').length;
+      const masked = maskDate(prev);
+      this.value = masked;
+      // restore caret near the same digit index
+      let i = 0, count = 0, pos = masked.length;
+      while (i < masked.length) {
+        if (/\d/.test(masked[i])) {
+          count++;
+          if (count >= digitsBefore) { pos = i + 1; break; }
+        }
+        i++;
+      }
+      this.setSelectionRange(pos, pos);
+    });
+  })();
+  </script>

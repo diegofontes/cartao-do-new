@@ -10,6 +10,10 @@
   <div id="addresses" hx-get="{% url 'cards:addresses_partial' card.id %}" hx-trigger="load"></div>
   <div id="links" hx-get="{% url 'cards:links_partial' card.id %}" hx-trigger="load"></div>
   <div id="gallery" style="grid-column:1/-1" hx-get="{% url 'cards:gallery_partial' card.id %}" hx-trigger="load"></div>
-  <div id="services" style="grid-column:1/-1" hx-get="{% url 'scheduling:services_partial' card.id %}" hx-trigger="load"></div>
+  {% if card.mode == 'delivery' %}
+    <div id="menu" style="grid-column:1/-1" hx-get="{% url 'delivery:menu_partial' card.id %}" hx-trigger="load"></div>
+  {% else %}
+    <div id="services" style="grid-column:1/-1" hx-get="{% url 'scheduling:services_partial' card.id %}" hx-trigger="load"></div>
+  {% endif %}
 </div>
 {% endblock %}

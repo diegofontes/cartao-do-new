@@ -66,6 +66,9 @@
                 </form>
               {% endif %}
             {% endif %}
+            {% if c.mode == 'delivery' %}
+              <a role="menuitem" href="{% url 'delivery:orders_page' c.id %}">Pedidos (Delivery)</a>
+            {% endif %}
             <a role="menuitem" href="{% url 'cards:detail' c.id %}">Abrir</a>
           </div>
         </details>

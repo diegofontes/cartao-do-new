@@ -1,0 +1,45 @@
+{% load static %}
+
+<div id="actions-{{ o.id }}" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <details class="dropdown">
+    <summary class="btn" aria-haspopup="menu" aria-expanded="false" aria-label="Mais ações">
+      <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-ellipsis"></use></svg>
+    </summary>
+    <div class="menu" role="menu">
+      {% if o.status == 'pending' %}
+        <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="status" value="accepted" />
+          <button role="menuitem" style="width:100%;text-align:left">Aceitar</button>
+        </form>
+        <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="status" value="rejected" />
+          <button role="menuitem" style="width:100%;text-align:left">Rejeitar</button>
+        </form>
+      {% elif o.status == 'accepted' %}
+        <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="status" value="preparing" />
+          <button role="menuitem" style="width:100%;text-align:left">Preparar</button>
+        </form>
+        <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="status" value="cancelled" />
+          <button role="menuitem" style="width:100%;text-align:left">Cancelar</button>
+        </form>
+      {% elif o.status == 'preparing' or o.status == 'ready' %}
+        <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="status" value="shipped" />
+          <button role="menuitem" style="width:100%;text-align:left">Enviado</button>
+        </form>
+        <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="status" value="cancelled" />
+          <button role="menuitem" style="width:100%;text-align:left">Cancelar</button>
+        </form>
+      {% elif o.status == 'shipped' %}
+        <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+          {% csrf_token %}<input type="hidden" name="status" value="completed" />
+          <button role="menuitem" style="width:100%;text-align:left">Concluir</button>
+        </form>
+      {% endif %}
+    </div>
+  </details>
+</div>
+

@@ -1,7 +1,7 @@
 import datetime as dt
 from calendar import monthrange
 from django.conf import settings
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 import stripe
@@ -101,12 +101,17 @@ def compute_amount_cents(units: int) -> int:
 
 
 def get_unbilled_metering_events(user: User, start: dt.date, end: dt.date):
-    # Only appointments are billable by metering now
+    # Billable per‑event metering: appointments confirmed + delivery orders accepted
     return (
         MeteringEvent.objects
         .filter(user=user, occurred_at__date__gte=start, occurred_at__date__lte=end)
-        .filter(resource_type="appointment", event_type="appointment_confirmed")
         .filter(invoice_line__isnull=True)
+        .filter(
+            (
+                (models.Q(resource_type="appointment") & models.Q(event_type="appointment_confirmed")) |
+                (models.Q(resource_type="delivery") & models.Q(event_type="order_accepted"))
+            )
+        )
         .order_by("occurred_at")
     )
 
@@ -127,7 +132,7 @@ def create_and_pay_invoice_for_period(user: User, start: dt.date, end: dt.date) 
     created_items = []
     period_label = f"{start.strftime('%Y-%m-%d')} a {end.strftime('%Y-%m-%d')}"
 
-    # Appointments per-event items (grouped for transparency)
+    # Per-event items (grouped for transparency): appointments + delivery orders
     if appt_amount_cents > 0:
         from collections import defaultdict
         groups = defaultdict(list)

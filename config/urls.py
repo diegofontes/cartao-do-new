@@ -32,6 +32,7 @@ urlpatterns = [
         name="signup",
     ),
     path("billing/", include("apps.billing.urls")),
+    path("delivery/", include("apps.delivery.urls")),
     path("metering/", include("apps.metering.urls")),
     path("stripe/", include("apps.billing.webhooks")),  # /stripe/webhook/
     path("", RedirectView.as_view(pattern_name="dashboard:index", permanent=False)),

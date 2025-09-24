@@ -46,6 +46,16 @@ def render_template(code: str, channel: str, payload: dict) -> dict:
             "body_txt": "Olá{% if name %} {{ name }}{% endif %}, seu agendamento {{ service }} foi confirmado para {{ date }} {{ time }}. Página: /@{{ nick }}{% if ics_url %} — Adicione ao calendário: {{ ics_url }}{% endif %}.",
             "body_html": "<div style=\"font-family:system-ui,Arial;line-height:1.5;color:#111\"><p>Olá{% if name %} {{ name }}{% endif %},</p><p>Seu agendamento <strong>{{ service }}</strong> foi confirmado para <strong>{{ date }} {{ time }}</strong>.</p><p>Página: <a href=\"/@{{ nick }}\">/@{{ nick }}</a>{% if ics_url %} — <a href=\"{{ ics_url }}\">Adicionar ao calendário</a>{% endif %}.</p></div>",
         },
+        ("email", "signup_verify"): {
+            "subject": "Confirme seu e-mail — código de verificação",
+            "body_txt": "Olá{% if name %} {{ name }}{% endif %}, seu código de verificação é {{ code }}. Válido por {{ ttl_min }} minutos.",
+            "body_html": "<p>Olá{% if name %} {{ name }}{% endif %},</p><p>Seu código de verificação é <strong>{{ code }}</strong>.</p><p>Válido por {{ ttl_min }} minutos.</p>",
+        },
+        ("email", "reset_password"): {
+            "subject": "Redefinir senha — código de verificação",
+            "body_txt": "Olá{% if name %} {{ name }}{% endif %}, seu código para redefinir a senha é {{ code }}. Válido por {{ ttl_min }} minutos.",
+            "body_html": "<p>Olá{% if name %} {{ name }}{% endif %},</p><p>Seu código para redefinir a senha é <strong>{{ code }}</strong>.</p><p>Válido por {{ ttl_min }} minutos.</p>",
+        },
     }
     tpl = t or type("_obj", (), defaults.get((channel, code), {}))
     ctx = Context(payload or {})

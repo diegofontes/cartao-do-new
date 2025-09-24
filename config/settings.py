@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.cards",
     "apps.scheduling",
+    "apps.delivery",
     "apps.metering",
     "apps.notifications",
     "apps.pages",
@@ -70,6 +71,10 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            "libraries": {
+                # Ensure custom template tags are always registered
+                "currency": "apps.delivery.templatetags.currency",
+            },
         },
     },
 ]
@@ -224,3 +229,11 @@ if FORCE_SCRIPT_NAME:
     #CSRF_COOKIE_PATH = FORCE_SCRIPT_NAME or '/' 
     #SESSION_COOKIE_PATH = FORCE_SCRIPT_NAME or '/'
     USE_X_FORWARDED_HOST = True
+
+# Delivery limits (per card)
+DELIVERY_LIMITS = {
+    "groups_per_card": int(os.getenv("DELIVERY_GROUPS_PER_CARD", "20")),
+    "items_per_card": int(os.getenv("DELIVERY_ITEMS_PER_CARD", "200")),
+    "modifier_groups_per_item": int(os.getenv("DELIVERY_MODIFIER_GROUPS_PER_ITEM", "20")),
+    "options_per_modifier_group": int(os.getenv("DELIVERY_OPTIONS_PER_MODIFIER_GROUP", "50")),
+}

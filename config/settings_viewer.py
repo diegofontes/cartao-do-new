@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.media",
     "apps.metering",
     "apps.pages",
+    "apps.delivery",
 ]
 
 MIDDLEWARE = [
@@ -54,9 +55,15 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
-        "OPTIONS": {"context_processors": [
-            "django.template.context_processors.request",
-        ]},
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+            ],
+            "libraries": {
+                # Ensure viewer knows our custom tags
+                "currency": "apps.delivery.templatetags.currency",
+            },
+        },
     }
 ]
 

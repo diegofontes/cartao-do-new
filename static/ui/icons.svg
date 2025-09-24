@@ -29,4 +29,16 @@
     <circle cx="12" cy="12" r="1.6"/>
     <circle cx="18" cy="12" r="1.6"/>
   </symbol>
+  <!-- List and Cart icons -->
+  <symbol id="icon-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+    <circle cx="4" cy="6" r="1.4"/>
+    <circle cx="4" cy="12" r="1.4"/>
+    <circle cx="4" cy="18" r="1.4"/>
+    <path d="M9 6h12M9 12h12M9 18h12"/>
+  </symbol>
+  <symbol id="icon-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+    <circle cx="9" cy="20" r="1.6"/>
+    <circle cx="17" cy="20" r="1.6"/>
+    <path d="M3 4h2l2 12h10l2-8H7"/>
+  </symbol>
 </svg>

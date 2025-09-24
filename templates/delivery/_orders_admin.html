@@ -1,0 +1,50 @@
+<section id="orders" class="box">
+  <header class="row between">
+    <h2>Pedidos (Delivery)</h2>
+  </header>
+  {% if orders %}
+  <table class="table">
+    <thead><tr><th>Data</th><th>Código</th><th>Cliente</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td>{{ o.created_at|date:"d/m H:i" }}</td>
+        <td>{{ o.code }}</td>
+        <td>{{ o.customer_name }}</td>
+        <td>R$ {{ o.total_cents|floatformat:-2 }}</td>
+        <td>{{ o.status }}</td>
+        <td class="row" style="gap:6px">
+          <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#orders" hx-swap="outerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="accepted" />
+            <button class="btn">Aceitar</button>
+          </form>
+          <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#orders" hx-swap="outerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="rejected" />
+            <button class="btn">Rejeitar</button>
+          </form>
+          <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#orders" hx-swap="outerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="preparing" />
+            <button class="btn">Preparar</button>
+          </form>
+          <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#orders" hx-swap="outerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="ready" />
+            <button class="btn">Pronto</button>
+          </form>
+          <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#orders" hx-swap="outerHTML">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="completed" />
+            <button class="btn">Concluir</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Nenhum pedido ainda.</p>
+  {% endif %}
+</section>

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block breadcrumb %}Pedidos / {{ card.title }}{% endblock %}
+{% load static currency %}
+{% block content %}
+<section class="card">
+  <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+    <div class="row" style="gap:8px;align-items:center">
+      <h2 style="margin:0">Pedidos (Delivery)</h2>
+      <span class="pill">{{ orders|length }} pedidos</span>
+    </div>
+    <div class="row" style="gap:8px">
+      <a class="btn" href="{% url 'cards:detail' card.id %}">Voltar ao card</a>
+    </div>
+  </div>
+
+  <div class="row" style="gap:8px;margin-top:12px">
+    <a class="btn {% if tab == 'active' %}primary{% endif %}" href="{% url 'delivery:orders_page' card.id %}?tab=active">Ativos</a>
+    <a class="btn {% if tab == 'completed' %}primary{% endif %}" href="{% url 'delivery:orders_page' card.id %}?tab=completed">Concluídos</a>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr;gap:12px;margin-top:12px">
+    {% for o in orders %}
+    <article class="box" style="border:1px solid var(--border);border-radius:12px;padding:0;background:var(--bg)">
+      <details>
+        <summary class="row" style="justify-content:space-between;align-items:center;padding:12px;cursor:pointer">
+          <div class="row" style="gap:10px;align-items:center">
+            <div class="delivery-head-order">
+              <span id="status-{{ o.id }}">
+                {% with s=o.status %}
+                  {% if s == 'pending' %}
+                    <span class="pill" style="background:color-mix(in srgb, #f59e0b 18%, var(--bg));border-color:#d97706;color:#7c2d12">{{ o.get_status_display|default:o.status }}</span>
+                  {% elif s == 'accepted' %}
+                    <span class="pill" style="background:color-mix(in srgb, #2563eb 18%, var(--bg));border-color:#1d4ed8;color:#0b2559">{{ o.get_status_display|default:o.status }}</span>
+                  {% elif s == 'rejected' %}
+                    <span class="pill" style="background:color-mix(in srgb, #dc2626 20%, var(--bg));border-color:#b91c1c;color:#3f0a0a">{{ o.get_status_display|default:o.status }}</span>
+                  {% elif s == 'preparing' %}
+                    <span class="pill" style="background:color-mix(in srgb, #f97316 18%, var(--bg));border-color:#ea580c;color:#7c2d12">{{ o.get_status_display|default:o.status }}</span>
+                  {% elif s == 'ready' %}
+                    <span class="pill" style="background:color-mix(in srgb, #14b8a6 18%, var(--bg));border-color:#0d9488;color:#0a3b36">{{ o.get_status_display|default:o.status }}</span>
+                  {% elif s == 'shipped' %}
+                    <span class="pill" style="background:color-mix(in srgb, #8b5cf6 18%, var(--bg));border-color:#7c3aed;color:#2e1065">{{ o.get_status_display|default:o.status }}</span>
+                  {% elif s == 'completed' %}
+                    <span class="pill" style="background:color-mix(in srgb, #16a34a 18%, var(--bg));border-color:#15803d;color:#134e24">{{ o.get_status_display|default:o.status }}</span>
+                  {% elif s == 'cancelled' %}
+                    <span class="pill" style="background:color-mix(in srgb, #dc2626 20%, var(--bg));border-color:#b91c1c;color:#3f0a0a">{{ o.get_status_display|default:o.status }}</span>
+                  {% else %}
+                    <span class="pill">{{ o.get_status_display|default:o.status }}</span>
+                  {% endif %}
+                {% endwith %}
+              </span>
+              <strong>{{ o.code }}</strong>
+            </div>
+            <div class="delivery-head-order" >
+              <span class="pill">{{ o.total_cents|brl_cents }}</span>
+              <span class="muted">{{ o.created_at|date:"d/m H:i" }}</span>
+            </div>
+          </div>
+          <div id="actions-{{ o.id }}">
+          <details class="dropdown">
+            <summary class="btn" aria-haspopup="menu" aria-expanded="false" aria-label="Mais ações">
+              <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-ellipsis"></use></svg>
+            </summary>
+            <div class="menu" role="menu">
+              {% if o.status == 'pending' %}
+                <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+                  {% csrf_token %}<input type="hidden" name="status" value="accepted" />
+                  <button role="menuitem" style="width:100%;text-align:left">Aceitar</button>
+                </form>
+                <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+                  {% csrf_token %}<input type="hidden" name="status" value="rejected" />
+                  <button role="menuitem" style="width:100%;text-align:left">Rejeitar</button>
+                </form>
+              {% elif o.status == 'accepted' %}
+                <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+                  {% csrf_token %}<input type="hidden" name="status" value="preparing" />
+                  <button role="menuitem" style="width:100%;text-align:left">Preparar</button>
+                </form>
+                <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+                  {% csrf_token %}<input type="hidden" name="status" value="cancelled" />
+                  <button role="menuitem" style="width:100%;text-align:left">Cancelar</button>
+                </form>
+              {% elif o.status == 'preparing' or o.status == 'ready' %}
+                <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+                  {% csrf_token %}<input type="hidden" name="status" value="shipped" />
+                  <button role="menuitem" style="width:100%;text-align:left">Enviado</button>
+                </form>
+                <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+                  {% csrf_token %}<input type="hidden" name="status" value="cancelled" />
+                  <button role="menuitem" style="width:100%;text-align:left">Cancelar</button>
+                </form>
+              {% elif o.status == 'shipped' %}
+                <form hx-post="{% url 'delivery:update_order_status' o.id %}" hx-target="#ord-{{ o.id }}" hx-swap="outerHTML" class="inline">
+                  {% csrf_token %}<input type="hidden" name="status" value="completed" />
+                  <button role="menuitem" style="width:100%;text-align:left">Concluir</button>
+                </form>
+              {% endif %}
+            </div>
+          </details>
+          </div>
+        </summary>
+
+        <div id="ord-{{ o.id }}" class="stack" style="gap:12px;margin:12px">
+          {% if o.status in 'accepted,preparing,ready,shipped,completed' or o.status == 'accepted' %}
+            <!-- Cliente -->
+            <div class="stack" style="gap:10px">
+              <div class="row" style="gap:8px;align-items:center">
+                <span aria-hidden="true">👤</span>
+                <div class="muted">Cliente</div>
+              </div>
+              <div class="row" style="gap:10px;flex-wrap:wrap">
+                <span>👤 {{ o.customer_name }}</span>
+                <span>📞 {{ o.customer_phone }}</span>
+                {% if o.customer_email %}
+                  <a class="underline" href="mailto:{{ o.customer_email }}">✉️ {{ o.customer_email }}</a>
+                {% endif %}
+                {% if o.customer_phone %}
+                  <a class="btn" href="https://wa.me/{{ o.customer_phone|cut:'+' }}" target="_blank" rel="noopener" title="Abrir conversa no WhatsApp">💬 WhatsApp</a>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if o.fulfillment == 'delivery' %}
+            <!-- Endereço -->
+            <div class="stack" style="gap:10px; margin-top: 12px;">
+              <div class="row" style="gap:8px;align-items:center">
+                <span aria-hidden="true">📍</span>
+                <div class="muted">Endereço</div>
+              </div>
+              {% with a=o.address_json %}
+                <div>{{ a.logradouro }} {{ a.numero }} {{ a.complemento }}</div>
+                <div>{{ a.bairro }} — {{ a.cidade }}/{{ a.uf }} {% if a.cep %} • {{ a.cep }}{% endif %}</div>
+                {% with query=a.logradouro|default:''|add:' '|add:a.numero|default:''|add:' '|add:a.complemento|default:''|add:', '|add:a.bairro|default:''|add:', '|add:a.cidade|default:''|add:' - '|add:a.uf|default:''|add:', '|add:a.cep|default:'' %}
+                  <div>
+                    <a class="btn" href="https://www.google.com/maps/search/?api=1&query={{ query|urlencode }}" target="_blank" rel="noopener">🗺️ Abrir no Maps</a>
+                  </div>
+                {% endwith %}
+              {% endwith %}
+            </div>
+            {% endif %}
+            {% if o.notes %}
+            <div class="stack" style="gap:12px">
+              <div class="muted">Observações</div>
+              <div>{{ o.notes }}</div>
+            </div>
+            {% endif %}
+            <div class="stack" style="gap:12px;  margin-top: 6px;">
+              <div class="row" style="gap:12px;align-items:center"><svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-list"></use></svg><div class="muted">Itens</div></div>
+              <ul class="list" style="display:flex;flex-direction:column;gap:8px">
+                {% for it in o.items.all %}
+                <li class="box" style="border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--bg-elev)">
+                  <div class="row" style="justify-content:space-between">
+                    <div>{{ it.menu_item.name|default:"Item removido" }}</div>
+                    <div>x{{ it.qty }}</div>
+                  </div>
+                  {% with opts=it.options.all txts=it.texts.all %}
+                  {% if opts or txts %}
+                  <ul class="muted" style="margin-left:14px">
+                    {% for op in opts %}
+                      {% if op.modifier_option %}
+                        <li>
+                          {% if op.modifier_option.modifier_group %}{{ op.modifier_option.modifier_group.name }}: {% endif %}
+                          {{ op.modifier_option.label }}
+                        </li>
+                      {% endif %}
+                    {% endfor %}
+                    {% for tx in txts %}
+                      {% if tx.text_value %}
+                        <li>{% if tx.modifier_group %}{{ tx.modifier_group.name }}: {% endif %}{{ tx.text_value }}</li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                  {% endif %}
+                  {% endwith %}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% else %}
+            <div class="help">Dados do cliente e itens visíveis após aceite.</div>
+          {% endif %}
+        </div>
+      </details>
+    </article>
+    {% empty %}
+      <div class="help">Sem pedidos nesta aba.</div>
+    {% endfor %}
+  </div>
+
+  {% if num_pages and num_pages > 1 %}
+  <nav class="row" aria-label="Paginação" style="justify-content:center;gap:8px;margin-top:16px">
+    {% if has_prev %}
+      <a class="btn" href="{% url 'delivery:orders_page' card.id %}?tab={{ tab }}&page={{ prev_page }}">Anterior</a>
+    {% else %}
+      <span class="btn muted" aria-disabled="true">Anterior</span>
+    {% endif %}
+    <span class="pill">Página {{ page }} de {{ num_pages }}</span>
+    {% if has_next %}
+      <a class="btn" href="{% url 'delivery:orders_page' card.id %}?tab={{ tab }}&page={{ next_page }}">Próxima</a>
+    {% else %}
+      <span class="btn muted" aria-disabled="true">Próxima</span>
+    {% endif %}
+  </nav>
+  {% endif %}
+</section>
+{% endblock %}

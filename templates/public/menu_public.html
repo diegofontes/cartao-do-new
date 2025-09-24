@@ -1,0 +1,214 @@
+{% extends 'public/base_public.html' %}
+{% load static currency %}
+{% block title %}@{{ card.nickname }}{% endblock %}
+{% block content %}
+<main class="card-viewer">
+  <section class="header">
+    <div class="header-left">
+      {% if card.avatar_w128 %}
+        <img class="avatar" src="{% url 'media:image_public' path=card.avatar_w128.name %}" alt="Avatar de {{ card.title }}" width="96" height="96" />
+      {% endif %}
+      <div class="title-wrap">
+        <h1 class="title">{{ card.title }}</h1>
+        <div class="nickname">@{{ card.nickname }}</div>
+      </div>
+    </div>
+    <div class="header-right" style="display:flex;gap:8px;align-items:center">
+      {% with addrs=card.addresses.all %}
+      {% if addrs|length %}
+      <details class="addr-dropdown">
+        <summary class="btn" aria-label="Endereços">
+          <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-location"></use></svg>
+          <span class="sr-only">Endereços</span>
+        </summary>
+        <ul class="addr-menu">
+          {% for a in addrs %}
+          {% with query=a.logradouro|default:''|add:', '|add:a.numero|default:''|add:' - '|add:a.bairro|default:''|add:', '|add:a.cidade|default:''|add:' - '|add:a.uf|default:''|add:', '|add:a.cep|default:''|add:' Brasil' %}
+          <li>
+            <a target="_blank" rel="noopener"
+               href="https://www.google.com/maps/search/?api=1&query={{ query|urlencode }}">
+              {{ a.label|default:"Endereço" }}
+            </a>
+          </li>
+          {% endwith %}
+          {% endfor %}
+        </ul>
+      </details>
+      {% endif %}
+      {% endwith %}
+      <!-- Theme toggle next to addresses -->
+      <button class="btn" aria-label="Alternar tema" title="Alternar tema">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-moon"></use></svg>
+      </button>
+      <button class="btn" hx-get="{% url 'delivery_cart' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML" aria-label="Abrir carrinho" style="display:inline-flex;align-items:center;gap:8px">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-cart"></use></svg>
+      </button>
+    </div>
+  </section>
+
+  {% if card.description %}
+  <section class="desc"><p>{{ card.description }}</p></section>
+  {% endif %}
+
+  {% with links_len=links|length gallery_len=gallery|length %}
+  <section class="tabs">
+    <div class="tablist" role="tablist">
+      {% for key in tab_order %}
+        {% if key == 'menu' %}
+          <button role="tab" aria-controls="panel-menu" class="tab {% if forloop.first %}is-active{% endif %}">Cardápio</button>
+        {% elif key == 'links' and links_len %}
+          <button role="tab" aria-controls="panel-links" class="tab {% if forloop.first %}is-active{% endif %}"
+                  hx-get="{% url 'tabs_links' card.nickname %}" hx-target="#panel-links" hx-swap="outerHTML">Links</button>
+        {% elif key == 'gallery' and gallery_len %}
+          <button role="tab" aria-controls="panel-gallery" class="tab {% if forloop.first %}is-active{% endif %}"
+                  hx-get="{% url 'tabs_gallery' card.nickname %}" hx-target="#panel-gallery" hx-swap="outerHTML">Galeria</button>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <div>
+      {% for key in tab_order %}
+        {% if key == 'menu' %}
+          <div id="panel-menu" role="tabpanel" class="panel" {% if not forloop.first %}hidden{% endif %}>
+            <style>
+              .menu-grid{display:grid;grid-template-columns:1fr;gap:16px}
+              @media(min-width:1024px){.menu-grid{grid-template-columns:1fr}}
+              .menu-pane{min-width:0}
+              .cart-pane{position:sticky; top:16px}
+              .menu-card{border:0;border-radius:12px;padding:12px;background:var(--bg)}
+              .menu-item-row{display:flex;gap:12px}
+              .menu-item-row .info{display:flex;gap:2px}
+              .group-title{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;box-shadow: var(--shadow);border:1px solid var(--border);cursor:pointer;border-radius: 12px;}
+              .group-title::-webkit-details-marker{display:none}
+              .menu-item-form{margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
+              .form-error{color:#b91c1c;font-size:.9rem;margin:6px 0}
+              .between{display:flex;justify-content:space-between;align-items:center}
+            </style>
+            <script>
+              function validateMenuForm(form){
+                try{
+                  // Clear previous errors
+                  form.querySelectorAll('.form-error').forEach(el=>el.remove());
+                  const groups = form.querySelectorAll('fieldset[data-type]');
+                  for (const g of groups){
+                    const type = g.getAttribute('data-type');
+                    const required = g.getAttribute('data-required') === 'true';
+                    const min = parseInt(g.getAttribute('data-min')||'0');
+                    const max = g.getAttribute('data-max');
+                    const name = g.getAttribute('data-name');
+                    let count = 0;
+                    if (type === 'single'){
+                      count = g.querySelectorAll('input[type=radio]:checked').length;
+                      if (required && count !== 1){ return showGroupError(g, 'Selecione uma opção.'); }
+                      if (!required && count > 1){ return showGroupError(g, 'Selecione no máximo uma opção.'); }
+                    } else if (type === 'multi'){
+                      count = g.querySelectorAll('input[type=checkbox]:checked').length;
+                      const maxN = max ? parseInt(max) : Number.MAX_SAFE_INTEGER;
+                      if (count < (min||0) || count > maxN){
+                        return showGroupError(g, `Selecione entre ${min||0} e ${max ? max : '∞'} opções.`);
+                      }
+                    } else if (type === 'text'){
+                      const v = (g.querySelector('input[type=text]')?.value||'').trim();
+                      if (required && v.length === 0){ return showGroupError(g, 'Preencha este campo.'); }
+                      if (v.length > 100){ return showGroupError(g, 'Máx. 100 caracteres.'); }
+                    }
+                  }
+                  return true;
+                }catch(_){ return true; }
+              }
+              function showGroupError(group, msg){
+                const el = document.createElement('div');
+                el.className = 'form-error';
+                el.textContent = msg;
+                group.appendChild(el);
+                group.scrollIntoView({behavior:'smooth', block:'center'});
+                return false;
+              }
+            </script>
+            <div class="menu-grid">
+              <section class="menu menu-pane">
+                {% for g in groups %}
+                <details class="group">
+                  <summary class="group-title">{{ g.name }} <span class="count">({{ g.items.all|length }})</span></summary>
+                  <div class="items">
+                    {% for it in g.items.all %}
+                    {% if it.is_active %}
+                    <article class="menu-card">
+                      <div class="menu-item-row" onclick="this.closest('.menu-card').classList.toggle('is-open')">
+                        {% if it.image %}
+                        <img src="{% url 'media:image_public' path=it.image.name %}" alt="{{ it.name }}" class="thumb" style="width:96px;height:96px;object-fit:cover;border-radius:10px" />
+                        {% endif %}
+                        <div class="info" style="min-width:0;flex:1;flex-direction: column;">
+                          <h3 class="name" style="margin:0 0 4px 0; text-transform:uppercase">{{ it.name|upper }}</h3>
+                          {% if it.description %}<p class="desc" style="margin:0 0 6px 0">{{ it.description }}</p>{% endif %}
+                          <div class="price" style="font-weight:600">{{ it.base_price_cents|brl_cents }}</div>
+                        </div>
+                      </div>
+                      <form class="menu-item-form" onsubmit="return validateMenuForm(this)" hx-post="{% url 'delivery_cart_add' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+                        <input type="hidden" name="item_id" value="{{ it.id }}" />
+                        {% for mg in it.modifier_groups.all %}
+                        <fieldset class="box" style="margin-bottom:8px" data-type="{{ mg.type }}" data-required="{{ mg.required|yesno:'true,false' }}" data-min="{{ mg.min_choices|default:0 }}" data-max="{{ mg.max_choices|default:'' }}" data-name="mg_{{ mg.id }}">
+                          <legend>
+                            {{ mg.name }} {% if mg.required %}<span class="muted">(obrigatório)</span>{% endif %}
+                          </legend>
+                          {% if mg.type == 'single' %}
+                            {% for opt in mg.options.all %}
+                              {% if opt.is_active %}
+                              <label class="row" style="gap:6px;align-items:center">
+                                <input type="radio" name="mg_{{ mg.id }}" value="{{ opt.id }}" {% if mg.required %}required{% endif %} />
+                                <span>{{ opt.label }}</span>
+                                {% if opt.price_delta_cents %}<span class="muted">+ {{ opt.price_delta_cents|brl_cents }}</span>{% endif %}
+                              </label>
+                              {% endif %}
+                            {% endfor %}
+                          {% elif mg.type == 'multi' %}
+                            {% for opt in mg.options.all %}
+                              {% if opt.is_active %}
+                              <label class="row" style="gap:6px;align-items:center">
+                                <input type="checkbox" name="mg_{{ mg.id }}" value="{{ opt.id }}" />
+                                <span>{{ opt.label }}</span>
+                                {% if opt.price_delta_cents %}<span class="muted">+ {{ opt.price_delta_cents|brl_cents }}</span>{% endif %}
+                              </label>
+                              {% endif %}
+                            {% endfor %}
+                          {% elif mg.type == 'text' %}
+                            <input type="text" name="mg_{{ mg.id }}" maxlength="100" placeholder="Observação" class="input" />
+                          {% endif %}
+                        </fieldset>
+                        {% endfor %}
+                        <div class="row" style="gap:8px;align-items:center;justify-content:flex-end">
+                          <div class="row" style="gap:6px;align-items:center">
+                            <button type="button" class="btn circle" onclick="var i=this.nextElementSibling; i.value=Math.max(1,(parseInt(i.value||'1')-1));">-</button>
+                            <input type="number" name="qty" min="1" value="1" class="input" style="width:70px;text-align:center" />
+                            <button type="button" class="btn circle" onclick="var i=this.previousElementSibling; i.value=parseInt(i.value||'1')+1;">+</button>
+                          </div>
+                          <button class="btn primary">Adicionar</button>
+                        </div>
+                      </form>
+                    </article>
+                    {% endif %}
+                    {% endfor %}
+                  </div>
+                </details>
+                {% endfor %}
+              </section>
+
+            </div>
+          </div>
+        {% elif key == 'links' and links_len %}
+          <div id="panel-links" role="tabpanel" class="panel" {% if not forloop.first %}hidden{% endif %}>
+            {% include 'public/tabs_links.html' %}
+          </div>
+        {% elif key == 'gallery' and gallery_len %}
+          <div id="panel-gallery" role="tabpanel" class="panel" {% if not forloop.first %}hidden{% endif %}>
+            {% include 'public/tabs_gallery.html' %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endwith %}
+
+  <aside id="slideover" aria-live="polite"></aside>
+</main>
+{% endblock %}

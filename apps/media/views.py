@@ -9,8 +9,9 @@ from apps.cards.models import Card, GalleryItem
 
 
 def image_public(request, path: str):
-    # Only allow files under our upload prefix
-    if not path.startswith("u/"):
+    # Only allow files under our upload prefixes
+    # Legacy/gallery/avatars use "u/..."; some models use "uploads/..."
+    if not (path.startswith("u/") or path.startswith("uploads/")):
         raise Http404
     if not default_storage.exists(path):
         raise Http404
@@ -60,4 +61,3 @@ def gallery_private(request, id, size: str):
     resp = FileResponse(f, content_type=ctype or "application/octet-stream")
     resp["Cache-Control"] = "private, no-store"
     return resp
-

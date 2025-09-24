@@ -15,6 +15,13 @@
     <span>Descrição</span>
     <textarea name="description" class="textarea" rows="3" {% if card.deactivation_marked %}disabled{% endif %}>{{ card.description }}</textarea>
   </label>
+  <label class="field">
+    <span>Modo</span>
+    <select name="mode" class="input" {% if card.deactivation_marked %}disabled{% endif %}>
+      <option value="appointment" {% if card.mode != 'delivery' %}selected{% endif %}>Agendamentos</option>
+      <option value="delivery" {% if card.mode == 'delivery' %}selected{% endif %}>Delivery (Cardápio)</option>
+    </select>
+  </label>
   <div class="row" style="justify-content:flex-end;margin-top:var(--space-3)">
     <button class="btn primary" {% if card.deactivation_marked %}disabled title="Edição bloqueada enquanto marcado"{% endif %}>Salvar</button>
   </div>

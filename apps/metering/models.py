@@ -6,12 +6,19 @@ from apps.common.models import BaseModel
 
 class PricingRule(BaseModel):
     CADENCE_CHOICES = [("once", "Once"), ("monthly", "Monthly"), ("per_event", "Per Event")]
-    RESOURCE_CHOICES = [("card", "Card"), ("link", "Link"), ("gallery", "Gallery"), ("appointment", "Appointment")]
+    RESOURCE_CHOICES = [
+        ("card", "Card"),
+        ("link", "Link"),
+        ("gallery", "Gallery"),
+        ("appointment", "Appointment"),
+        ("delivery", "Delivery"),
+    ]
     EVENT_CHOICES = [
         ("publish", "Publish"),
         ("link_add", "Link Added"),
         ("gallery_add", "Gallery Added"),
         ("appointment_confirmed", "Appointment Confirmed"),
+        ("order_accepted", "Order Accepted"),
     ]
 
     code = models.CharField(max_length=50, unique=True)
@@ -50,4 +57,3 @@ class MeteringEvent(BaseModel):
             models.Index(fields=["user", "occurred_at"]),
             models.Index(fields=["resource_type", "event_type"]),
         ]
-
