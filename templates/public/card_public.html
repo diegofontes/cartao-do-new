@@ -36,6 +36,10 @@
       </details>
       {% endif %}
       {% endwith %}
+      <!-- Theme toggle next to addresses -->
+      <button class="btn" aria-label="Alternar tema" title="Alternar tema">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-moon"></use></svg>
+      </button>
     </div>
   </section>
 
@@ -49,13 +53,13 @@
     <div class="tablist" role="tablist">
       {% for key in tab_order %}
         {% if key == 'links' and links_len %}
-          <button role="tab" aria-controls="panel-links" class="tab {% if forloop.first %}is-active{% endif %}"
+          <button role="tab" aria-controls="panel-links" class="tab  primary {% if forloop.first %}is-active{% endif %}"
                   hx-get="{% url 'tabs_links' card.nickname %}" hx-target="#panel-links" hx-swap="outerHTML">Links</button>
         {% elif key == 'gallery' and gallery_len %}
-          <button role="tab" aria-controls="panel-gallery" class="tab {% if forloop.first %}is-active{% endif %}"
+          <button role="tab" aria-controls="panel-gallery" class="tab  primary {% if forloop.first %}is-active{% endif %}"
                   hx-get="{% url 'tabs_gallery' card.nickname %}" hx-target="#panel-gallery" hx-swap="outerHTML">Galeria</button>
         {% elif key == 'services' and services_len %}
-          <button role="tab" aria-controls="panel-services" class="tab {% if forloop.first %}is-active{% endif %}"
+          <button role="tab" aria-controls="panel-services" class="tab  primary {% if forloop.first %}is-active{% endif %}"
                   hx-get="{% url 'tabs_services' card.nickname %}" hx-target="#panel-services" hx-swap="outerHTML">Serviços</button>
         {% endif %}
       {% endfor %}

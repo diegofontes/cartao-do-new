@@ -117,15 +117,15 @@
       <li class="list-card">
         <details open>
           <summary class="row summary-row">
-            <h3 style="margin:0">{{ g.name }}</h3>
-            <span class="count">{{ g.items.all|length }} iten{{ g.items.all|length|pluralize:"s" }}</span>
-          </summary>
-          <div class="row" style="justify-content:flex-end; gap:6px; margin:6px 0">
+            <div class="row" style="flex-direction: column; gap:6px; margin:6px 0">
+              <h3 style="margin:0">{{ g.name }}</h3>
+              <span class="count">{{ g.items.all|length }} iten{{ g.items.all|length|pluralize:"s" }}</span>
+            </div>
             <form hx-post="{% url 'delivery:delete_group' g.id %}" hx-target="#menu" hx-swap="innerHTML" hx-confirm="Remover grupo '{{ g.name }}' e todos os seus itens?">
               {% csrf_token %}
               <button class="btn ghost" title="Excluir grupo">Excluir grupo</button>
             </form>
-          </div>
+          </summary>
           <div class="stack" style="gap:8px; margin-top:8px">
             {% for it in g.items.all %}
             <details>
@@ -144,16 +144,16 @@
               <div class="stack" style="gap:6px; margin-top:8px">
                 {% for mg in it.modifier_groups.all %}
                 <details>
-                <summary class="row mod-row">
+                <summary class="row mod-row" style="justify-content:space-between;align-items:center">
+                <div class="row" style="gap:6px; margin:6px 0">
                   <div><strong>{{ mg.name }}</strong> <span class="muted">({{ mg.type }})</span></div>
                   <span class="count">{{ mg.options.all|length }} opção{{ mg.options.all|length|pluralize:"es" }}</span>
-                </summary>
-                <div class="row" style="justify-content:flex-end; gap:6px; margin:6px 0">
+                </div>
                   <form hx-post="{% url 'delivery:delete_modifier_group' mg.id %}" hx-target="#menu" hx-swap="innerHTML" hx-confirm="Remover grupo de opções '{{ mg.name }}'?">
                     {% csrf_token %}
                     <button class="btn ghost" title="Excluir grupo de opções">Excluir</button>
                   </form>
-                </div>
+                </summary>
                 <ul style="margin:8px 4px 0 16px">
                   {% for op in mg.options.all %}
                   <li class="row" style="justify-content:space-between;align-items:center">

@@ -76,6 +76,7 @@ class Order(BaseModel):
         ("rejected", "Rejected"),
         ("preparing", "Preparing"),
         ("ready", "Ready"),
+        ("shipped", "Shipped"),
         ("completed", "Completed"),
         ("cancelled", "Cancelled"),
     ]
@@ -118,4 +119,3 @@ class OrderItemText(BaseModel):
     order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name="texts")
     modifier_group = models.ForeignKey(ModifierGroup, on_delete=models.SET_NULL, null=True)
     text_value = models.CharField(max_length=100)
-

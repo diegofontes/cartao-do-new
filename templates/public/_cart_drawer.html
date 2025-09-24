@@ -12,20 +12,25 @@
       <ul class="list">
         {% for li in cart.items %}
         <li class="row between">
-          <div>
+          <div class="row" style="gap:10px;align-items:center">
+            {% if li.item.image %}
+            <img class="cart-thumb" src="{% url 'media:image_public' path=li.item.image.name %}" alt="{{ li.item.name }}" />
+            {% endif %}
+            <div>
             <div class="strong">{{ li.item.name }}</div>
             <div class="muted">R$ {{ li.unit_price_cents|floatformat:-2 }} x {{ li.qty }}</div>
+            </div>
           </div>
           <div class="row gap-2">
             <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
               <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
               <input type="hidden" name="qty" value="{{ li.qty|add:'-1' }}" />
-              <button class="btn" aria-label="Diminuir">-</button>
+              <button class="btn circle" aria-label="Diminuir">-</button>
             </form>
             <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
               <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
               <input type="hidden" name="qty" value="{{ li.qty|add:'1' }}" />
-              <button class="btn" aria-label="Aumentar">+</button>
+              <button class="btn circle" aria-label="Aumentar">+</button>
             </form>
           </div>
         </li>
@@ -44,4 +49,3 @@
     </div>
   </div>
 </div>
-

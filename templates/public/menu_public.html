@@ -13,9 +13,35 @@
         <div class="nickname">@{{ card.nickname }}</div>
       </div>
     </div>
-    <div class="header-right">
+    <div class="header-right" style="display:flex;gap:8px;align-items:center">
+      {% with addrs=card.addresses.all %}
+      {% if addrs|length %}
+      <details class="addr-dropdown">
+        <summary class="btn" aria-label="Endereços">
+          <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-location"></use></svg>
+          <span class="sr-only">Endereços</span>
+        </summary>
+        <ul class="addr-menu">
+          {% for a in addrs %}
+          {% with query=a.logradouro|default:''|add:', '|add:a.numero|default:''|add:' - '|add:a.bairro|default:''|add:', '|add:a.cidade|default:''|add:' - '|add:a.uf|default:''|add:', '|add:a.cep|default:''|add:' Brasil' %}
+          <li>
+            <a target="_blank" rel="noopener"
+               href="https://www.google.com/maps/search/?api=1&query={{ query|urlencode }}">
+              {{ a.label|default:"Endereço" }}
+            </a>
+          </li>
+          {% endwith %}
+          {% endfor %}
+        </ul>
+      </details>
+      {% endif %}
+      {% endwith %}
+      <!-- Theme toggle next to addresses -->
+      <button class="btn" aria-label="Alternar tema" title="Alternar tema">
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-moon"></use></svg>
+      </button>
       <button class="btn" hx-get="{% url 'delivery_cart' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML" aria-label="Abrir carrinho" style="display:inline-flex;align-items:center;gap:8px">
-        <svg aria-hidden="true" width="18" height="18" style="color:#000"><use href="{% static 'ui/icons.svg' %}#icon-cart"></use></svg>
+        <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-cart"></use></svg>
       </button>
     </div>
   </section>
@@ -52,7 +78,7 @@
               .menu-card{border:0;border-radius:12px;padding:12px;background:var(--bg)}
               .menu-item-row{display:flex;gap:12px}
               .menu-item-row .info{display:flex;gap:2px}
-              .group-title{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;box-shadow: var(--shadow);border:1px solid var(--border);cursor:pointer}
+              .group-title{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;box-shadow: var(--shadow);border:1px solid var(--border);cursor:pointer;border-radius: 12px;}
               .group-title::-webkit-details-marker{display:none}
               .menu-item-form{margin-top:8px;border-top:1px solid var(--border);padding-top:8px}
               .form-error{color:#b91c1c;font-size:.9rem;margin:6px 0}
@@ -108,7 +134,7 @@
                     {% for it in g.items.all %}
                     {% if it.is_active %}
                     <article class="menu-card">
-                      <div class="menu-item-row">
+                      <div class="menu-item-row" onclick="this.closest('.menu-card').classList.toggle('is-open')">
                         {% if it.image %}
                         <img src="{% url 'media:image_public' path=it.image.name %}" alt="{{ it.name }}" class="thumb" style="width:96px;height:96px;object-fit:cover;border-radius:10px" />
                         {% endif %}
@@ -152,9 +178,9 @@
                         {% endfor %}
                         <div class="row" style="gap:8px;align-items:center;justify-content:flex-end">
                           <div class="row" style="gap:6px;align-items:center">
-                            <button type="button" class="btn" onclick="var i=this.nextElementSibling; i.value=Math.max(1,(parseInt(i.value||'1')-1));">-</button>
+                            <button type="button" class="btn circle" onclick="var i=this.nextElementSibling; i.value=Math.max(1,(parseInt(i.value||'1')-1));">-</button>
                             <input type="number" name="qty" min="1" value="1" class="input" style="width:70px;text-align:center" />
-                            <button type="button" class="btn" onclick="var i=this.previousElementSibling; i.value=parseInt(i.value||'1')+1;">+</button>
+                            <button type="button" class="btn circle" onclick="var i=this.previousElementSibling; i.value=parseInt(i.value||'1')+1;">+</button>
                           </div>
                           <button class="btn primary">Adicionar</button>
                         </div>

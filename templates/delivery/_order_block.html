@@ -1,0 +1,74 @@
+{% load static currency %}
+<div id="ord-{{ o.id }}" class="stack" style="gap:12px;margin:12px">
+  {% if o.status in 'accepted,preparing,ready,shipped,completed' or o.status == 'accepted' %}
+    <div class="row between"><div class="strong">Total</div><div>{{ o.total_cents|brl_cents }}</div></div>
+    <div class="stack" style="gap:10px">
+      <div class="row" style="gap:8px;align-items:center">
+        <span aria-hidden="true">👤</span>
+        <div class="muted">Cliente</div>
+      </div>
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <span>👤 {{ o.customer_name }}</span>
+        <span>📞 {{ o.customer_phone }}</span>
+        {% if o.customer_email %}
+          <a class="underline" href="mailto:{{ o.customer_email }}">✉️ {{ o.customer_email }}</a>
+        {% endif %}
+        {% if o.customer_phone %}
+          <a class="btn" href="https://wa.me/{{ o.customer_phone|cut:'+' }}" target="_blank" rel="noopener" title="Abrir conversa no WhatsApp">💬 WhatsApp</a>
+        {% endif %}
+      </div>
+    </div>
+    {% if o.fulfillment == 'delivery' %}
+    <div class="stack" style="gap:10px">
+      <div class="row" style="gap:8px;align-items:center">
+        <span aria-hidden="true">📍</span>
+        <div class="muted">Endereço</div>
+      </div>
+      {% with a=o.address_json %}
+        <div>{{ a.logradouro }} {{ a.numero }} {{ a.complemento }}</div>
+        <div>{{ a.bairro }} — {{ a.cidade }}/{{ a.uf }} {% if a.cep %} • {{ a.cep }}{% endif %}</div>
+        {% with query=a.logradouro|default:''|add:' '|add:a.numero|default:''|add:' '|add:a.complemento|default:''|add:', '|add:a.bairro|default:''|add:', '|add:a.cidade|default:''|add:' - '|add:a.uf|default:''|add:', '|add:a.cep|default:'' %}
+          <div>
+            <a class="btn" href="https://www.google.com/maps/search/?api=1&query={{ query|urlencode }}" target="_blank" rel="noopener">🗺️ Abrir no Maps</a>
+          </div>
+        {% endwith %}
+      {% endwith %}
+    </div>
+    {% endif %}
+    {% if o.notes %}
+    <div class="stack" style="gap:6px">
+      <div class="muted">Observações</div>
+      <div>{{ o.notes }}</div>
+    </div>
+    {% endif %}
+    <div class="stack" style="gap:6px">
+      <div class="row" style="gap:6px;align-items:center"><svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-list"></use></svg><div class="muted">Itens</div></div>
+      <ul class="list" style="display:flex;flex-direction:column;gap:8px">
+        {% for it in o.items.all %}
+        <li class="box" style="border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--bg-elev)">
+          <div class="row" style="justify-content:space-between"><div>{{ it.menu_item.name|default:"Item removido" }}</div><div>x{{ it.qty }}</div></div>
+          {% with opts=it.options.all txts=it.texts.all %}
+          {% if opts or txts %}
+          <ul class="muted" style="margin-left:14px">
+            {% for op in opts %}
+              {% if op.modifier_option %}
+                <li>{% if op.modifier_option.modifier_group %}{{ op.modifier_option.modifier_group.name }}: {% endif %}{{ op.modifier_option.label }}</li>
+              {% endif %}
+            {% endfor %}
+            {% for tx in txts %}
+              {% if tx.text_value %}
+                <li>{% if tx.modifier_group %}{{ tx.modifier_group.name }}: {% endif %}{{ tx.text_value }}</li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% endwith %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% else %}
+    <div class="row between"><div class="strong">Total</div><div>{{ o.total_cents|brl_cents }}</div></div>
+    <div class="help">Dados do cliente e itens visíveis após aceite.</div>
+  {% endif %}
+</div>

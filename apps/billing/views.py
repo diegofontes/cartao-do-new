@@ -121,16 +121,24 @@ def kpis_view(request):
     start, end = _parse_range(request)
     # Cards faturáveis no fechamento: published (inclui marcados)
     cards_published = Card.objects.filter(owner=request.user, status="published").count()
-    # Agendamentos aprovados no período (per-event)
-    base = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end, resource_type="appointment", event_type="appointment_confirmed")
-    appointments_confirmed = base.count()
+    # Agendamentos aprovados + pedidos aceitos (per-event)
+    appts_qs = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end, resource_type="appointment", event_type="appointment_confirmed")
+    appointments_confirmed = appts_qs.count()
+    delivery_qs = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end, resource_type="delivery", event_type="order_accepted")
+    delivery_accepted = delivery_qs.count()
     # Valores (prévia): cards monthly + appointments
     card_unit = resolve_unit_price("card", "publish", when=end)
     appt_unit = resolve_unit_price("appointment", "appointment_confirmed", when=end)
-    total_cents = cards_published * (card_unit or 0) + appointments_confirmed * (appt_unit or 0)
+    delivery_unit = resolve_unit_price("delivery", "order_accepted", when=end)
+    total_cents = (
+        cards_published * (card_unit or 0)
+        + appointments_confirmed * (appt_unit or 0)
+        + delivery_accepted * (delivery_unit or 0)
+    )
     return render(request, "billing/_kpis.html", {
         "cards_published": cards_published,
         "appointments_confirmed": appointments_confirmed,
+        "delivery_accepted": delivery_accepted,
         "total_cents": total_cents,
         "total_brl": _fmt_brl(total_cents),
     })
@@ -150,7 +158,14 @@ def preview_view(request):
     appt_unit = resolve_unit_price("appointment", "appointment_confirmed", when=end)
     appt_subtotal = appt_count * (appt_unit or 0)
     rows.append({"resource_type": "appointment", "event_type": "appointment_confirmed", "events": appt_count, "subtotal_cents": appt_subtotal, "subtotal_brl": _fmt_brl(appt_subtotal)})
-    total_cents = cards_subtotal + appt_subtotal
+    # Delivery accepted orders
+    delivs = MeteringEvent.objects.filter(user=request.user, occurred_at__gte=start, occurred_at__lt=end, resource_type="delivery", event_type="order_accepted")
+    deliv_count = delivs.count()
+    deliv_unit = resolve_unit_price("delivery", "order_accepted", when=end)
+    deliv_subtotal = deliv_count * (deliv_unit or 0)
+    if deliv_count:
+        rows.append({"resource_type": "delivery", "event_type": "order_accepted", "events": deliv_count, "subtotal_cents": deliv_subtotal, "subtotal_brl": _fmt_brl(deliv_subtotal)})
+    total_cents = cards_subtotal + appt_subtotal + deliv_subtotal
     return render(request, "billing/_preview.html", {
         "rows": rows,
         "total_cents": total_cents,

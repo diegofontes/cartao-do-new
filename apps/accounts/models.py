@@ -22,6 +22,15 @@ class User(BaseModel, AbstractUser):
 
     email = models.EmailField("email address", blank=True)
     email_verified_at = models.DateTimeField(null=True, blank=True)
+    # Additional demographics collected at signup
+    birth_date = models.DateField(null=True, blank=True)
+    GENDER_CHOICES = (
+        ("M", "Masculino"),
+        ("F", "Feminino"),
+        ("O", "Outro"),
+        ("N", "Prefiro não informar"),
+    )
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
 
     class Meta(AbstractUser.Meta):
         constraints = [

@@ -12,16 +12,21 @@
       <ul class="list" style="display:flex;flex-direction:column;gap:8px">
         {% for li in cart.items %}
           <li class="row between">
-            <div>
-              <div class="strong">{{ li.item.name }}</div>
-              <div class="muted">{{ li.unit_price_cents|brl_cents }} x {{ li.qty }}</div>
+            <div class="row" style="gap:10px;align-items:center">
+              {% if li.item.image %}
+              <img class="cart-thumb" src="{% url 'media:image_public' path=li.item.image.name %}" alt="{{ li.item.name }}" />
+              {% endif %}
+              <div>
+                <div class="strong">{{ li.item.name }}</div>
+                <div class="muted">{{ li.unit_price_cents|brl_cents }} x {{ li.qty }}</div>
+              </div>
             </div>
             <div>{{ li.line_subtotal_cents|brl_cents }}</div>
           </li>
         {% endfor %}
       </ul>
       <div class="row between"><div class="strong">Subtotal</div><div>{{ cart.subtotal_cents|brl_cents }}</div></div>
-      <form class="stack" style="gap:10px" hx-post="{% url 'delivery_checkout_submit' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+      <form class="stack" style="gap:10px; margin-top: 1rem;" hx-post="{% url 'delivery_checkout_submit' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
         {% csrf_token %}
         <label class="field"><span>Nome</span><input class="input" type="text" name="name" required /></label>
         <fieldset class="box" >
@@ -55,7 +60,7 @@
           </div>
         </div>
         <label class="field"><span>Observações</span><textarea class="textarea" name="notes" rows="3"></textarea></label>
-        <div class="row" style="justify-content:flex-end"><button id="co-submit" class="btn primary" {% if not phone_verified %}disabled{% endif %}>Concluir pedido</button></div>
+        <div class="row" style="justify-content:flex-end; margin: 15px;"><button id="co-submit" class="btn primary" {% if not phone_verified %}disabled{% endif %}>Concluir pedido</button></div>
       </form>
     </div>
     {% else %}

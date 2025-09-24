@@ -7,6 +7,8 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'public/styles.css' %}">
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <!-- Theme handling (reuse dashboard logic) -->
+    <script defer src="{% static 'ui/theme.js' %}"></script>
     <script defer src="{% static 'public/viewer.js' %}"></script>
     <script>
       // CSRF helper for HTMX in the public viewer (uses viewer_csrftoken cookie)
@@ -33,7 +35,11 @@
     <footer class="pub-footer">
       <div class="pub-footer__inner">
         <div class="pub-footer__brand">
-          <img src="{% static 'img/logo-cap-v1-dark-icon.png' %}" alt="SnakeUnix" width="24" height="24" />
+          <img id="logo"
+               src="{% static 'img/logo-cap-icon.png' %}"
+               data-logo-dark="{% static 'img/logo-cap-icon.png' %}"
+               data-logo-light="{% static 'img/logo-cap-v1-dark-icon.png' %}"
+               alt="SnakeUnix" width="24" height="24" />
           <span>Desenvolvido por SnakeUnix</span>
         </div>
         <a class="btn primary" href="{% url 'accounts:auth_login' %}">Crie seu cartão</a>

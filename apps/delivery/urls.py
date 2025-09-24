@@ -18,4 +18,5 @@ urlpatterns = [
     # Orders management (basic)
     path("cards/<uuid:card_id>/orders", admin_views.orders_partial, name="orders_partial"),
     path("orders/<uuid:order_id>/status", admin_views.update_order_status, name="update_order_status"),
+    path("cards/<uuid:card_id>/orders/page", admin_views.orders_page, name="orders_page"),
 ]

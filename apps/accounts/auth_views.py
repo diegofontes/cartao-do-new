@@ -187,27 +187,63 @@ def signup_start(request: HttpRequest) -> HttpResponse:
 
     email = _normalize_email(request.POST.get("email", ""))
     password = (request.POST.get("password", "") or "").strip()
+    first_name = (request.POST.get("first_name", "") or "").strip()
+    last_name = (request.POST.get("last_name", "") or "").strip()
+    birthdate_str = (request.POST.get("birthdate", "") or "").strip()
+    gender = (request.POST.get("gender", "") or "").strip()
     agree = request.POST.get("agree_terms") in ("on", "true", "1", "yes")
+
+    # Basic validations
+    ctx = {"email": email, "first_name": first_name, "last_name": last_name, "birthdate": birthdate_str, "gender": gender}
     if not email or not password:
         messages.error(request, "Informe e-mail e senha válidos.")
-        return render_card(request, "auth/signup.html", "auth/_card_signup.html", {}, status=400)
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", ctx, status=400)
+    if not first_name or not last_name:
+        messages.error(request, "Informe seu nome e sobrenome.")
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", ctx, status=400)
+    # Parse birthdate (DD/MM/AAAA) and compute age
+    try:
+        from datetime import datetime, timezone
+        dob = datetime.strptime(birthdate_str, "%d/%m/%Y").date()
+        today = datetime.now(timezone.utc).date()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+    except Exception:
+        messages.error(request, "Data de nascimento inválida. Use DD/MM/AAAA.")
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", ctx, status=400)
+    if age < 13 or age > 120:
+        messages.error(request, "Idade deve estar entre 13 e 120.")
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", ctx, status=400)
+    if gender not in ("M", "F", "O", "N"):
+        messages.error(request, "Selecione um gênero válido.")
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", ctx, status=400)
     if not agree:
         messages.error(request, "Você precisa aceitar a Política de Privacidade e os Termos de Uso.")
-        return render_card(request, "auth/signup.html", "auth/_card_signup.html", {}, status=400)
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", ctx, status=400)
 
     if User.objects.filter(email__iexact=email).exists():
         messages.error(request, "E-mail já cadastrado.")
-        return render_card(request, "auth/signup.html", "auth/_card_signup.html", {}, status=400)
+        return render_card(request, "auth/signup.html", "auth/_card_signup.html", ctx, status=400)
 
     # Generate unique internal username (hidden from UI)
     username = f"u_{uuid.uuid4().hex[:12]}"
-    user = User.objects.create(username=username, email=email)
+    user = User.objects.create(
+        username=username,
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        birth_date=dob,
+        gender=gender,
+    )
     user.password = make_password(password)
     user.save(update_fields=["password"])
 
     ch, code = EmailChallenge.create_for(user, EmailChallenge.PURPOSE_SIGNUP)
-    default_mail_provider.send(
-        MailMessage(to=email, subject="Verify your email", body=f"Code: {code}")
+    enqueue(
+        type='email',
+        to=email,
+        template_code='signup_verify',
+        payload={'code': code, 'name': first_name, 'ttl_min': 10},
+        idempotency_key=f'signupverify:{ch.id}'
     )
     request.session["pending_signup_user_id"] = str(user.id)
     request.session["pending_signup_challenge_id"] = str(ch.id)
@@ -353,9 +389,23 @@ def code_resend(request: HttpRequest) -> HttpResponse:
             payload={'code': code, 'name': user.first_name, 'ttl_min': 10},
             idempotency_key=f'login2fa:{ch.id}'
         )
+    elif purpose == EmailChallenge.PURPOSE_SIGNUP:
+        enqueue(
+            type='email',
+            to=user.email,
+            template_code='signup_verify',
+            payload={'code': code, 'name': user.first_name, 'ttl_min': 10},
+            idempotency_key=f'signupverify:{ch.id}'
+        )
     else:
-        # mantém fluxo atual para signup/reset por enquanto
-        default_mail_provider.send(MailMessage(to=user.email, subject=f"{purpose} code", body=f"Code: {code}"))
+        # Reset password flow via notifications
+        enqueue(
+            type='email',
+            to=user.email,
+            template_code='reset_password',
+            payload={'code': code, 'name': user.first_name, 'ttl_min': 10},
+            idempotency_key=f'reset:{ch.id}'
+        )
 
     # Return the current form unchanged (HTMX will just keep it)
     # Optionally we could re-render the form with a timer indicator
