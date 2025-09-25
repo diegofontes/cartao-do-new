@@ -16,10 +16,9 @@ Exibir “Detalhes da prévia” por categoria com notas de promoções/cadênci
 ---------------------------------------------------
 
 
-- Storage S3
-- Dia de cobrança ( tartar datas de ano bi sexto )
-- página 404 
-- Modo produçao em docker 
+Wire notifications on order creation now.
+Add rate limiting and phone validation.
+Flesh out delete/reorder and is_active toggles in the delivery admin.
 
 
 ----------------------------------------------------

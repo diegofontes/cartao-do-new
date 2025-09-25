@@ -36,6 +36,7 @@ def render_template(code: str, channel: str, payload: dict) -> dict:
         ("sms", "login_2fa"): {"body_txt": "Seu código é {{ code }}. Validade: {{ ttl_min }} min."},
         ("sms", "booking_phone_verify"): {"body_txt": "Seu código para agendar é {{ code }} (válido por {{ ttl_min }} min). Não compartilhe."},
         ("sms", "booking_confirmed_sms"): {"body_txt": "Agendamento confirmado: {{ service }} em {{ date }} {{ time }}. Página: /@{{ nick }}"},
+        ("sms", "delivery_order_status"): {"body_txt": "{% if message %}{{ message }}{% else %}Pedido {{ code }}: status {{ status }}.{% endif %}"},
         ("email", "login_2fa"): {
             "subject": "Seu código de acesso (expira em {{ ttl_min }} min)",
             "body_txt": "Olá{% if name %} {{ name }}{% endif %}, seu código é {{ code }}. Válido por {{ ttl_min }} minutos.",
@@ -62,6 +63,10 @@ def render_template(code: str, channel: str, payload: dict) -> dict:
     out = {}
     if channel == "sms":
         body = DjTemplate(getattr(tpl, "body_txt", "")).render(ctx)
+        if not (body or "").strip():
+            # Fallback to built-in default when DB template is empty
+            _def = defaults.get((channel, code)) or {}
+            body = DjTemplate(_def.get("body_txt", "")).render(ctx)
         out.update({"text": body})
     else:
         subj = DjTemplate(getattr(tpl, "subject", "")).render(ctx)
