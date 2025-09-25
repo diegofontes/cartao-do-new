@@ -127,7 +127,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = "pt-br"
-TIME_ZONE = "UTC"
+# Allow timezone override via environment (e.g., TIME_ZONE=America/Sao_Paulo)
+TIME_ZONE = os.getenv("TIME_ZONE", "UTC")
 USE_I18N = True
 USE_TZ = True
 
@@ -166,7 +167,8 @@ CACHES = {
 # Celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL") or os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND") or CELERY_BROKER_URL
-CELERY_TIMEZONE = TIME_ZONE
+# Celery will use Django's TIME_ZONE by default; allow override via CELERY_TIMEZONE env
+CELERY_TIMEZONE = os.getenv("CELERY_TIMEZONE", TIME_ZONE)
 CELERY_TASK_ALWAYS_EAGER = False
 
 # Stripe
