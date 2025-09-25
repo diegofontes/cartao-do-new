@@ -22,6 +22,7 @@ services:
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C.UTF-8 --lc-ctype=C.UTF-8"
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
+      TZ: America/Sao_Paulo
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 0.0.0.0"]
       interval: 10s
@@ -43,6 +44,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      TZ: America/Sao_Paulo
     depends_on: [redis, db]
     ports: ["8000:8000"]
     healthcheck:
@@ -63,6 +65,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings_viewer
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      TZ: America/Sao_Paulo
     command: ["gunicorn","config.wsgi:application","-b","0.0.0.0:9000","--workers","2","--timeout","60"]
     depends_on: [redis, db]
     ports: ["9000:9000"]
@@ -81,6 +84,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      TZ: America/Sao_Paulo
     command: ["celery","-A","config","worker","-l","info","--concurrency","2"]
     depends_on: [redis, db]
 
@@ -93,6 +97,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
+      TZ: America/Sao_Paulo
     command: ["celery","-A","config","beat","-l","info","--scheduler","celery.beat:PersistentScheduler"]
     volumes:
       - ./celerybeat-schedule:/app/celerybeat-schedule
