@@ -1,9 +1,24 @@
+/* CSS Reset — minimize browser defaults across elements */
+*, *::before, *::after{box-sizing:border-box}
+*{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+img, picture, video, canvas, svg{display:block;max-width:100%}
+ul[role="list"], ol[role="list"]{list-style:none;margin:0;padding:0}
+fieldset{border:0;margin:0;padding:0}
+legend{padding:0}
+table{border-collapse:collapse;border-spacing:0}
+
+/* Theme variables */
 :root{
   --bg:#ffffff; --bg-elev:#f6f7f8;
   --fg:#111111; --fg-muted:#666; --border:#e6e6e8;
   --focus:#111111;
   --shadow:0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.08);
   --radius:14px; --gap-1:8px; --gap-2:12px; --gap-3:16px; --gap-4:24px; --gap-5:32px;
+  /* Scrollbar (light) */
+  --scrollbar-track: color-mix(in oklab, var(--bg), black 4%);
+  --scrollbar-thumb: color-mix(in oklab, var(--fg), transparent 86%);
+  --scrollbar-thumb-hover: color-mix(in oklab, var(--fg), transparent 80%);
 }
 [data-theme="dark"]{
   --bg: rgb(31 41 55 / var(--tw-bg-opacity, 1));
@@ -13,6 +28,10 @@
   --border: #212226;
   --focus: #ffffff;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  /* Scrollbar (dark) */
+  --scrollbar-track: color-mix(in oklab, var(--bg), white 4%);
+  --scrollbar-thumb: color-mix(in oklab, var(--fg), transparent 86%);
+  --scrollbar-thumb-hover: color-mix(in oklab, var(--fg), transparent 80%);
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -22,6 +41,12 @@ img{display:block;max-width:100%}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit;background: var(--bg-elev);}
 button{cursor:pointer}
+/* Themed scrollbars (Firefox + WebKit) */
+*{scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track)}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:var(--scrollbar-track);border-radius:8px}
+*::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-radius:8px;border:2px solid var(--scrollbar-track)}
+*::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover)}
 .row{display:flex;align-items:center;gap:var(--gap-2)}
 .field{display:flex;flex-direction:column;gap:6px}
 .input,.select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg);-webkit-appearance:none;appearance:none}
@@ -117,3 +142,44 @@ button{cursor:pointer}
 
 /* Prevent footer overlapping content */
 .card-viewer{padding-bottom:calc(var(--gap-5) + 64px)}
+
+/* Load modal (viewer, same padrão do dashboard) */
+.load-modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.18);z-index:1000}
+.load-modal.is-open{display:grid}
+.load-box{min-width:260px;padding:20px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:12px;outline:none}
+.load-spinner{width:28px;height:28px;border-radius:50%;border:2px solid color-mix(in srgb, var(--border), transparent 30%);border-top-color:var(--fg);animation:spin .8s linear infinite}
+.load-text{color:var(--fg-muted)}
+#load-progress{width:100%;height:8px;border:0;border-radius:999px;background:var(--bg-elev);color:var(--fg)}
+#load-progress::-webkit-progress-bar{background:var(--bg-elev);border-radius:999px}
+#load-progress::-webkit-progress-value{background:var(--fg);border-radius:999px}
+#load-progress::-moz-progress-bar{background:var(--fg);border-radius:999px}
+
+/* Toasts (viewer, alinhado ao dashboard) */
+.toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:1100}
+@media (max-width:640px){.toasts{left:16px;right:16px}}
+.toast{background:var(--bg);color:var(--fg);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:12px;padding:12px 14px;min-width:220px;max-width:420px;display:flex;align-items:flex-start;gap:12px}
+.toast.ok{background:color-mix(in srgb, #16a34a 18%, var(--bg));border-color:#15803d;color:#0f321a}
+.toast.ok .msg{color:#134e24}
+.toast.err{background:color-mix(in srgb, #dc2626 20%, var(--bg));border-color:#b91c1c;color:#3f0a0a}
+.toast.err .msg{color:#6b1111}
+.toast .title{font-weight:600; font-size:1rem}
+.toast .msg{color:var(--fg-muted);font-size:.94rem}
+.toast-close{margin-left:auto;border:1px solid var(--border);background:var(--bg);border-radius:10px;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center}
+.toast-close span{font-size:20px;line-height:1}
+
+/* Dark theme legibility for toasts */
+[data-theme="dark"] .toast{color:var(--fg)}
+[data-theme="dark"] .toast .msg{color:var(--fg-muted)}
+[data-theme="dark"] .toast-close{background:var(--bg-elev);border-color:var(--border)}
+[data-theme="dark"] .toast.ok{
+  background: color-mix(in srgb, #16a34a 26%, var(--bg));
+  border-color: #22c55e;
+  color: #e6f9ee;
+}
+[data-theme="dark"] .toast.ok .msg{color:#bbf7d0}
+[data-theme="dark"] .toast.err{
+  background: color-mix(in srgb, #ef4444 26%, var(--bg));
+  border-color: #f87171;
+  color: #fee2e2;
+}
+[data-theme="dark"] .toast.err .msg{color:#fecaca}

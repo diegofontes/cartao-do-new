@@ -23,11 +23,13 @@
           </div>
           <div class="row gap-2">
             <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+              {% csrf_token %}
               <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
               <input type="hidden" name="qty" value="{{ li.qty|add:'-1' }}" />
               <button class="btn circle" aria-label="Diminuir">-</button>
             </form>
             <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+              {% csrf_token %}
               <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
               <input type="hidden" name="qty" value="{{ li.qty|add:'1' }}" />
               <button class="btn circle" aria-label="Aumentar">+</button>

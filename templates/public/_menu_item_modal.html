@@ -12,6 +12,7 @@
       {% if item.description %}<p class="desc">{{ item.description }}</p>{% endif %}
 
       <form id="menu-add-form" hx-post="{% url 'delivery_cart_add' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML" class="grid" style="grid-template-columns:1fr;gap:10px">
+        {% csrf_token %}
         <input type="hidden" name="item_id" value="{{ item.id }}" />
         {% for mg in modifier_groups %}
         <fieldset class="box">
@@ -52,4 +53,3 @@
     </div>
   </div>
 </div>
-

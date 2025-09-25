@@ -24,5 +24,47 @@
     <div id="auth-card" class="card">
       {% include card_template|default:'auth/_card_login.html' %}
     </div>
+    <div id="load-modal" class="load-modal" aria-hidden="true" aria-live="polite">
+      <div class="load-box" role="dialog" aria-modal="true" aria-label="Carregando" tabindex="-1">
+        <div class="load-spinner" aria-hidden="true"></div>
+        <div class="load-text">Processando...</div>
+        <progress id="load-progress" max="100" value="0" hidden></progress>
+      </div>
+    </div>
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
+    <script>
+      (function(){
+        // HTMX CSRF: prefer token from closest form, fallback cookie
+        function getCookie(name){ var m=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return m?m.pop():''; }
+        document.addEventListener('htmx:configRequest', function(evt){
+          try{
+            var el = evt.detail && evt.detail.elt; var token = '';
+            var form = el && el.closest && el.closest('form');
+            var inp = form && form.querySelector('input[name="csrfmiddlewaretoken"]');
+            if (inp && inp.value) token = inp.value; else token = getCookie('csrftoken');
+            if (token) evt.detail.headers['X-CSRFToken'] = token;
+            evt.detail.credentials = 'same-origin';
+          }catch(_){ }
+        });
+
+        // Modal + toasts (errors only)
+        var modal = document.getElementById('load-modal');
+        var box = modal && modal.querySelector('.load-box');
+        var progress = document.getElementById('load-progress');
+        var toasts = document.getElementById('toasts');
+        if (!modal || !box || !toasts) return;
+        var pending = 0; var restoreFocus = null;
+        function openModal(){ if (!modal.classList.contains('is-open')){ modal.classList.add('is-open'); modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null; box.focus({preventScroll:true}); } if(progress){ progress.hidden=true; progress.value=0; } }
+        function closeModal(){ if (!modal.classList.contains('is-open')) return; modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; if (progress){ progress.hidden=true; progress.value=0; } if (restoreFocus && typeof restoreFocus.focus==='function'){ restoreFocus.focus(); } restoreFocus=null; }
+        function begin(){ pending += 1; openModal(); }
+        function finish(){ pending = Math.max(0, pending-1); if (pending===0) closeModal(); }
+        function toastErr(title, message){ var el=document.createElement('div'); el.className='toast err'; el.setAttribute('role','alert'); el.innerHTML='\n<div class="toast-copy"><div class="title"></div>'+(message?'<div class="msg"></div>':'')+'</div>\n<button type="button" class="toast-close" aria-label="Fechar aviso"><span aria-hidden="true">&times;</span></button>'; el.querySelector('.title').textContent=title||'Erro'; if(message) el.querySelector('.msg').textContent=message; el.querySelector('.toast-close').addEventListener('click', function(){ el.remove(); }); toasts.appendChild(el); setTimeout(function(){ el.remove(); }, 7000); }
+        document.body.addEventListener('htmx:beforeRequest', function(e){ begin(); });
+        document.body.addEventListener('htmx:sendError', function(){ finish(); toastErr('Falha de rede', 'Verifique sua conexão e tente novamente.'); });
+        document.body.addEventListener('htmx:responseError', function(e){ var xhr=e.detail && e.detail.xhr; var status=xhr && xhr.status; var msg='Não foi possível completar a ação.'; if(status===400) msg='Dados inválidos.'; else if(status===403) msg='Acesso negado.'; else if(status===429) msg='Muitas tentativas. Aguarde um pouco.'; else if(status>=500) msg='Erro no servidor. Tente novamente.'; toastErr(status?('Erro '+status):'Erro', msg); });
+        document.body.addEventListener('htmx:afterRequest', function(){ finish(); });
+        document.addEventListener('keydown', function(ev){ if (ev.key==='Escape'){ pending=0; closeModal(); } });
+      })();
+    </script>
   </body>
 </html>

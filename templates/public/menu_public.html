@@ -145,6 +145,7 @@
                         </div>
                       </div>
                       <form class="menu-item-form" onsubmit="return validateMenuForm(this)" hx-post="{% url 'delivery_cart_add' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+                        {% csrf_token %}
                         <input type="hidden" name="item_id" value="{{ it.id }}" />
                         {% for mg in it.modifier_groups.all %}
                         <fieldset class="box" style="margin-bottom:8px" data-type="{{ mg.type }}" data-required="{{ mg.required|yesno:'true,false' }}" data-min="{{ mg.min_choices|default:0 }}" data-max="{{ mg.max_choices|default:'' }}" data-name="mg_{{ mg.id }}">

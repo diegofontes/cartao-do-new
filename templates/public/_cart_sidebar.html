@@ -22,12 +22,14 @@
           </div>
           <div class="row" style="gap:6px;align-items:center">
             <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+              {% csrf_token %}
               <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
               <input type="hidden" name="qty" value="{{ li.qty|add:'-1' }}" />
               <button class="btn circle" aria-label="Diminuir">-</button>
             </form>
             <div class="muted" style="min-width:2ch;text-align:center">{{ li.qty }}</div>
             <form hx-post="{% url 'delivery_cart_update' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+              {% csrf_token %}
               <input type="hidden" name="index" value="{{ forloop.counter0 }}" />
               <input type="hidden" name="qty" value="{{ li.qty|add:'1' }}" />
               <button class="btn circle" aria-label="Aumentar">+</button>

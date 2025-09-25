@@ -43,9 +43,10 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    # Sessions must load before CSRF
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls_viewer"

@@ -1,3 +1,13 @@
+/* CSS Reset — minimize browser defaults across elements */
+*, *::before, *::after{box-sizing:border-box}
+*{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+img, picture, video, canvas, svg{display:block;max-width:100%}
+ul[role="list"], ol[role="list"]{list-style:none;margin:0;padding:0}
+fieldset{border:0;margin:0;padding:0}
+legend{padding:0}
+table{border-collapse:collapse;border-spacing:0}
+
 /* Minimal, accessible, grayscale dashboard UI */
 /* Design tokens */
 :root{
@@ -139,7 +149,7 @@ hr{border:0;border-top:1px solid var(--border)}
 .btn.primary{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 
 /* Inputs */
-.field{display:flex;flex-direction:column;gap:6px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom: 9px;}
 .input,.select,.textarea{border:1px solid var(--border);background:var(--bg);padding:8px 10px;border-radius:10px}
 .field .input,.field .select,.field .textarea{width:100%}
 .checkbox{width:18px;height:18px}
@@ -258,6 +268,23 @@ hr{border:0;border-top:1px solid var(--border)}
   justify-content:center;
 }
 .toast-close span{font-size:20px;line-height:1;}
+
+/* Dark theme legibility for toasts */
+[data-theme="dark"] .toast{color:var(--fg)}
+[data-theme="dark"] .toast .msg{color:var(--muted)}
+[data-theme="dark"] .toast-close{background:var(--bg-elev);border-color:var(--border)}
+[data-theme="dark"] .toast.ok{
+  background: color-mix(in srgb, #16a34a 26%, var(--bg));
+  border-color: #22c55e;
+  color: #e6f9ee;
+}
+[data-theme="dark"] .toast.ok .msg{color:#bbf7d0}
+[data-theme="dark"] .toast.err{
+  background: color-mix(in srgb, #ef4444 26%, var(--bg));
+  border-color: #f87171;
+  color: #fee2e2;
+}
+[data-theme="dark"] .toast.err .msg{color:#fecaca}
 
 /* Skeleton */
 .skeleton{background:linear-gradient(90deg, color-mix(in oklab, var(--bg-elev), black 6%) 25%, color-mix(in oklab, var(--bg-elev), white 6%) 37%, color-mix(in oklab, var(--bg-elev), black 6%) 63%);background-size:400% 100%;animation:sheen 1.4s ease infinite;border-radius:8px}

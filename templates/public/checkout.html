@@ -22,6 +22,7 @@
       </ul>
       <div class="row between mt-3"><div class="strong">Subtotal</div><div>R$ {{ cart.subtotal_cents|floatformat:-2 }}</div></div>
       <form class="grid mt-3" style="grid-template-columns:1fr;gap:10px" hx-post="{% url 'delivery_checkout_submit' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
+        {% csrf_token %}
         <input type="text" name="name" placeholder="Seu nome" required />
         <input type="tel" name="phone" placeholder="Telefone" required />
         <input type="email" name="email" placeholder="E-mail (opcional)" />
@@ -50,4 +51,3 @@
     </div>
   </div>
 </div>
-

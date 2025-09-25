@@ -10,6 +10,7 @@
     <!-- Theme handling (reuse dashboard logic) -->
     <script defer src="{% static 'ui/theme.js' %}"></script>
     <script defer src="{% static 'public/viewer.js' %}"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <script>
       // CSRF helper for HTMX in the public viewer (uses viewer_csrftoken cookie)
       (function(){
@@ -19,7 +20,21 @@
         }
         document.addEventListener('htmx:configRequest', function(evt){
           try{
-            var token = getCookie('viewer_csrftoken') || getCookie('csrftoken');
+            var el = evt.detail && evt.detail.elt;
+            var token = null;
+            // 1) Prefer token from the closest form (hidden input)
+            if (el && el.closest) {
+              var form = el.closest('form');
+              var inp = form && form.querySelector('input[name="csrfmiddlewaretoken"]');
+              if (inp && inp.value) token = inp.value;
+            }
+            // 2) Fallback to meta tag rendered by template
+            if (!token) {
+              var meta = document.querySelector('meta[name="csrf-token"]');
+              if (meta) token = meta.getAttribute('content') || '';
+            }
+            // 3) Last resort: readable cookies (may fail if HttpOnly)
+            if (!token) token = getCookie('viewer_csrftoken') || getCookie('csrftoken');
             if(token){ evt.detail.headers['X-CSRFToken'] = token; }
             evt.detail.credentials = 'same-origin';
           }catch(_){ }
@@ -28,7 +43,14 @@
     </script>
   </head>
   <body>
-    <div class="toasts" id="toasts"></div>
+    <div id="load-modal" class="load-modal" aria-hidden="true" aria-live="polite">
+      <div class="load-box" role="dialog" aria-modal="true" aria-label="Carregando" tabindex="-1">
+        <div class="load-spinner" aria-hidden="true"></div>
+        <div class="load-text">Processando...</div>
+        <progress id="load-progress" max="100" value="0" hidden></progress>
+      </div>
+    </div>
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
     <main id="main" class="container">
       {% block content %}{% endblock %}
     </main>
@@ -47,31 +69,216 @@
     </footer>
   </body>
   <script>
-    (function(){
-      function showToast(type, title, message){
-        var box = document.getElementById('toasts'); if(!box) return;
-        var el = document.createElement('div');
-        el.className = 'toast ' + (type === 'error' ? 'err' : 'ok');
-        el.innerHTML = '<div class="toast-copy"><div class="title"></div>' + (message?'<div class="msg"></div>':'') + '</div>' +
-                       '<button type="button" class="toast-close" aria-label="Fechar aviso"><span aria-hidden="true">&times;</span></button>';
-        el.querySelector('.title').textContent = title || (type==='error'?'Erro':'Sucesso');
-        if(message){ el.querySelector('.msg').textContent = message; }
-        el.querySelector('.toast-close').addEventListener('click', function(){ el.remove(); });
-        box.appendChild(el);
-        setTimeout(function(){ el.remove(); }, type==='error'?7000:5000);
+    (function () {
+      const modal = document.getElementById('load-modal');
+      const toasts = document.getElementById('toasts');
+      if (!modal || !toasts) return;
+
+      const box = modal.querySelector('.load-box');
+      const progress = document.getElementById('load-progress');
+      const shell = document.getElementById('main');
+      let pending = 0;
+      let restoreFocus = null;
+
+      function getFocusable() {
+        return Array.from(
+          modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        ).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
       }
-      function parseFlash(xhr){
-        var keys=['HX-Trigger','HX-Trigger-After-Settle','HX-Trigger-After-Response'];
-        for(var i=0;i<keys.length;i++){
-          var raw = xhr.getResponseHeader(keys[i]); if(!raw) continue;
-          try { var data = JSON.parse(raw); var flash = data.flash || data['flash:after'] || data['flash:response']; if(flash) return flash; } catch(e){}
+
+      modal.addEventListener('keydown', (event) => {
+        if (event.key !== 'Tab') return;
+        const focusables = getFocusable();
+        if (!focusables.length) {
+          event.preventDefault();
+          box?.focus();
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+        if (event.shiftKey) {
+          if (active === first || active === modal) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else if (active === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+
+      function shouldSkip(elt) {
+        return elt?.closest?.('[data-no-load]') != null;
+      }
+
+      function setInert(state) {
+        if (!shell) return;
+        if (state) shell.setAttribute('inert', '');
+        else shell.removeAttribute('inert');
+      }
+
+      function openModal(showProgress) {
+        if (!modal.classList.contains('is-open')) {
+          modal.classList.add('is-open');
+          modal.setAttribute('aria-hidden', 'false');
+          document.body.style.overflow = 'hidden';
+          setInert(true);
+          restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          box?.focus({ preventScroll: true });
+        }
+        if (progress) {
+          progress.value = 0;
+          progress.hidden = !showProgress;
+        }
+      }
+
+      function resetModal() {
+        if (!modal.classList.contains('is-open')) return;
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        setInert(false);
+        if (progress) {
+          progress.hidden = true;
+          progress.value = 0;
+        }
+        if (restoreFocus && typeof restoreFocus.focus === 'function') {
+          restoreFocus.focus();
+        }
+        restoreFocus = null;
+      }
+
+      function begin(showProgress) {
+        pending += 1;
+        openModal(showProgress);
+      }
+
+      function finish() {
+        pending = Math.max(0, pending - 1);
+        if (pending === 0) resetModal();
+      }
+
+      function toast({ type = 'ok', title, message }) {
+        const el = document.createElement('div');
+        const variant = type === 'err' ? 'err' : 'ok';
+        el.className = `toast ${variant}`;
+        el.setAttribute('role', type === 'err' ? 'alert' : 'status');
+        el.innerHTML = `
+          <div class=\"toast-copy\">
+            <div class=\"title\">${title || (type === 'err' ? 'Não foi possível salvar' : 'Salvo com sucesso')}</div>
+            ${message ? `<div class=\\\"msg\\\">${message}</div>` : ''}
+          </div>
+          <button type=\"button\" class=\"toast-close\" aria-label=\"Fechar aviso\">
+            <span aria-hidden=\"true\">&times;</span>
+          </button>
+        `;
+        el.querySelector('.toast-close')?.addEventListener('click', () => el.remove());
+        toasts.appendChild(el);
+        window.setTimeout(() => el.remove(), type === 'err' ? 9000 : 8000);
+      }
+
+      function parseFlash(xhr) {
+        const headers = ['HX-Trigger', 'HX-Trigger-After-Settle', 'HX-Trigger-After-Response'];
+        for (const header of headers) {
+          const raw = xhr?.getResponseHeader(header);
+          if (!raw) continue;
+          try {
+            const data = JSON.parse(raw);
+            const flash = data.flash || data['flash:after'] || data['flash:response'];
+            if (flash) return flash;
+          } catch (_) {
+            continue;
+          }
         }
         return null;
       }
-      document.body.addEventListener('htmx:afterRequest', function(e){
-        var xhr = e.detail && e.detail.xhr; if(!xhr) return;
-        var flash = parseFlash(xhr); if(!flash) return;
-        showToast(flash.type==='error'?'error':'ok', flash.title, flash.message);
+
+      function showFlash(flash, status) {
+        if (!flash) return false;
+        const type = flash.type === 'error' ? 'err' : 'ok';
+        if (type === 'err' && status >= 400) return false;
+        toast({
+          type,
+          title: flash.title || (type === 'err' ? 'Erro' : 'Sucesso'),
+          message: flash.message || ''
+        });
+        return true;
+      }
+
+      document.body.addEventListener('htmx:beforeRequest', (event) => {
+        const elt = event.detail?.elt || event.target;
+        if (shouldSkip(elt)) return;
+        const form = elt?.closest?.('form');
+        const encoding = form?.enctype || form?.getAttribute?.('hx-encoding') || '';
+        const isUpload = typeof encoding === 'string' && encoding.toLowerCase().includes('multipart/form-data');
+        begin(isUpload);
+      });
+
+      document.body.addEventListener('htmx:xhr:progress', (event) => {
+        if (!progress || progress.hidden) return;
+        const { loaded, total, lengthComputable } = event.detail;
+        if (!lengthComputable || typeof total !== 'number' || total <= 0) return;
+        progress.value = Math.round((loaded / total) * 100);
+      });
+
+      document.body.addEventListener('htmx:sendError', () => {
+        finish();
+        toast({
+          type: 'err',
+          title: 'Falha de rede',
+          message: 'Verifique sua conexão e tente novamente.'
+        });
+      });
+
+      document.body.addEventListener('htmx:responseError', (event) => {
+        const xhr = event.detail?.xhr;
+        const status = xhr?.status || 0;
+        const flash = parseFlash(xhr);
+        if (flash && flash.type === 'error') {
+          toast({
+            type: 'err',
+            title: flash.title || 'Não foi possível concluir',
+            message: flash.message || ''
+          });
+          return;
+        }
+        let message = 'Não foi possível completar a ação.';
+        if (status === 400) message = 'Dados inválidos. Revise os campos.';
+        else if (status === 403) message = 'Acesso negado.';
+        else if (status === 409) message = 'Conflito na operação.';
+        else if (status >= 500) message = 'Erro no servidor. Tente novamente em instantes.';
+        toast({
+          type: 'err',
+          title: status ? `Erro ${status}` : 'Erro',
+          message
+        });
+      });
+
+      document.body.addEventListener('htmx:afterRequest', (event) => {
+        const elt = event.detail?.elt;
+        const xhr = event.detail?.xhr;
+        if (!shouldSkip(elt) && xhr) {
+          const status = xhr.status || 0;
+          const flash = parseFlash(xhr);
+          const flashed = showFlash(flash, status);
+          const failed = !!event.detail?.failed || status >= 400;
+          if (!failed && !flashed) {
+            const config = event.detail?.requestConfig || {};
+            const verb = (config.verb || config.method || '').toUpperCase();
+            if (verb && verb !== 'GET') {
+              toast({ type: 'ok', title: 'Ação executada com sucesso.' });
+            }
+          }
+        }
+        finish();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+          pending = 0;
+          resetModal();
+        }
       });
     })();
   </script>
