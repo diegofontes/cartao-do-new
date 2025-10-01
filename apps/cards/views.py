@@ -36,6 +36,7 @@ def create_card(request):
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         description = (request.POST.get("description") or "").strip()
+        raw_phone = (request.POST.get("notification_phone") or "").strip()
         if len(title) < 3:
             return HttpResponseBadRequest("Invalid title")
         # Auto-generate slug unique per owner (no form field)
@@ -48,7 +49,15 @@ def create_card(request):
         mode = request.POST.get("mode") or "appointment"
         if mode not in {"appointment", "delivery"}:
             mode = "appointment"
-        card = Card.objects.create(owner=request.user, title=title, description=description, slug=candidate, mode=mode)
+        # Normalize optional phone
+        from apps.common.phone import to_e164
+        notification_phone = None
+        if raw_phone:
+            try:
+                notification_phone = to_e164(raw_phone, "BR")
+            except Exception:
+                return HttpResponseBadRequest("Telefone inválido")
+        card = Card.objects.create(owner=request.user, title=title, description=description, slug=candidate, mode=mode, notification_phone=notification_phone)
         return redirect("cards:detail", id=card.id)
     return render(request, "cards/create.html")
 
