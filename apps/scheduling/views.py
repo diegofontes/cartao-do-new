@@ -11,6 +11,9 @@ from .slots import generate_slots
 from .forms import SchedulingServiceForm, ServiceAvailabilityForm
 from apps.cards.models import Card
 from django.core.exceptions import ValidationError
+from apps.notifications.api import enqueue
+from django.conf import settings
+from zoneinfo import ZoneInfo
 
 
 @login_required
@@ -56,6 +59,29 @@ def create_appointment(request, id):
         form_answers_json={},
         status="pending",
     )
+    # Notify card owner via SMS (best effort)
+    try:
+        card = service.card
+        if getattr(card, 'notification_phone', None):
+            try:
+                tz = ZoneInfo(service.timezone or "UTC")
+            except Exception:
+                tz = ZoneInfo("UTC")
+            s_local = s.astimezone(tz)
+            date_label = s_local.strftime("%d/%m")
+            time_label = s_local.strftime("%H:%M")
+            base = (getattr(settings, 'DASHBOARD_BASE_URL', '') or '').rstrip('/')
+            path = "/agenda/list?status=pending&contact=&start=&end="
+            agenda_url = f"{base}{path}" if base else path
+            enqueue(
+                type='sms',
+                to=card.notification_phone,
+                template_code='owner_new_booking',
+                payload={'service': service.name, 'date': date_label, 'time': time_label, 'agenda_url': agenda_url},
+                idempotency_key=f'owner_new_booking:{appt.id}'
+            )
+    except Exception:
+        pass
     return JsonResponse({"ok": True, "id": str(appt.id)})
 
 

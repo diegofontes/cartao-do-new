@@ -340,6 +340,19 @@ def checkout_submit(request, nickname: str):
                     opt = get_object_or_404(ModifierOption, pk=opt_id, modifier_group=mg)
                     OrderItemOption.objects.create(order_item=oi, modifier_option=opt, price_delta_cents_snapshot=int(opt.price_delta_cents or 0))
 
+    # Notify card owner via SMS (best effort)
+    try:
+        if card.notification_phone:
+            enqueue(
+                type='sms',
+                to=card.notification_phone,
+                template_code='owner_new_order',
+                payload={'code': order.code, 'orders_url': f"/delivery/cards/{card.id}/orders/page"},
+                idempotency_key=f'owner_new_order:{order.id}'
+            )
+    except Exception:
+        pass
+
     # Clear cart
     _save_cart(request, str(card.id), {"items": []})
 

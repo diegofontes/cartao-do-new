@@ -41,6 +41,8 @@ class Card(BaseModel):
     nickname_locked_until = models.DateTimeField(blank=True, null=True)
     # Comma-separated order for public tabs (links,gallery,services)
     tabs_order = models.CharField(max_length=64, default="links,gallery,services")
+    # Número para notificações (telefone E.164 opcional)
+    notification_phone = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:
         constraints = [

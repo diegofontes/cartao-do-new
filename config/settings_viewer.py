@@ -128,6 +128,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Base URL of this viewer instance (used by main app to link here)
 VIEWER_BASE_URL = os.getenv("VIEWER_BASE_URL", "http://localhost:9000")
+DASHBOARD_BASE_URL = os.getenv("DASHBOARD_BASE_URL", "http://localhost:8000")
 
 # Use distinct cookie names so the viewer (port 9000) doesn't clash with the
 # main app session/CSRF cookies running on the same domain (localhost).

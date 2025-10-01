@@ -37,6 +37,9 @@ def render_template(code: str, channel: str, payload: dict) -> dict:
         ("sms", "booking_phone_verify"): {"body_txt": "Seu código para agendar é {{ code }} (válido por {{ ttl_min }} min). Não compartilhe."},
         ("sms", "booking_confirmed_sms"): {"body_txt": "Agendamento confirmado: {{ service }} em {{ date }} {{ time }}. Página: /@{{ nick }}"},
         ("sms", "delivery_order_status"): {"body_txt": "{% if message %}{{ message }}{% else %}Pedido {{ code }}: status {{ status }}.{% endif %}"},
+        # Owner notifications (defaults)
+        ("sms", "owner_new_booking"): {"body_txt": "Novo agendamento: {{ service }} em {{ date }} {{ time }}. Agenda: {{ agenda_url }}"},
+        ("sms", "owner_new_order"): {"body_txt": "Novo pedido {{ code }}. Pedidos: {{ orders_url }}"},
         ("email", "login_2fa"): {
             "subject": "Seu código de acesso (expira em {{ ttl_min }} min)",
             "body_txt": "Olá{% if name %} {{ name }}{% endif %}, seu código é {{ code }}. Válido por {{ ttl_min }} minutos.",

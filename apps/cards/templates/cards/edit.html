@@ -16,6 +16,11 @@
     <textarea name="description" class="textarea" rows="3" {% if card.deactivation_marked %}disabled{% endif %}>{{ card.description }}</textarea>
   </label>
   <label class="field">
+    <span>Número para notificações (opcional)</span>
+    <input name="notification_phone" type="tel" class="input" placeholder="Ex.: +55 11 91234-5678" value="{{ card.notification_phone }}" {% if card.deactivation_marked %}disabled{% endif %} />
+    <small class="help">Usado para receber notificações do cartão.</small>
+  </label>
+  <label class="field">
     <span>Modo</span>
     <select name="mode" class="input" {% if card.deactivation_marked %}disabled{% endif %}>
       <option value="appointment" {% if card.mode != 'delivery' %}selected{% endif %}>Agendamentos</option>

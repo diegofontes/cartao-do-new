@@ -1,5 +1,6 @@
 import datetime as dt
 from zoneinfo import ZoneInfo
+from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
@@ -13,6 +14,7 @@ from apps.common.phone import to_e164, gen_code, hash_code
 from apps.notifications.api import enqueue
 import logging
 import datetime as dt
+from zoneinfo import ZoneInfo
 
 log = logging.getLogger(__name__)
 
@@ -93,6 +95,29 @@ def public_create_appointment(request, nickname: str):
     )
     # clear verification flag
     request.session["phone_verified"] = False
+    # Notify card owner via SMS (best effort)
+    try:
+        if card.notification_phone:
+            try:
+                tz = ZoneInfo(service.timezone or "UTC")
+            except Exception:
+                tz = ZoneInfo("UTC")
+            s_local = sdt.astimezone(tz)
+            date_label = s_local.strftime("%d/%m")
+            time_label = s_local.strftime("%H:%M")
+            base = (getattr(settings, 'DASHBOARD_BASE_URL', '') or '').rstrip('/')
+            path = "/agenda/list?status=pending&contact=&start=&end="
+            agenda_url = f"{base}{path}" if base else path
+            log.warning("agenda_url: %s", agenda_url)
+            enqueue(
+                type='sms',
+                to=card.notification_phone,
+                template_code='owner_new_booking',
+                payload={'service': service.name, 'date': date_label, 'time': time_label, 'agenda_url': agenda_url},
+                idempotency_key=f'owner_new_booking:{appt.id}'
+            )
+    except Exception:
+        pass
     return render(request, "public/_appointment_result.html", {"ok": True, "appointment": appt})
 
 

@@ -185,6 +185,9 @@ DEFAULT_CURRENCY = os.getenv("DEFAULT_CURRENCY", "usd")
 # Public viewer base URL (for "view card" button)
 VIEWER_BASE_URL = os.getenv("VIEWER_BASE_URL", "http://localhost:9000")
 
+# Dashboard base URL for links in notifications
+DASHBOARD_BASE_URL = os.getenv("DASHBOARD_BASE_URL", "http://localhost:8000")
+
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/auth/login"

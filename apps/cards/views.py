@@ -64,6 +64,7 @@ def edit_card(request, id):
         title = (request.POST.get("title") or "").strip()
         description = (request.POST.get("description") or "").strip()
         mode = (request.POST.get("mode") or card.mode or "appointment").strip()
+        raw_phone = (request.POST.get("notification_phone") or "").strip()
         if len(title) < 3:
             return HttpResponseBadRequest("Invalid title")
         # Normalize mode
@@ -75,6 +76,16 @@ def edit_card(request, id):
         card.description = description
         card.mode = mode
         update_fields = ["title", "description", "mode"]
+        # Normalize and set notification phone (optional)
+        from apps.common.phone import to_e164
+        if raw_phone:
+            try:
+                card.notification_phone = to_e164(raw_phone, "BR")
+            except Exception:
+                return HttpResponseBadRequest("Telefone inválido")
+        else:
+            card.notification_phone = None
+        update_fields.append("notification_phone")
         # Adjust tabs order only if it matches the previous default or empty
         prev_default = "links,gallery,services"
         new_default = "menu,links,gallery"
