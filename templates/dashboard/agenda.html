@@ -30,11 +30,86 @@
       .agenda-top{flex-direction:column;align-items:stretch;gap:12px}
     }
   </style>
+  {% if view == 'list' %}
+  <style>
+    /* Timeline (list) styles */
+    /* Override grid layout from generic agenda shell when in list mode */
+    #agenda-page[data-view="list"] { display:block; }
+    /* :root{--bg:#fff;--fg:#111;--muted:#666;--border:#e6e6e8;--elev:#f6f7f8;--shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08);--r:14px} */
+    .bar{display:flex;flex-direction: column; gap:12px;margin-bottom:16px}
+    .toggle{display:flex;gap:8px;align-items:center}
+    .toggle .btn{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px}
+    .toggle .btn.primary{background:#111;color:#fff;border-color:#111}
+    .card{border:1px solid var(--border);border-radius:var(--r);background:var(--bg);box-shadow:var(--shadow);padding:12px}
+    .timeline{position:relative}
+    /* .day.sticky{position:sticky;top:0;background:var(--bg);padding:8px 0;margin:12px 0 8px;border-bottom:1px solid var(--border)} */
+    .col{position:relative;margin:0;padding:0 0 0 28px;list-style:none}
+    .node{position:relative;margin:10px 0}
+    .dot{position:absolute;left:8px;top:18px;width:10px;height:10px;border-radius:50%;background:#111}
+    .line{position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--border)}
+    .card .row{display:flex;gap:8px;justify-content:space-between;align-items:center}
+    .badge{border:1px solid var(--border);border-radius:999px;padding:2px 8px;color:var(--muted);font-size:.85rem}
+    .badge.confirmed{border-color:#111;color:#111}
+    .muted{color:var(--muted)}
+    .actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+    .is-hidden{display:none !important}
+    @media(max-width:720px){ 
+        aside .row{flex-direction:row;align-items:flex-start} 
+        .agenda .row{flex-direction:column;align-items:flex-start}
+        .bar{flex-direction:column;align-items:stretch}
+        .input, .select, .textarea {width: 100%;}
+        #filters {width: 100%;}
+        .card .row{display: flex;flex-direction: row;}
+        section .col{padding-left: 0;}
+      }
+  </style>
+  {% endif %}
 {% endblock %}
 {% block breadcrumb %}Agenda{% endblock %}
 {% block content %}
 <section id="agenda-page" class="agenda" data-view="{{ view }}">
+  {% if view == 'list' %}
+  <header class="bar">
+
+    <div class="toggle" role="tablist" aria-label="Alternar visualização">
+      <a href="{% url 'dashboard:agenda' %}?view=week" class="btn" role="tab" aria-selected="false">Calendário</a>
+      <a href="{% url 'dashboard:agenda' %}?view=list" class="btn primary" role="tab" aria-selected="true">Lista</a>
+      <button type="button" id="filters-btn" class="btn ghost" title="Mostrar/ocultar filtros" aria-label="Mostrar ou ocultar filtros" aria-controls="filters" aria-expanded="{% if request.GET.status or request.GET.name or request.GET.contact or request.GET.start or request.GET.end %}true{% else %}false{% endif %}">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12 10 19 14 21 14 12 22 3"/></svg>
+      </button>
+    </div>
+    <div class="row">
+    <form id="filters" class="row{% if not request.GET.status and not request.GET.name and not request.GET.contact and not request.GET.start and not request.GET.end %} is-hidden{% endif %}" role="search" aria-label="Filtros de agenda"
+          hx-get="{% url 'dashboard:agenda_list_partial' %}"
+          hx-trigger="submit"
+          hx-target="#list" hx-swap="innerHTML" hx-push-url="true">
+      <select name="status" class="select">
+        <option value="">Todos</option>
+        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pendentes</option>
+        <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmados</option>
+        <option value="denied" {% if request.GET.status == 'denied' %}selected{% endif %}>Negados</option>
+        <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelados</option>
+      </select>
+      <!-- <input type="search" name="name" class="input" placeholder="Nome ou @nick" value="{{ request.GET.name }}" aria-label="Nome ou nickname" /> -->
+      <input type="search" name="contact" class="input" placeholder="Telefone ou e‑mail (somente confirmados)" value="{{ request.GET.contact }}" aria-label="Contato" />
+      <input type="date" name="start" class="input" value="{{ request.GET.start }}" aria-label="Início" />
+      <input type="date" name="end" class="input" value="{{ request.GET.end }}" aria-label="Fim" />
+      <button type="submit" class="btn">Filtrar</button>
+    </form>
+    </div>
+  </header>
+  <div id="list" hx-get="{% url 'dashboard:agenda_list_partial' %}{% if request.GET %}?{{ request.GET.urlencode }}{% else %}?view=list{% endif %}"
+       hx-trigger="load" hx-swap="innerHTML">
+    <div class="card" role="status" aria-live="polite">Carregando…</div>
+  </div>
+  {% else %}
   <header class="agenda-top">
+    <div class="row" >
+      <div class="toggle" role="tablist" aria-label="Alternar visualização">
+        <a href="{% url 'dashboard:agenda' %}?view=week" class="btn primary" role="tab" aria-selected="false">Calendário</a>
+        <a href="{% url 'dashboard:agenda' %}?view=list" class="btn" role="tab" aria-selected="true">Lista</a>
+      </div>
+    </div>
     <div class="row">
       <button class="btn" hx-get="{% url 'dashboard:agenda' %}?view={{ view }}&date={{ prev }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">◀</button>
       <button class="btn" hx-get="{% url 'dashboard:agenda' %}?view={{ view }}&date={{ today }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">Hoje</button>
@@ -43,6 +118,7 @@
     </div>
     <div class="row">
       <select class="select" name="view" hx-trigger="change" hx-get="{% url 'dashboard:agenda' %}?date={{ anchor }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">
+        <option value="list" {% if view == 'list' %}selected{% endif %}>Lista</option>
         <option value="day" {% if view == 'day' %}selected{% endif %}>Dia</option>
         <option value="week" {% if view == 'week' %}selected{% endif %}>Semana</option>
         <option value="month" {% if view == 'month' %}selected{% endif %}>Mês</option>
@@ -121,20 +197,52 @@
   </div>
 
   <aside id="sidebar" aria-live="polite"></aside>
+  {% endif %}
 </section>
+
 <script>
   // Default to day view on mobile if not already
   (function(){
     try{
       var isMobile = window.matchMedia('(max-width: 1024px)').matches;
       var currentView = '{{ view }}';
-      if(isMobile && currentView !== 'day'){
+      if(isMobile && currentView !== 'day' && currentView !== 'list'){
         var url = '{% url 'dashboard:agenda' %}?view=day&date={{ anchor }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}';
         htmx.ajax('GET', url, { target: '#agenda-page', swap: 'outerHTML' });
       }
     }catch(_){/* noop */}
   })();
-
   // Tamanho e posicionamento são tratados por static/ui/dashboard.js
+
+  // apresenta ou fecha o formulário de filtro (com persistência)
+  (function(){
+    var f = document.getElementById('filters');
+    var b = document.getElementById('filters-btn');
+
+    console.log(f, b); // debug
+    if(!f || !b) return;
+    function setFilters(open){
+      console.log('setFilters', open); // debug
+      if(open){ f.classList.remove('is-hidden'); f.style.display=''; b.setAttribute('aria-expanded','true'); }
+      else { f.classList.add('is-hidden'); f.style.display='none'; b.setAttribute('aria-expanded','false'); }
+      try{ localStorage.setItem('agendaFiltersOpen', open ? '1':'0'); }catch(_){ }
+    }
+    function toggle(){
+      console.log('toggle'); // debug
+      var open = !!(f && !f.classList.contains('is-hidden') && f.style.display !== 'none');
+      setFilters(!open);
+    }
+
+    b.addEventListener('click', function(ev){ ev.preventDefault(); toggle(); });
+    // Aplica preferência armazenada, se houver
+    document.addEventListener('DOMContentLoaded', function(){
+      try{
+        var pref = localStorage.getItem('agendaFiltersOpen');
+        if(pref !== null){ setFilters(pref === '1'); }
+      }catch(_){ }
+    });
+
+  })();
+
 </script>
 {% endblock %}
