@@ -7,7 +7,7 @@
   <title>Página não encontrada — 404</title>
   <script defer src="{% static 'ui/theme.js' %}"></script>
   <style>
-    :root{--bg:#fff;--fg:#111;--muted:#666;--border:#e6e6e8;--shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08);--r:14px;}
+    /* :root{--bg:#fff;--fg:#111;--muted:#666;--border:#e6e6e8;--shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08);--r:14px;} */
     body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;}
     .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px;}
     .card{max-width:560px;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:28px;text-align:center;}
@@ -19,17 +19,52 @@
   <body>
     <main class="wrap">
       <section class="card" role="alert">
-        <img id="logo"
-          src="{% static 'img/logo-cap-v1.png' %}"
-          data-logo-darklight="{% static 'img/logo-cap-v1.png' %}"
-          data-logo-light="{% static 'img/logo-cap-v1-dark.png' %}"
-          alt="Logo"
-          style="height:154px">
+          <img id="logo"
+               src="{% static 'img/logo-cap-v1-dark.png' %}"
+               data-logo-light="{% static 'img/logo-cap-v1-dark.png' %}"
+               data-logo-dark="{% static 'img/logo-cap-v1.png' %}"
+               alt="Logo"
+               style="height:154px" />
+
         <h1>404 — Página não encontrada</h1>
         <p>O recurso que você procurava não existe ou foi movido.</p>
         <a class="btn" href="/">Voltar para o início</a>
       </section>
     </main>
+
+    <script>
+      // Fallback: garante função global se static/ui/theme.js não carregar
+      if (typeof window.toggleTheme !== 'function') {
+        (function(){
+          function applyLogoFor(theme){
+            try{
+              var el = document.getElementById('logo');
+              if(!el) return;
+              var light = el.getAttribute('data-logo-light');
+              var dark = el.getAttribute('data-logo-dark');
+              el.src = theme === 'dark' ? (dark || el.src) : (light || el.src);
+            }catch(e){}
+          }
+          window.toggleTheme = function(){
+            var root = document.documentElement;
+            var next = (root.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            try{ localStorage.setItem('theme', next); }catch(e){}
+            applyLogoFor(next);
+          };
+          // Ajusta o logo na carga inicial
+          document.addEventListener('DOMContentLoaded', function(){
+            var current = document.documentElement.getAttribute('data-theme') || 'light';
+            applyLogoFor(current);
+          });
+          // Clique delegado para elementos com data-toggle-theme
+          document.addEventListener('click', function(e){
+            var t = e.target.closest('[data-toggle-theme]');
+            if(t){ e.preventDefault(); try{ window.toggleTheme(); }catch(_){} }
+          });
+        })();
+      }
+    </script>
   </body>
   </html>
 

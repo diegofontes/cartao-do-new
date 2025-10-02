@@ -10,9 +10,9 @@
         hx-swap="innerHTML">
     {% csrf_token %}
     <div id="dropzone" tabindex="0" role="button" aria-label="Enviar imagens"
-         style="padding:16px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-elev);margin-bottom:10px">
+         style="display:flex;justify-content: center;padding:16px;border:1px dashed var(--border);border-radius:10px;background:var(--bg-elev);margin-bottom:10px">
       <input type="file" id="files" name="files" accept="image/*" multiple hidden>
-      <p>Arraste e solte imagens aqui ou <button type="button" class="btn ghost" data-open-file>clique para selecionar</button></p>
+      <p style="display: flex;flex-direction: column; align-items: center;" >Arraste e solte imagens aqui <span>ou</span> <button type="button" class="btn ghost" data-open-file>clique para selecionar</button></p>
       <div class="htmx-indicator">Enviando…</div>
     </div>
   </form>

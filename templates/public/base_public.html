@@ -174,7 +174,13 @@
           </button>
         `;
         el.querySelector('.toast-close')?.addEventListener('click', () => el.remove());
-        toasts.appendChild(el);
+        // Viewer mode: ensure only the last toast is visible
+        if (typeof toasts.replaceChildren === 'function') {
+          toasts.replaceChildren(el);
+        } else {
+          while (toasts.firstChild) toasts.removeChild(toasts.firstChild);
+          toasts.appendChild(el);
+        }
         window.setTimeout(() => el.remove(), type === 'err' ? 9000 : 8000);
       }
 

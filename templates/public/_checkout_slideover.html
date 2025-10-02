@@ -29,7 +29,8 @@
       <form class="stack" style="gap:10px; margin-top: 1rem;" hx-post="{% url 'delivery_checkout_submit' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
         {% csrf_token %}
         <label class="field"><span>Nome</span><input class="input" type="text" name="name" required /></label>
-        <fieldset class="box" >
+        <label class="field"><span>E-mail (opcional)</span><input class="input" type="email" name="email" /></label>
+        <fieldset class="box" style="grid-column:1/-1" >
           <label class="field"><span>Telefone (BR/E.164)</span>
             <input class="input" name="phone" id="co-phone" inputmode="tel" placeholder="+55 11 9XXXX-XXXX" required />
           </label>
@@ -37,11 +38,10 @@
                hx-post="{% url 'delivery_send_code' card.nickname %}"
                hx-trigger="click from:#send-sms-dv"
                hx-include="closest form"
-               hx-target="#verify-dv" hx-swap="innerHTML">
+               hx-target="#verify-dv" hx-swap="outerHTML">
             <button type="button" id="send-sms-dv" class="btn">Enviar código</button>
           </div>
         </fieldset>
-        <label class="field"><span>E-mail (opcional)</span><input class="input" type="email" name="email" /></label>
         <label class="field">
           <span>Retirada ou entrega?</span>
           <select name="fulfillment" id="ff-select" class="select" onchange="document.getElementById('addr').hidden = this.value!=='delivery'">
