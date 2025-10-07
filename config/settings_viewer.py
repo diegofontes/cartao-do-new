@@ -29,10 +29,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
     "django_htmx",
     "apps.accounts",
     "apps.notifications",
     "apps.cards",
+    "apps.search.apps.SearchConfig",
     "apps.scheduling",
     "apps.media",
     "apps.metering",
@@ -84,7 +86,7 @@ if DATABASE_URL:
     u = urlparse(DATABASE_URL)
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
+            "ENGINE": "django.contrib.gis.db.backends.postgis",
             "NAME": u.path.lstrip("/"),
             "USER": u.username,
             "PASSWORD": u.password,
@@ -97,7 +99,7 @@ if DATABASE_URL:
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
+            "ENGINE": "django.contrib.gis.db.backends.postgis",
             "NAME": POSTGRES_DB,
             "USER": POSTGRES_USER,
             "PASSWORD": POSTGRES_PASSWORD,
@@ -162,6 +164,9 @@ CELERY_TASK_ALWAYS_EAGER = False
 
 # Ensure notifications stay in DEV mode on viewer unless overridden
 os.environ.setdefault("NOTIF_DEV_MODE", "1")
+
+# Geocoding settings
+NOMINATIM_USER_AGENT=  os.getenv("NOMINATIM_USER_AGENT", "cartao.do/1.0 (contato@cartao.do)")
 
 # Basic production security (configurable via env)
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "true").lower() == "true"

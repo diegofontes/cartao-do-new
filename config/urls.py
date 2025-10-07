@@ -35,6 +35,8 @@ urlpatterns = [
     path("delivery/", include("apps.delivery.urls")),
     path("metering/", include("apps.metering.urls")),
     path("stripe/", include("apps.billing.webhooks")),  # /stripe/webhook/
+    path("search/dashboard/", include(("apps.search.urls_dashboard", "search_dashboard"), namespace="search_dashboard")),
+    path("search/", include(("apps.search.urls", "search_public"), namespace="search")),
     path("", RedirectView.as_view(pattern_name="dashboard:index", permanent=False)),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/?$", card_public.card_public, name="card_public_main"),
 ]

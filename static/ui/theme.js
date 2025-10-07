@@ -104,12 +104,18 @@
 
   // Swap logo image based on current theme
   function applyLogo(){
-    const el = document.getElementById('logo');
-    if(!el) return;
-    const light = el.getAttribute('data-logo-light');
-    const dark = el.getAttribute('data-logo-dark');
     const isDark = root.getAttribute('data-theme') === 'dark';
-    el.src = isDark ? (dark || el.src) : (light || el.src);
+    const els = document.querySelectorAll('[data-logo-light], [data-logo-dark], #logo');
+    els.forEach(function(el){
+      const light = el.getAttribute('data-logo-light') || el.getAttribute('data-logo-dark');
+      const dark = el.getAttribute('data-logo-dark') || el.getAttribute('data-logo-light');
+      const next = isDark ? (dark || el.getAttribute('src')) : (light || el.getAttribute('src'));
+      if (next && el.getAttribute('src') !== next) {
+        el.classList.add('logo-swap');
+        el.setAttribute('src', next);
+        window.setTimeout(function(){ el.classList.remove('logo-swap'); }, 180);
+      }
+    });
   }
   document.addEventListener('DOMContentLoaded', applyLogo);
   // Observe data-theme attribute changes to keep logo in sync

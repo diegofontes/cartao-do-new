@@ -9,7 +9,7 @@ services:
     command: ["redis-server","--save","","--appendonly","no"]
 
   db:
-    image: postgres:16
+    image: postgis/postgis:16-3.4
     container_name: app-postgres
     restart: unless-stopped
     ports:
@@ -72,6 +72,25 @@ services:
     ports: ["9000:9000"]
     healthcheck:
       test: ["CMD-SHELL","curl -fsS http://localhost:9000/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  search:
+    image: local/cartao-do:latest
+    container_name: app-search
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings_search
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      TZ: America/Sao_Paulo
+    command: ["gunicorn","config.wsgi:application","-b","0.0.0.0:9100","--workers","2","--timeout","60"]
+    depends_on: [redis, db]
+    ports: ["9100:9100"]
+    healthcheck:
+      test: ["CMD-SHELL","curl -fsS http://localhost:9100/healthz || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5

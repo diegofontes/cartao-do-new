@@ -1,0 +1,173 @@
+<section class="card" aria-labelledby="search-profile-title">
+  <div class="row" style="justify-content:space-between;align-items:flex-start;gap:var(--space-3)">
+    <div>
+      <h2 id="search-profile-title" style="margin:0">Perfil de Busca</h2>
+      <p class="muted" style="margin-top:var(--space-1);max-width:60ch">
+        Somente cards publicados e ativos aparecem na busca pública. Configure a categoria,
+        localização base e raio de atuação. Use a prévia para testar com coordenadas simuladas.
+      </p>
+    </div>
+    {% if card.search_profile and card.search_profile.active %}
+      <span class="badge success">Ativo</span>
+    {% elif card.search_profile %}
+      <span class="badge">Inativo</span>
+    {% else %}
+      <span class="badge">Sem perfil</span>
+    {% endif %}
+  </div>
+
+  <form
+    class="stack"
+    hx-post="{% url 'search_dashboard:profile_save' card.id %}"
+    hx-target="#search-profile"
+    hx-swap="innerHTML"
+  >
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="grid" style="gap:var(--space-3);grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <label class="field">
+        <span>Categoria</span>
+        {{ form.category }}
+        {% if form.category.errors %}<span class="error">{{ form.category.errors|join:", " }}</span>{% endif %}
+      </label>
+      <label class="field">
+        <span>Raio (km)</span>
+        {{ form.radius_km }}
+        {% if form.radius_km.errors %}<span class="error">{{ form.radius_km.errors|join:", " }}</span>{% endif %}
+      </label>
+      
+      <label class="field">
+        <span>Latitude</span>
+        {{ form.latitude }}
+        {% if form.latitude.errors %}<span class="error">{{ form.latitude.errors|join:", " }}</span>{% endif %}
+      </label>
+      <label class="field">
+        <span>Longitude</span>
+        {{ form.longitude }}
+        {% if form.longitude.errors %}<span class="error">{{ form.longitude.errors|join:", " }}</span>{% endif %}
+      </label>
+      <label class="field" style="align-self:end">
+        <span class="row" style="gap:var(--space-1);align-items:center">
+          {{ form.active }}<span>Perfil ativo</span>
+        </span>
+        {% if form.active.errors %}<span class="error">{{ form.active.errors|join:", " }}</span>{% endif %}
+      </label>
+    </div>
+
+    <div class="row" style="gap:var(--space-2);align-items:flex-end;flex-wrap:wrap">
+      <label class="field" style="min-width:200px">
+        <span>Buscar por CEP (stub interno)</span>
+        <input type="text" class="input" name="cep" id="cep-input" placeholder="00000-000" maxlength="9" />
+        <button type="button" class="btn primary" data-geocode="{% url 'search_dashboard:geocode_stub' %}">Preencher coordenadas</button>
+      </label>
+      <div class="muted" id="cep-feedback" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="row" style="gap:var(--space-2);justify-content:flex-end">
+      <button type="submit" class="btn primary">Salvar</button>
+      <button type="submit" class="btn"
+              formaction="{% url 'search_dashboard:profile_deactivate' card.id %}"
+              hx-post="{% url 'search_dashboard:profile_deactivate' card.id %}"
+              hx-target="#search-profile"
+              hx-swap="innerHTML"
+              hx-include="closest form"
+              {% if not card.search_profile %}disabled{% endif %}
+      >Desativar</button>
+    </div>
+  </form>
+
+  <!-- <hr style="margin:var(--space-4) 0" />
+
+  <section aria-labelledby="search-preview-title">
+    <div class="row" style="justify-content:space-between;align-items:center;gap:var(--space-3)">
+      <div>
+        <h3 id="search-preview-title" style="margin:0">Pré-visualizar resultados</h3>
+        <p class="muted" style="margin-top:var(--space-1)">Informe uma localização de usuário para testar a consulta.</p>
+      </div>
+    </div>
+    <form
+      class="stack"
+      hx-post="{% url 'search_dashboard:profile_preview' card.id %}"
+      hx-target="#search-preview"
+      hx-swap="innerHTML"
+    >
+      {% csrf_token %}
+      {% if preview_form.non_field_errors %}
+        <div class="alert error">{{ preview_form.non_field_errors }}</div>
+      {% endif %}
+      <div class="grid" style="gap:var(--space-3);grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+        <label class="field">
+          <span>Latitude</span>
+          {{ preview_form.latitude }}
+          {% if preview_form.latitude.errors %}<span class="error">{{ preview_form.latitude.errors|join:", " }}</span>{% endif %}
+        </label>
+        <label class="field">
+          <span>Longitude</span>
+          {{ preview_form.longitude }}
+          {% if preview_form.longitude.errors %}<span class="error">{{ preview_form.longitude.errors|join:", " }}</span>{% endif %}
+        </label>
+        <label class="field">
+          <span>Raio (km)</span>
+          {{ preview_form.radius_km }}
+          {% if preview_form.radius_km.errors %}<span class="error">{{ preview_form.radius_km.errors|join:", " }}</span>{% endif %}
+        </label>
+        <label class="field">
+          <span>Categoria</span>
+          {{ preview_form.category }}
+        </label>
+        <label class="field">
+          <span>Modo</span>
+          {{ preview_form.mode }}
+        </label>
+      </div>
+      <div class="row" style="justify-content:flex-end">
+        <button type="submit" class="btn">Testar busca</button>
+      </div>
+    </form>
+    <div id="search-preview" class="stack" style="margin-top:var(--space-3)">
+      {% include 'search/_preview_results.html' with results=preview_results form=preview_form only %}
+    </div>
+  </section> -->
+</section>
+
+<script>
+  (function(){
+    const btn = document.querySelector('[data-geocode]');
+    if(!btn) return;
+    const feedback = document.getElementById('cep-feedback');
+    const cepInput = document.getElementById('cep-input');
+    const latInput = document.querySelector('input[name="latitude"]');
+    const lngInput = document.querySelector('input[name="longitude"]');
+    const csrf = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    btn.addEventListener('click', async function(){
+      const cep = (cepInput?.value || '').trim();
+      if(!cep){
+        feedback && (feedback.textContent = 'Informe um CEP para buscar.');
+        return;
+      }
+      try {
+        const resp = await fetch(btn.dataset.geocode, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrf?.value || ''
+          },
+          body: new URLSearchParams({cep})
+        });
+        const data = await resp.json();
+        if(resp.ok){
+          if(latInput) latInput.value = data.lat;
+          if(lngInput) lngInput.value = data.lng;
+          feedback && (feedback.textContent = 'Coordenadas preenchidas a partir do CEP.');
+        }else{
+          feedback && (feedback.textContent = data.error || 'CEP não encontrado no stub.');
+        }
+      } catch(_err){
+        feedback && (feedback.textContent = 'Não foi possível consultar o CEP agora.');
+      }
+    });
+  })();
+</script>

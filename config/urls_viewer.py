@@ -5,11 +5,14 @@ from apps.cards import views_public as card_public
 from apps.scheduling import views_public as booking_public
 from apps.pages import urls_public as pages_public
 from apps.delivery import views_public as delivery_public
+from apps.search import views_public as search_views
 
 urlpatterns = [
     path("img/", include((media_urls, "media"), namespace="media")),
     # Healthcheck endpoint for viewer
     path("healthz", lambda _request: HttpResponse("ok")),
+    path("buscar/", search_views.nearby_page, name="search_nearby"),
+    path("search/", include(("apps.search.urls", "search_public"), namespace="search")),
     # Legal pages in public viewer
     path("", include((pages_public, "pages"), namespace="pages")),
     # Auth endpoints for login/signup in the public viewer
