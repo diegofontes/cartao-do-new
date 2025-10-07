@@ -10,7 +10,7 @@
         <span>Nickname público</span>
         <input name="nickname" id="nickname" class="input" pattern="^[a-z0-9_.]{3,32}$" required
                hx-get="{% url 'cards:check_nickname' %}"
-               hx-trigger="change, keyup changed delay:300ms"
+               hx-trigger="change, keyup changed delay:2000ms"
                hx-target="#nick-feedback" hx-swap="innerHTML"
                placeholder="seu_nome" />
         <div id="nick-feedback" class="help"></div>

@@ -63,7 +63,7 @@ button{cursor:pointer}
 .card-viewer{max-width:880px;margin:0 auto;padding:var(--gap-5)}
 .header{display:flex;align-items:center;justify-content:space-between;gap:var(--gap-4)}
 .header-left{display:flex;align-items:center;gap:var(--gap-4)}
-.header-right{display:flex;align-items:center}
+.header-right{display:flex;align-items:center;gap: 8px;}
 .avatar{width:96px;height:96px;border-radius:16px;box-shadow:var(--shadow);object-fit:cover}
 .title{font-size:2rem;line-height:1.2;margin:0}
 .nickname{color:var(--fg-muted);margin-top:4px}
@@ -254,7 +254,7 @@ button{cursor:pointer}
   background: transparent;
   font-size: 1.05rem;
   color: var(--fg);
-  padding: 10px 12px;
+  padding: 10px 24px;
   /* padding: var(--space-3) 0; */
 }
 
