@@ -83,7 +83,7 @@ services:
     env_file: [.env]
     environment:
       DJANGO_SETTINGS_MODULE: config.settings_search
-      FORCE_SCRIPT_NAME: /s
+      DJANGO_FORCE_SCRIPT_NAME: /s
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
       TZ: America/Sao_Paulo
