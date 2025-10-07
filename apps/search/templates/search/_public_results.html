@@ -1,0 +1,35 @@
+{% if form and form.errors %}
+  <div class="alert error">Parâmetros inválidos. Verifique latitude, longitude e raio.</div>
+{% endif %}
+{% if results %}
+  <div class="search-results">
+    {% for item in results %}
+      <article class="search-card">
+        <div class="search-card__media">
+          {% if item.avatar_thumb_path %}
+            <img src="{% url 'media:image_public' path=item.avatar_thumb_path %}" alt="Avatar de {{ item.title }}" loading="lazy" />
+          {% elif item.avatar_thumb_url %}
+            <img src="{{ item.avatar_thumb_url }}" alt="Avatar de {{ item.title }}" loading="lazy" />
+          {% else %}
+            <div class="search-card__placeholder" aria-hidden="true"></div>
+          {% endif %}
+        </div>
+        <div class="search-card__body">
+          <h3>{{ item.title }}</h3>
+          <div class="search-card__meta">
+            <span class="badge">{{ item.category }}</span>
+            <span class="badge">{{ item.mode_label }}</span>
+          </div>
+          <div class="search-card__distance">{{ item.distance_label }}</div>
+        </div>
+        <div class="search-card__actions">
+          {% if item.viewer_url %}
+            <a class="btn primary" href="{{ item.viewer_url }}">Ver card</a>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="muted">Nenhum card encontrado dentro do raio informado.</p>
+{% endif %}

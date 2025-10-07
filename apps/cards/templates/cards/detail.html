@@ -15,5 +15,8 @@
   {% else %}
     <div id="services" style="grid-column:1/-1" hx-get="{% url 'scheduling:services_partial' card.id %}" hx-trigger="load"></div>
   {% endif %}
+
+    <div id="search-profile" style="grid-column:1/-1" hx-get="{% url 'search_dashboard:profile_panel' card.id %}" hx-trigger="load"></div>
+
 </div>
 {% endblock %}

@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
     # Tailwind integration (django-tailwind)
     "tailwind",
     "theme",  # Nome do app Tailwind
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     "apps.billing",
     "apps.dashboard",
     "apps.cards",
+    "apps.search.apps.SearchConfig",
     "apps.scheduling",
     "apps.delivery",
     "apps.metering",
@@ -95,7 +97,7 @@ if DATABASE_URL:
     u = urlparse(DATABASE_URL)
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
+            "ENGINE": "django.contrib.gis.db.backends.postgis",
             "NAME": u.path.lstrip("/"),
             "USER": u.username,
             "PASSWORD": u.password,
@@ -108,7 +110,7 @@ if DATABASE_URL:
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
+            "ENGINE": "django.contrib.gis.db.backends.postgis",
             "NAME": POSTGRES_DB,
             "USER": POSTGRES_USER,
             "PASSWORD": POSTGRES_PASSWORD,
@@ -242,3 +244,6 @@ DELIVERY_LIMITS = {
     "modifier_groups_per_item": int(os.getenv("DELIVERY_MODIFIER_GROUPS_PER_ITEM", "20")),
     "options_per_modifier_group": int(os.getenv("DELIVERY_OPTIONS_PER_MODIFIER_GROUP", "50")),
 }
+
+# Geocoding settings
+NOMINATIM_USER_AGENT=  os.getenv("NOMINATIM_USER_AGENT", "cartao.do/1.0 (contato@cartao.do)")
