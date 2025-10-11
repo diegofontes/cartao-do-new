@@ -53,7 +53,7 @@
           <label class="field"><span>CEP</span>
             <input class="input" type="text" name="cep" id="co-cep"
                    hx-get="{% url 'delivery_cep_lookup' card.nickname %}"
-                   hx-target="#addr-fields" hx-include="#co-cep" hx-trigger="change, keyup changed delay:600ms" placeholder="00000-000" />
+                   hx-target="#addr-fields" hx-include="#co-cep" hx-trigger="change, keyup changed delay:1000ms" placeholder="00000-000" />
           </label>
           <div id="addr-fields">
             {% include 'public/_checkout_addr_fields.html' %}

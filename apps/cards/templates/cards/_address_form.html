@@ -14,7 +14,7 @@
       <span>CEP</span>
       <input name="cep" id="cep" class="input" inputmode="numeric" pattern="^\d{5}-?\d{3}$"
              hx-get="{% url 'cards:cep_lookup' %}"
-             hx-trigger="blur changed delay:300ms"
+             hx-trigger="blur changed delay:1000ms"
              hx-target="#addr-fields"
              hx-swap="innerHTML"
              aria-describedby="cep-help" required />

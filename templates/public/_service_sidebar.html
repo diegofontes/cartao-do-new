@@ -11,7 +11,7 @@
   <div class="slideover-body">
     <form id="booking-form"
           hx-post="{% url 'public_validate_booking' card.nickname service.id %}"
-          hx-trigger="change from:#booking-form, keyup changed delay:300ms"
+          hx-trigger="change from:#booking-form, keyup changed delay:1000ms"
           hx-target="#dlg-footer" hx-swap="outerHTML"
           class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
       {% csrf_token %}

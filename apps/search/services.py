@@ -13,8 +13,11 @@ def build_point(lat: float, lng: float, srid: int = 4326) -> Point:
     return Point(float(lng), float(lat), srid=srid)
 
 
-def search_profiles(query: SearchQuery) -> QuerySet[SearchProfile]:
+def search_profiles(query: SearchQuery, *, extra: int = 0) -> QuerySet[SearchProfile]:
     user_point = build_point(query.latitude, query.longitude)
+    offset = max(0, int(getattr(query, "offset", 0) or 0))
+    limit = max(1, int(getattr(query, "limit", 1) or 1))
+    total = limit + max(0, int(extra))
 
     qs = (
         SearchProfile.objects
@@ -34,7 +37,7 @@ def search_profiles(query: SearchQuery) -> QuerySet[SearchProfile]:
     return (
         qs
         .select_related("card")
-        .order_by("distance", "created_at")[: query.limit]
+        .order_by("distance", "created_at")[offset: offset + total]
     )
 
 

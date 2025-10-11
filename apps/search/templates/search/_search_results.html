@@ -7,43 +7,24 @@
   {% endif %}
 
   {% if results %}
-    <ul class="result-list">
-      {% for item in results %}
-        <li class="result-card card">
-          <div class="result-card__media" aria-hidden="true">
-            {% if item.avatar_thumb_path %}
-              <img src="{% url 'media:image_public' path=item.avatar_thumb_path %}" width="96" height="96"  alt="" class="avatar" loading="lazy" />
-            {% elif item.avatar_thumb_url %}
-              <img src="{{ item.avatar_thumb_url }}" alt="" loading="lazy" />
-            {% else %}
-              <div class="avatar-placeholder"></div>
-            {% endif %}
-          </div>
-          <div class="result-card__body">
-            <h3 class="result-card__title">
-              <a href="{{ item.viewer_url }}" target="_blank" rel="noopener">
-                {{ item.title }}
-                {% if item.nickname %}
-                  <span class="result-card__nickname">@{{ item.nickname }}</span>
-                {% endif %}
-              </a>
-            </h3>
-            <div class="result-card__meta">
-              <span class="badge">{{ item.category_label }}</span>
-              <span class="badge">{{ item.mode_label }}</span>
-            </div>
-            <div class="result-card__distance">{{ item.distance_label }}</div>
-          </div>
-          <!-- <div class="result-card__actions">
-            {% if item.viewer_url %}
-              <a class="btn secondary" href="{{ item.viewer_url }}" target="_blank" rel="noopener">
-                Abrir Card
-              </a>
-            {% endif %}
-          </div> -->
-        </li>
-      {% endfor %}
+    <ul class="result-list" id="results-list">
+      {% include 'search/_search_results_items.html' with items=results %}
     </ul>
+    <div id="results-load-more" class="results-load-more">
+      {% if has_more and load_more_url %}
+        <button
+          type="button"
+          class="btn secondary"
+          hx-get="{{ load_more_url }}"
+          hx-target="#results-list"
+          hx-swap="beforeend"
+          hx-indicator="#results-loading"
+          aria-label="Carregar mais resultados"
+        >
+          Carregar mais
+        </button>
+      {% endif %}
+    </div>
   {% elif not error %}
     <div class="card muted">Nenhum card encontrado para os critérios informados.</div>
   {% endif %}

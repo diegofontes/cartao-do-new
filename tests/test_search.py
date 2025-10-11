@@ -300,3 +300,67 @@ def test_search_results_warns_outside_sp(client):
     )
     assert resp.status_code in {200, 422}
     assert "São Paulo" in resp.content.decode()
+
+
+@pytest.mark.django_db
+def test_search_results_paginates(client, user):
+    base_point = Point(-46.63, -23.55, srid=4326)
+    for idx in range(20):
+        card = Card.objects.create(
+            owner=user,
+            title=f"Card {idx}",
+            slug=f"card-{idx}",
+            nickname=f"card{idx}",
+            status="published",
+            mode="appointment",
+        )
+        SearchProfile.objects.create(
+            card=card,
+            category=SearchCategory.CONSULTORIA,
+            origin=Point(base_point.x + (idx * 0.0001), base_point.y + (idx * 0.0001), srid=4326),
+            radius_km=100,
+            active=True,
+        )
+
+    resp = client.get(
+        reverse("search:results"),
+        {"lat": base_point.y, "lng": base_point.x, "radius_km": 80},
+        HTTP_HX_REQUEST="true",
+    )
+    assert resp.status_code == 200
+    html = resp.content.decode()
+    assert html.count('class="result-card card"') == 15
+    assert 'Carregar mais' in html
+    assert 'offset=15' in html
+
+
+@pytest.mark.django_db
+def test_search_results_append_page(client, user):
+    base_point = Point(-46.63, -23.55, srid=4326)
+    for idx in range(18):
+        card = Card.objects.create(
+            owner=user,
+            title=f"Extra {idx}",
+            slug=f"extra-{idx}",
+            nickname=f"extra{idx}",
+            status="published",
+            mode="appointment",
+        )
+        SearchProfile.objects.create(
+            card=card,
+            category=SearchCategory.CONSULTORIA,
+            origin=Point(base_point.x + (idx * 0.0001), base_point.y + (idx * 0.0001), srid=4326),
+            radius_km=100,
+            active=True,
+        )
+
+    resp = client.get(
+        reverse("search:results"),
+        {"lat": base_point.y, "lng": base_point.x, "radius_km": 80, "offset": 15},
+        HTTP_HX_REQUEST="true",
+        HTTP_HX_TARGET="results-list",
+    )
+    assert resp.status_code == 200
+    html = resp.content.decode()
+    assert html.count('class="result-card card"') == 3
+    assert 'hx-swap-oob="outerHTML:#results-load-more"' in html

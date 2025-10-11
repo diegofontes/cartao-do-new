@@ -1,0 +1,28 @@
+{% if results %}
+  {% include 'search/_search_results_items.html' with items=results %}
+{% endif %}
+{% if has_more and load_more_url %}
+  <div
+    id="results-load-more"
+    class="results-load-more"
+    hx-swap-oob="outerHTML:#results-load-more"
+  >
+    <button
+      type="button"
+      class="btn secondary"
+      hx-get="{{ load_more_url }}"
+      hx-target="#results-list"
+      hx-swap="beforeend"
+      hx-indicator="#results-loading"
+      aria-label="Carregar mais resultados"
+    >
+      Carregar mais
+    </button>
+  </div>
+{% else %}
+  <div
+    id="results-load-more"
+    class="results-load-more"
+    hx-swap-oob="outerHTML:#results-load-more"
+  ></div>
+{% endif %}

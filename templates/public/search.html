@@ -23,9 +23,14 @@
           hx-swap="outerHTML"
           hx-indicator="#results-loading"
           data-results-url="{% url 'search:results' %}"
-          data-default-radius="{{ default_radius|default:10 }}">
+          data-default-radius="{{ default_radius|default:10 }}"
+          data-page-size="{{ page_size|default:15 }}">
       {% csrf_token %}
       <input type="hidden" name="state" value="SP">
+      <input type="hidden" name="lat" id="search-lat">
+      <input type="hidden" name="lng" id="search-lng">
+      <input type="hidden" name="limit" value="{{ page_size|default:15 }}">
+      <input type="hidden" name="offset" value="0">
 
       <div class="search-bar" role="group" aria-label="Buscar cards publicados">
         <div class="search-bar__segment search-bar__segment--address">
@@ -38,8 +43,9 @@
                  autocomplete="off"
                  aria-describedby="address-hint">
           <button type="button"
-                  class="search-bar__clear"
-                   id="btn-geoloc">
+                  class="search-bar__clear search-bar__geoloc"
+                  id="btn-geoloc"
+                  aria-label="Usar minha localização">
             📍
           </button>
           <button type="button"
@@ -68,7 +74,7 @@
         </button>
       </div>
       <div id="geo-feedback" class="search-feedback" role="status" aria-live="polite">
-        Ex.: "Av. Paulista, 1000" (somente endereços em SP).
+        Informe um endereço ou capture sua localização para buscar cards próximos.
       </div>
       <!-- <p id="address-hint" class="search-hint muted">
       </p> -->

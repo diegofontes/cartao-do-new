@@ -529,6 +529,15 @@ button{cursor:pointer}
   gap: var(--space-3);
 }
 
+.results-load-more {
+  display: flex;
+  justify-content: center;
+}
+
+.results-load-more .btn {
+  min-width: 180px;
+}
+
 .visually-hidden {
   position: absolute !important;
   width: 1px;

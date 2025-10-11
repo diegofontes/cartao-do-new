@@ -129,6 +129,7 @@ class SearchQuery:
     category: str | None
     mode: str | None
     limit: int
+    offset: int = 0
 
     @property
     def user_point(self) -> Point:
@@ -143,6 +144,7 @@ class SearchQueryForm(forms.Form):
     category = forms.ChoiceField(choices=[("", "Todas")] + list(SearchCategory.choices), required=False)
     mode = forms.ChoiceField(choices=[("", "Todos"), ("appointment", "Agendamentos"), ("delivery", "Delivery")], required=False)
     limit = forms.IntegerField(required=False, min_value=1, max_value=200)
+    offset = forms.IntegerField(required=False, min_value=0)
 
     def clean(self) -> dict[str, Any]:
         data = super().clean()
@@ -161,6 +163,8 @@ class SearchQueryForm(forms.Form):
             raise ValidationError("Categoria inválida.")
         limit = data.get("limit") or 50
         data["limit"] = max(1, min(int(limit), 200))
+        offset = data.get("offset") or 0
+        data["offset"] = max(0, int(offset))
         return data
 
     def to_query(self) -> SearchQuery:
@@ -174,4 +178,5 @@ class SearchQueryForm(forms.Form):
             category=(cleaned.get("category") or None),
             mode=(cleaned.get("mode") or None),
             limit=int(cleaned.get("limit")),
+            offset=int(cleaned.get("offset", 0)),
         )

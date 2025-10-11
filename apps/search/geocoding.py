@@ -40,9 +40,9 @@ def _normalize_cep(raw_cep: str) -> str:
 def _build_query(via_cep_payload: dict[str, str]) -> str:
     pieces = [
         via_cep_payload.get("logradouro"),
-        # via_cep_payload.get("bairro"),
+        via_cep_payload.get("bairro"),
         via_cep_payload.get("localidade"),
-        # via_cep_payload.get("uf"),
+        via_cep_payload.get("uf"),
         "Brasil",
     ]
     filtered = [p.strip() for p in pieces if p]
