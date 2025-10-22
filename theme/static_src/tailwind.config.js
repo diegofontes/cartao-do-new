@@ -42,6 +42,7 @@ module.exports = {
         // '../../**/*.py'
         // ignore .data na raiz do projeto
         '!../../.data/**',
+        '!../../user-data-dir/**',
     ],
     theme: {
         extend: {},

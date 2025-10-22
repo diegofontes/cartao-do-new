@@ -24,6 +24,7 @@ urlpatterns = [
     path("addresses/<uuid:address_id>/delete", views.delete_address, name="delete_address"),
     path("<uuid:id>/gallery", views.gallery_partial, name="gallery_partial"),
     path("<uuid:id>/gallery/add", views.add_gallery_item, name="add_gallery_item"),
+    path("gallery/<uuid:item_id>/update", views.update_gallery_item, name="update_gallery_item"),
     path("gallery/<uuid:item_id>/delete", views.delete_gallery_item, name="delete_gallery_item"),
     # CEP lookup (global)
     path("cep/lookup", views.cep_lookup, name="cep_lookup"),

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -135,7 +136,25 @@ class GalleryItem(BaseModel):
     thumb_w256 = models.FileField(upload_to="cards/gallery/", max_length=255, blank=True, null=True)
     thumb_w768 = models.FileField(upload_to="cards/gallery/", max_length=255, blank=True, null=True)
     caption = models.CharField(max_length=200, blank=True)
+    visible_in_gallery = models.BooleanField(default=True)
+    importance = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    service = models.ForeignKey(
+        "scheduling.SchedulingService",
+        on_delete=models.SET_NULL,
+        related_name="gallery_items",
+        blank=True,
+        null=True,
+    )
     order = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
 
     class Meta:
-        indexes = [models.Index(fields=["card", "order"])]
+        indexes = [
+            models.Index(fields=["card", "order"]),
+            models.Index(fields=["card", "service"]),
+            models.Index(fields=["service", "importance"]),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.service and self.service.card_id != self.card_id:
+            raise ValidationError({"service": "Serviço deve pertencer ao mesmo cartão."})

@@ -9,6 +9,28 @@
     </div>
   </header>
   <div class="slideover-body">
+    {% if service_gallery %}
+      <section aria-label="Imagens do serviço" style="margin-bottom:var(--space-4)">
+        <h3 class="title" style="font-size:1rem;margin:0 0 8px">Galeria</h3>
+        <div class="svc-carousel" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px">
+          {% for g in service_gallery %}
+            <figure data-gallery-item="{{ g.id }}" style="flex:0 0 auto;width:180px;margin:0">
+              {% if g.thumb_w256 %}
+                <img src="{% url 'media:image_public' path=g.thumb_w256.name %}"
+                     alt="{{ g.caption|default:'Imagem do serviço' }}"
+                     loading="lazy"
+                     style="width:100%;height:120px;object-fit:cover;border-radius:10px" />
+              {% else %}
+                <div class="box" style="height:120px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--bg-elev)">Sem miniatura</div>
+              {% endif %}
+              {% if g.caption %}
+                <figcaption class="muted" style="font-size:0.75rem;margin-top:4px">{{ g.caption }}</figcaption>
+              {% endif %}
+            </figure>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
     <form id="booking-form"
           hx-post="{% url 'public_validate_booking' card.nickname service.id %}"
           hx-trigger="change from:#booking-form, keyup changed delay:1000ms"

@@ -42,6 +42,7 @@ tw-init = "python manage.py tailwind init"
 tw-install = "python manage.py tailwind install"
 tw-build = "python manage.py tailwind build"
 tw-dev = "python manage.py tailwind start"
+google = "google-chrome --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 --user-data-dir=./user-data-dir --no-first-run --no-default-browser-check --disable-extensions"
 
 [tool.ruff]
 line-length = 100

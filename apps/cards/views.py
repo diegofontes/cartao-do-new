@@ -1,6 +1,7 @@
-from django.utils import timezone
 import json
+from pprint import pprint
 import re
+from django.utils import timezone
 import urllib.request
 from uuid import uuid4
 from django.contrib.auth.decorators import login_required
@@ -16,8 +17,8 @@ from django.core.exceptions import ValidationError
 from .services import add_link as svc_add_link, add_address as svc_add_address, add_gallery_item as svc_add_gallery
 from apps.billing.services import has_active_payment_method
 from django.conf import settings
-import re
 from django.utils.text import slugify
+from apps.scheduling.models import SchedulingService
 
 
 @ensure_csrf_cookie
@@ -123,6 +124,7 @@ def publish_card(request, id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
     card = get_object_or_404(Card, id=id)
+    pprint(card)
     if card.owner != request.user:
         return HttpResponseForbidden("Not allowed")
     if getattr(card, "deactivation_marked", False):
@@ -149,7 +151,8 @@ def publish_card(request, id):
         card.status = "published"
         card.published_at = timezone.now()
         card.save(update_fields=["nickname", "status", "published_at"])
-    except Exception:
+    except Exception as e:
+        pprint(e)
         return HttpResponse("publish failed", status=400)
     # Redirect to public URL
     response = HttpResponse("")
@@ -311,8 +314,9 @@ def cep_lookup(request):
 @login_required
 def gallery_partial(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
-    items = GalleryItem.objects.filter(card=card).order_by("order", "created_at")
-    return render(request, "cards/_gallery.html", {"card": card, "items": items})
+    items = GalleryItem.objects.filter(card=card).order_by("importance", "order", "created_at")
+    services = SchedulingService.objects.filter(card=card).order_by("name")
+    return render(request, "cards/_gallery.html", {"card": card, "items": items, "services": services})
 
 
 @login_required
@@ -329,7 +333,13 @@ def add_gallery_item(request, id):
         # Size check to return 413 specifically
         max_bytes = getattr(settings, "MAX_UPLOAD_BYTES", 2 * 1024 * 1024)
         if getattr(f, "size", 0) > max_bytes:
-            resp = render(request, "cards/_gallery.html", {"card": card, "items": GalleryItem.objects.filter(card=card).order_by("order", "created_at"), "errors": ["Arquivo excede 2MB."]})
+            ctx = {
+                "card": card,
+                "items": GalleryItem.objects.filter(card=card).order_by("importance", "order", "created_at"),
+                "errors": ["Arquivo excede 2MB."],
+                "services": SchedulingService.objects.filter(card=card).order_by("name"),
+            }
+            resp = render(request, "cards/_gallery.html", ctx)
             resp.status_code = 413
             resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Upload bloqueado", "message": "Arquivo excede 2MB."}})
             return resp
@@ -351,7 +361,12 @@ def add_gallery_item(request, id):
         except ValidationError as e:
             errors.append(str(e))
             continue
-    ctx = {"card": card, "items": GalleryItem.objects.filter(card=card).order_by("order", "created_at"), "errors": errors}
+    ctx = {
+        "card": card,
+        "items": GalleryItem.objects.filter(card=card).order_by("importance", "order", "created_at"),
+        "errors": errors,
+        "services": SchedulingService.objects.filter(card=card).order_by("name"),
+    }
     resp = render(request, "cards/_gallery.html", ctx)
     if errors:
         resp.status_code = 422
@@ -370,6 +385,59 @@ def delete_gallery_item(request, item_id):
     cid = it.card.id
     it.delete()
     return gallery_partial(request, cid)
+
+
+@login_required
+@require_POST
+def update_gallery_item(request, item_id):
+    item = get_object_or_404(GalleryItem, id=item_id, card__owner=request.user)
+    card = item.card
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
+    errors: list[str] = []
+    caption = (request.POST.get("caption") or "").strip()
+    visible = "visible_in_gallery" in request.POST
+    raw_importance = (request.POST.get("importance") or "").strip() or str(item.importance)
+    try:
+        importance = int(raw_importance)
+    except ValueError:
+        errors.append("Ordem de importância deve ser um número inteiro.")
+        importance = item.importance
+    if importance < 1:
+        errors.append("Ordem de importância deve ser no mínimo 1.")
+    service_id = (request.POST.get("service") or "").strip()
+    service = None
+    if service_id:
+        try:
+            service = SchedulingService.objects.get(id=service_id, card=card)
+        except SchedulingService.DoesNotExist:
+            errors.append("Serviço inválido para este cartão.")
+    item.caption = caption
+    item.visible_in_gallery = visible
+    item.importance = importance
+    item.service = service
+    success = False
+    if not errors:
+        try:
+            item.full_clean()
+        except ValidationError as e:
+            errors.extend([str(msg) for msg in e.messages])
+    if not errors:
+        item.save(update_fields=["caption", "visible_in_gallery", "importance", "service"])
+        success = True
+    ctx = {
+        "card": card,
+        "items": GalleryItem.objects.filter(card=card).order_by("importance", "order", "created_at"),
+        "services": SchedulingService.objects.filter(card=card).order_by("name"),
+        "errors": errors,
+    }
+    resp = render(request, "cards/_gallery.html", ctx)
+    if errors:
+        resp.status_code = 422
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Erro", "message": "; ".join(errors)}})
+    elif success:
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Feito!", "message": "Configurações atualizadas."}})
+    return resp
 
 
 """Delete card endpoint removed: archiving is the supported flow."""

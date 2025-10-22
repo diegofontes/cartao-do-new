@@ -29,19 +29,211 @@
     dz.addEventListener('drop', e=>{ const files = Array.from(e.dataTransfer.files||[]); if(!files.length) return; input.files = e.dataTransfer.files; htmx.trigger('#gallery-upload','submit'); });
   })();
   </script>
-  <ul class="grid" style="grid-template-columns:1fr;gap:8px" id="gallery-list">
+  <ul class="grid" style="grid-template-columns:1fr;gap:12px" id="gallery-list">
     {% for it in items %}
-      <li class="row" style="gap:8px;align-items:center">
-        {% if it.thumb_w256 %}
-          <img src="{% url 'media:gallery_private' it.id 'w256' %}" alt="{{ it.caption|default:'imagem' }}" width="128" height="128" loading="lazy" style="border-radius:8px;object-fit:cover" />
-        {% endif %}
-        <a href="{% url 'media:gallery_private' it.id 'w768' %}" target="_blank" class="underline">{{ it.caption|default:"arquivo" }}</a>
-        <button hx-post="{% url 'cards:delete_gallery_item' it.id %}"
-                hx-confirm="Confirmar exclusão desta imagem?"
-                hx-target="#gallery" class="btn ghost">Excluir</button>
+      <li class="box gallery-item"
+          data-gallery-item="{{ it.id }}"
+          data-gallery-full="{% if it.thumb_w256 %}{% url 'media:gallery_private' it.id 'w768' %}{% endif %}"
+          data-gallery-caption="{{ it.caption|default:'' }}">
+        <div class="gallery-item-header">
+          <button type="button" class="gallery-thumb" data-toggle-edit>
+            {% if it.thumb_w256 %}
+              <img src="{% url 'media:gallery_private' it.id 'w256' %}"
+                   alt="{{ it.caption|default:'imagem' }}"
+                   width="160"
+                   height="160"
+                   loading="lazy" />
+              <span class="gallery-thumb-hint">Clique para editar</span>
+            {% else %}
+              <span class="gallery-thumb-placeholder">Sem miniatura</span>
+            {% endif %}
+          </button>
+          <div class="gallery-item-actions">
+            <button type="button"
+                    class="btn ghost"
+                    data-preview
+                    {% if not it.thumb_w256 %}disabled{% endif %}>Visualização ampliada</button>
+            <button type="button"
+                    class="btn ghost"
+                    hx-post="{% url 'cards:delete_gallery_item' it.id %}"
+                    hx-confirm="Confirmar exclusão desta imagem?"
+                    hx-target="#gallery">Excluir</button>
+          </div>
+        </div>
+        <div class="gallery-item-body" data-edit-panel hidden>
+          <form class="grid gallery-item-form" style="gap:12px;align-items:flex-start"
+                hx-post="{% url 'cards:update_gallery_item' it.id %}"
+                hx-target="#gallery"
+                hx-swap="innerHTML">
+            {% csrf_token %}
+            <div class="grid grid-2col-mobile" style="gap:12px">
+              <label class="field" style="grid-column:1/-1">
+                <span>Legenda</span>
+                <input class="input" name="caption" value="{{ it.caption }}" maxlength="200" />
+              </label>
+              <label class="field">
+                <span>Serviço vinculado</span>
+                <select class="input" name="service">
+                  <option value="">Sem vínculo</option>
+                  {% for svc in services %}
+                    <option value="{{ svc.id }}" {% if it.service_id == svc.id %}selected{% endif %}>{{ svc.name }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label class="field">
+                <span>Ordem de importância</span>
+                <input class="input" type="number" name="importance" min="1" value="{{ it.importance }}" required />
+              </label>
+              <label class="field" style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:8px">
+                <input type="checkbox" name="visible_in_gallery" {% if it.visible_in_gallery %}checked{% endif %} />
+                <span>Visível na galeria pública</span>
+              </label>
+              <div class="row gallery-form-actions" style="grid-column:1/-1;justify-content:flex-end;gap:8px">
+                <button type="button" class="btn ghost" data-close-edit>Ocultar</button>
+                <button type="button"
+                        class="btn ghost"
+                        hx-post="{% url 'cards:delete_gallery_item' it.id %}"
+                        hx-confirm="Confirmar exclusão desta imagem?"
+                        hx-target="#gallery">Excluir</button>
+                <button type="submit" class="btn">Salvar</button>
+              </div>
+            </div>
+          </form>
+        </div>
       </li>
     {% empty %}
       <li class="muted">Nenhuma imagem.</li>
     {% endfor %}
   </ul>
+
+  <div id="gallery-modal" class="gallery-modal" hidden>
+    <div class="gallery-modal-content" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-caption">
+      <button type="button" class="gallery-modal-close" data-gallery-close aria-label="Fechar">✕</button>
+      <button type="button" class="gallery-modal-nav prev" data-gallery-prev aria-label="Anterior">‹</button>
+      <figure>
+        <img data-gallery-image alt="" />
+        <figcaption id="gallery-modal-caption" data-gallery-caption></figcaption>
+      </figure>
+      <button type="button" class="gallery-modal-nav next" data-gallery-next aria-label="Próximo">›</button>
+    </div>
+  </div>
 </section>
+
+<script>
+  (function(){
+    const container = document.getElementById('gallery');
+    if(!container) return;
+    let modal = document.getElementById('gallery-modal');
+    const duplicate = container.querySelector('#gallery-modal');
+    if(!modal && duplicate){
+      modal = duplicate;
+    }else if(modal && duplicate && modal !== duplicate){
+      duplicate.remove();
+    }
+    if(!modal) return;
+    if(modal.parentElement !== document.body){
+      document.body.appendChild(modal);
+    }
+    const items = Array.from(container.querySelectorAll('[data-gallery-item]'));
+    const imageEl = modal.querySelector('[data-gallery-image]');
+    const captionEl = modal.querySelector('[data-gallery-caption]');
+    let currentIndex = -1;
+    let lastFocus = null;
+
+    const openModal = (index)=>{
+      if(!items.length) return;
+      const target = items[index];
+      if(!target) return;
+      const full = target.dataset.galleryFull;
+      if(!full) return;
+      currentIndex = index;
+      lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      imageEl.src = full;
+      const caption = target.dataset.galleryCaption || '';
+      imageEl.alt = caption || 'Visualização de imagem';
+      captionEl.textContent = caption;
+      modal.hidden = false;
+      document.body.dataset.galleryScrollLock = 'true';
+      document.body.style.overflow = 'hidden';
+      modal.querySelector('[data-gallery-close]')?.focus({preventScroll:true});
+    };
+
+    const closeModal = ()=>{
+      modal.hidden = true;
+      imageEl.removeAttribute('src');
+      document.body.style.removeProperty('overflow');
+      delete document.body.dataset.galleryScrollLock;
+      if(lastFocus){
+        try{ lastFocus.focus({preventScroll:true}); }catch(_err){}
+      }
+    };
+
+    items.forEach((item, index)=>{
+      const panel = item.querySelector('[data-edit-panel]');
+      const toggle = item.querySelector('[data-toggle-edit]');
+      const closeBtn = item.querySelector('[data-close-edit]');
+      const previewBtn = item.querySelector('[data-preview]');
+      if(toggle && panel){
+        toggle.addEventListener('click', ()=>{
+          const shouldOpen = panel.hasAttribute('hidden');
+          if(shouldOpen){
+            panel.removeAttribute('hidden');
+            item.classList.add('is-open');
+          }else{
+            panel.setAttribute('hidden','');
+            item.classList.remove('is-open');
+          }
+        });
+      }
+      if(closeBtn && panel){
+        closeBtn.addEventListener('click', ()=>{
+          panel.setAttribute('hidden','');
+          item.classList.remove('is-open');
+        });
+      }
+      if(previewBtn){
+        previewBtn.addEventListener('click', ()=> openModal(index));
+      }
+    });
+
+    const closeBtn = modal.querySelector('[data-gallery-close]');
+    closeBtn?.addEventListener('click', closeModal);
+    modal.querySelector('[data-gallery-prev]')?.addEventListener('click', ()=>{
+      if(currentIndex < 0) return;
+      openModal((currentIndex + items.length - 1) % items.length);
+    });
+    modal.querySelector('[data-gallery-next]')?.addEventListener('click', ()=>{
+      if(currentIndex < 0) return;
+      openModal((currentIndex + 1) % items.length);
+    });
+    modal.addEventListener('click', event=>{
+      if(event.target === modal){
+        closeModal();
+      }
+    });
+
+    if(window._galleryModalKeyHandler){
+      document.removeEventListener('keydown', window._galleryModalKeyHandler);
+    }
+    window._galleryModalKeyHandler = event=>{
+      if(modal.hidden) return;
+      if(event.key === 'Escape'){
+        event.preventDefault();
+        closeModal();
+        return;
+      }
+      if(event.key === 'ArrowLeft'){
+        event.preventDefault();
+        if(items.length){
+          openModal((currentIndex + items.length - 1) % items.length);
+        }
+      }else if(event.key === 'ArrowRight'){
+        event.preventDefault();
+        if(items.length){
+          openModal((currentIndex + 1) % items.length);
+        }
+      }
+    };
+    document.addEventListener('keydown', window._galleryModalKeyHandler);
+  })();
+</script>

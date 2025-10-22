@@ -1,20 +1,20 @@
 import datetime as dt
+import logging
+import random
+from itertools import groupby
 from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
-from apps.cards.models import Card
+from apps.cards.models import Card, GalleryItem
 from .models import SchedulingService, Appointment
 from .slots import generate_slots
 from django.core.cache import cache
 from django.utils import timezone
 from apps.common.phone import to_e164, gen_code, hash_code
 from apps.notifications.api import enqueue
-import logging
-import datetime as dt
-from zoneinfo import ZoneInfo
 
 log = logging.getLogger(__name__)
 
@@ -130,7 +130,19 @@ def public_book_modal(request, nickname: str):
 def public_service_sidebar(request, nickname: str, id: str):
     card = _card(nickname)
     service = get_object_or_404(SchedulingService, id=id, card=card, is_active=True)
-    return render(request, "public/_service_sidebar.html", {"card": card, "service": service})
+    gallery_qs = GalleryItem.objects.filter(service=service).order_by("importance", "order", "created_at")
+    shuffled_gallery = list(gallery_qs)
+    grouped_items = []
+    for _, bucket in groupby(shuffled_gallery, key=lambda g: g.importance):
+        group_list = list(bucket)
+        if len(group_list) > 1:
+            random.shuffle(group_list)
+        grouped_items.extend(group_list)
+    return render(
+        request,
+        "public/_service_sidebar.html",
+        {"card": card, "service": service, "service_gallery": grouped_items},
+    )
 
 
 def _session_key(request):

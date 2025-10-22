@@ -26,7 +26,7 @@ def card_public(request, nickname: str):
         return delivery_menu_home(request, nickname)
     links = LinkButton.objects.filter(card=card).order_by("order", "created_at")
     socials = SocialLink.objects.filter(card=card, is_active=True).order_by("order", "created_at")
-    gallery = GalleryItem.objects.filter(card=card).order_by("order", "created_at")
+    gallery = GalleryItem.objects.filter(card=card, visible_in_gallery=True).order_by("importance", "order", "created_at")
     services = SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at") if card.mode != "delivery" else []
     allowed = ("links", "gallery") + (("services",) if card.mode != "delivery" else tuple())
     raw_order = (card.tabs_order or "links,gallery,services")
@@ -49,7 +49,7 @@ def tabs_links(request, nickname: str):
 
 def tabs_gallery(request, nickname: str):
     card = _get_card_by_nickname(nickname)
-    gallery = GalleryItem.objects.filter(card=card).order_by("order", "created_at")
+    gallery = GalleryItem.objects.filter(card=card, visible_in_gallery=True).order_by("importance", "order", "created_at")
     return render(request, "public/tabs_gallery.html", {"card": card, "gallery": gallery})
 
 def tabs_services(request, nickname: str):

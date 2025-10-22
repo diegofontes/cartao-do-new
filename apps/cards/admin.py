@@ -22,7 +22,9 @@ class LinkButtonAdmin(admin.ModelAdmin):
 
 @admin.register(GalleryItem)
 class GalleryItemAdmin(admin.ModelAdmin):
-    list_display = ("card", "caption", "order")
+    list_display = ("card", "caption", "importance", "visible_in_gallery", "service", "order")
+    list_filter = ("visible_in_gallery", "service")
+    search_fields = ("caption",)
 
 
 @admin.register(SocialLink)

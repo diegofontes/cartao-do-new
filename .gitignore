@@ -60,3 +60,9 @@ celerybeat.pid
 *.orig
 
 /.data/postgres/
+
+# chrome user data
+user-data-dir/
+
+ISSUE.md
+AGENTS.md

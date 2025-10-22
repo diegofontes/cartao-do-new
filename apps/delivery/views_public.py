@@ -49,7 +49,7 @@ def menu_home(request, nickname: str):
         tab_order = ["menu", "links", "gallery"]
     # Fetch links/gallery for tabs
     links = LinkButton.objects.filter(card=card).order_by("order", "created_at")
-    gallery = GalleryItem.objects.filter(card=card).order_by("order", "created_at")
+    gallery = GalleryItem.objects.filter(card=card, visible_in_gallery=True).order_by("importance", "order", "created_at")
     return render(
         request,
         "public/menu_public.html",

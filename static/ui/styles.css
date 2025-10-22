@@ -136,6 +136,36 @@ hr{border:0;border-top:1px solid var(--border)}
   .card-detail-grid{grid-template-columns:1fr}
 }
 
+/* Gallery item form container */
+.gallery-item-form{grid-template-columns:1fr}
+.gallery-item{display:flex;flex-direction:column;gap:var(--space-3)}
+.gallery-item-header{display:flex;flex-wrap:wrap;gap:var(--space-3);align-items:flex-start}
+.gallery-thumb{position:relative;width:160px;height:160px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.gallery-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery-thumb-placeholder{display:flex;align-items:center;justify-content:center;width:100%;height:100%;padding:var(--space-4);text-align:center;color:var(--fg-muted)}
+.gallery-thumb-hint{position:absolute;left:0;right:0;bottom:0;padding:6px 10px;font-size:12px;color:#fff;background:rgba(0,0,0,.55);opacity:0;transition:opacity .2s ease}
+.gallery-thumb:hover .gallery-thumb-hint,.gallery-item.is-open .gallery-thumb-hint{opacity:1}
+.gallery-item-actions{display:flex;gap:var(--space-2);flex-wrap:wrap}
+.gallery-item-body[hidden]{display:none}
+.gallery-modal{position:fixed;inset:0;width:100%;height:100%;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:32px;z-index:1200}
+.gallery-modal[hidden]{display:none}
+.gallery-modal-content{position:relative;width:100%;max-width:960px;display:flex;align-items:center;justify-content:center}
+.gallery-modal figure{margin:0;text-align:center;color:#fff;padding:0 56px;display:flex;flex-direction:column;gap:var(--space-3);align-items:center}
+.gallery-modal img{max-width:100%;max-height:80vh;border-radius:12px;box-shadow:0 12px 24px rgba(0,0,0,.45)}
+.gallery-modal figcaption{max-width:60ch;font-size:14px;color:rgba(255,255,255,.8)}
+.gallery-modal-close{position:fixed;top:24px;right:24px;border:0;background:rgba(0,0,0,.5);color:#fff;width:44px;height:44px;border-radius:999px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gallery-modal-nav{position:fixed;top:50%;transform:translateY(-50%);border:0;background:rgba(0,0,0,.45);color:#fff;width:52px;height:52px;border-radius:999px;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.gallery-modal-nav.prev{left:24px}
+.gallery-modal-nav.next{right:24px}
+@media (max-width:640px){
+  .gallery-modal{padding:16px}
+  .gallery-modal figure{padding:0 24px}
+  .gallery-modal-close{top:16px;right:16px;width:38px;height:38px;font-size:18px}
+  .gallery-modal-nav{width:44px;height:44px;font-size:24px}
+  .gallery-modal-nav.prev{left:12px}
+  .gallery-modal-nav.next{right:12px}
+}
+
 /* Reusable two-column grid that stacks on mobile (≤640px) */
 .grid-2col-mobile{grid-template-columns:1fr 1fr}
 @media (max-width:640px){
