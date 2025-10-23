@@ -22,6 +22,7 @@ class Card(BaseModel):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cards")
     title = models.CharField(max_length=120)
     description = models.TextField(blank=True)
+    about_markdown = models.TextField(blank=True, null=True, default="")
     # Processed avatar files (original JPEG + thumbs)
     avatar = models.ImageField(upload_to="uploads/cards/avatars/", max_length=255, blank=True, null=True)
     avatar_w64 = models.ImageField(upload_to="uploads/cards/avatars/", max_length=255, blank=True, null=True)

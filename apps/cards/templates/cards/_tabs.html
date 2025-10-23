@@ -6,50 +6,21 @@
     {% csrf_token %}
     <label class="field" style="min-width:260px">
       <select name="tabs_order" class="select">
-        {% if card.mode == 'delivery' %}
-          {% with opt="menu,links,gallery" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Cardápio, Links, Galeria</option>
-          {% endwith %}
-          {% with opt="menu,gallery,links" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Cardápio, Galeria, Links</option>
-          {% endwith %}
-          {% with opt="links,menu,gallery" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Links, Cardápio, Galeria</option>
-          {% endwith %}
-          {% with opt="links,gallery,menu" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Links, Galeria, Cardápio</option>
-          {% endwith %}
-          {% with opt="gallery,menu,links" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Galeria, Cardápio, Links</option>
-          {% endwith %}
-          {% with opt="gallery,links,menu" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Galeria, Links, Cardápio</option>
-          {% endwith %}
-        {% else %}
-          {% with opt="links,gallery,services" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Links, Galeria, Serviços</option>
-          {% endwith %}
-          {% with opt="links,services,gallery" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Links, Serviços, Galeria</option>
-          {% endwith %}
-          {% with opt="gallery,links,services" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Galeria, Links, Serviços</option>
-          {% endwith %}
-          {% with opt="gallery,services,links" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Galeria, Serviços, Links</option>
-          {% endwith %}
-          {% with opt="services,links,gallery" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Serviços, Links, Galeria</option>
-          {% endwith %}
-          {% with opt="services,gallery,links" %}
-          <option value="{{ opt }}" {% if current|join:',' == opt %}selected{% endif %}>Serviços, Galeria, Links</option>
-          {% endwith %}
-        {% endif %}
+        {% for value,label in options %}
+          <option value="{{ value }}" {% if current|join:',' == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
       </select>
     </label>
     <div class="actions" style="margin-top:var(--space-2);display:flex; justify-content:flex-end">
       <button type="submit" class="btn">Salvar</button>
     </div>
   </form>
-  <p class="help" style="margin-top:var(--space-2)">Afeta apenas a visualização pública do cartão.</p>
+  <p class="help" style="margin-top:var(--space-2)">
+    Afeta apenas a visualização pública do cartão.
+    {% if has_about %}
+      Inclua a aba “Sobre” na posição preferida; ela continua visível apenas quando houver conteúdo.
+    {% else %}
+      A aba “Sobre” aparece automaticamente quando houver conteúdo.
+    {% endif %}
+  </p>
 </section>

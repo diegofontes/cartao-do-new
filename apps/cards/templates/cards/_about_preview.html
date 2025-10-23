@@ -1,0 +1,10 @@
+<div id="about-preview" class="markdown-preview">
+  {% if error %}
+    <div class="box error" role="alert">{{ error }}</div>
+  {% elif preview_html %}
+    <div class="markdown-body">{{ preview_html|safe }}</div>
+  {% else %}
+    <p class="muted">Pré-visualização aparecerá aqui.</p>
+  {% endif %}
+</div>
+

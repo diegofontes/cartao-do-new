@@ -62,6 +62,8 @@
         {% elif key == 'gallery' and gallery_len %}
           <button role="tab" aria-controls="panel-gallery" class="tab {% if forloop.first %}is-active{% endif %}"
                   hx-get="{% url 'tabs_gallery' card.nickname %}" hx-target="#panel-gallery" hx-swap="outerHTML">Galeria</button>
+        {% elif key == 'about' and about_enabled %}
+          <button role="tab" aria-controls="panel-about" class="tab {% if forloop.first %}is-active{% endif %}">Sobre</button>
         {% endif %}
       {% endfor %}
     </div>
@@ -203,6 +205,10 @@
         {% elif key == 'gallery' and gallery_len %}
           <div id="panel-gallery" role="tabpanel" class="panel" {% if not forloop.first %}hidden{% endif %}>
             {% include 'public/tabs_gallery.html' %}
+          </div>
+        {% elif key == 'about' and about_enabled %}
+          <div id="panel-about" role="tabpanel" class="panel" {% if not forloop.first %}hidden{% endif %}>
+            {% include 'public/tabs_about.html' %}
           </div>
         {% endif %}
       {% endfor %}

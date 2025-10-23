@@ -1,11 +1,18 @@
 {% extends "base.html" %}
+{% load static %}
 {% block breadcrumb %}Cartões / {{ card.title }}{% endblock %}
+{% block head %}
+    <!-- Theme + HTMX CSRF helper (lê csrftoken do cookie) -->
+    <script defer src="{% static 'ui/theme.js' %}"></script>
+    <script defer src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+{% endblock %}
 {% block content %}
 <div id="card-header">
   {% include 'cards/_card_header.html' %}
 </div>
 <div class="grid card-detail-grid" style="gap:var(--space-4);margin-top:var(--space-4)">
   <div id="tabs" style="grid-column:1/-1" hx-get="{% url 'cards:tabs_partial' card.id %}" hx-trigger="load"></div>
+  <div id="card-about" style="grid-column:1/-1" hx-get="{% url 'cards:about_partial' card.id %}" hx-trigger="load"></div>
   <div id="social-links" style="grid-column:1/-1" hx-get="{% url 'cards:social_links_partial' card.id %}" hx-trigger="load"></div>
   <div id="addresses" hx-get="{% url 'cards:addresses_partial' card.id %}" hx-trigger="load"></div>
   <div id="links" hx-get="{% url 'cards:links_partial' card.id %}" hx-trigger="load"></div>

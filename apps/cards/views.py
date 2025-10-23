@@ -9,8 +9,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.decorators.http import require_POST
+from itertools import permutations
 from django.core.cache import cache
 from .models import Card, LinkButton, CardAddress, GalleryItem, SocialLink, PLATFORM_CHOICES
+from .markdown import MAX_MARKDOWN_CHARS, has_about_content, sanitize_about_markdown
 from apps.common.images import process_avatar, process_gallery
 from apps.common.validators import validate_upload
 from django.core.exceptions import ValidationError
@@ -19,6 +21,37 @@ from apps.billing.services import has_active_payment_method
 from django.conf import settings
 from django.utils.text import slugify
 from apps.scheduling.models import SchedulingService
+
+TAB_LABELS = {
+    "menu": "Cardápio",
+    "links": "Links",
+    "gallery": "Galeria",
+    "services": "Serviços",
+    "about": "Sobre",
+}
+
+
+def _allowed_tabs_for(card: Card) -> tuple[list[str], str]:
+    if getattr(card, "mode", "appointment") == "delivery":
+        base_allowed = ["menu", "links", "gallery"]
+        default_order = "menu,links,gallery"
+    else:
+        base_allowed = ["links", "gallery", "services"]
+        default_order = "links,gallery,services"
+    allowed = list(base_allowed)
+    if has_about_content(card.about_markdown):
+        allowed.append("about")
+        default_order = f"{default_order},about"
+    return allowed, default_order
+
+
+def _tab_options(allowed: list[str]) -> list[tuple[str, str]]:
+    opts: list[tuple[str, str]] = []
+    for perm in permutations(allowed):
+        value = ",".join(perm)
+        label = ", ".join(TAB_LABELS.get(key, key.title()) for key in perm)
+        opts.append((value, label))
+    return opts
 
 
 @ensure_csrf_cookie
@@ -117,6 +150,82 @@ def edit_card(request, id):
 def card_detail(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
     return render(request, "cards/detail.html", {"card": card, "viewer_base": getattr(settings, "VIEWER_BASE_URL", "http://localhost:9000")})
+
+
+@login_required
+def about_partial(request, id):
+    card = get_object_or_404(Card, id=id, owner=request.user)
+    preview_html = ""
+    error = None
+    try:
+        preview_html = sanitize_about_markdown(card.about_markdown or "")
+    except ValueError as exc:  # pragma: no cover - persisted content should already be valid
+        error = str(exc)
+    ctx = {
+        "card": card,
+        "about_markdown": card.about_markdown or "",
+        "preview_html": preview_html,
+        "error": error,
+        "max_chars": MAX_MARKDOWN_CHARS,
+    }
+    return render(request, "cards/_about.html", ctx)
+
+
+@login_required
+@require_POST
+def preview_about(request, id):
+    card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
+    markdown_value = (request.POST.get("about_markdown") or "").strip()
+    try:
+        preview_html = sanitize_about_markdown(markdown_value)
+        status = 200
+        error = None
+    except ValueError as exc:
+        preview_html = ""
+        error = str(exc)
+        status = 422
+    resp = render(request, "cards/_about_preview.html", {"card": card, "preview_html": preview_html, "error": error})
+    resp.status_code = status
+    return resp
+
+
+@login_required
+@require_POST
+def save_about(request, id):
+    card = get_object_or_404(Card, id=id, owner=request.user)
+    if getattr(card, "deactivation_marked", False):
+        return HttpResponseForbidden("Card marked for deactivation")
+    markdown_value = (request.POST.get("about_markdown") or "").strip()
+    try:
+        preview_html = sanitize_about_markdown(markdown_value)
+    except ValueError as exc:
+        resp = render(
+            request,
+            "cards/_about.html",
+            {
+                "card": card,
+                "about_markdown": markdown_value,
+                "preview_html": "",
+                "error": str(exc),
+                "max_chars": MAX_MARKDOWN_CHARS,
+            },
+        )
+        resp.status_code = 422
+        return resp
+    card.about_markdown = markdown_value
+    card.save(update_fields=["about_markdown"])
+    ctx = {
+        "card": card,
+        "about_markdown": markdown_value,
+        "preview_html": preview_html,
+        "error": None,
+        "max_chars": MAX_MARKDOWN_CHARS,
+    }
+    resp = render(request, "cards/_about.html", ctx)
+    resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Sobre atualizado", "message": "Conteúdo salvo."}})
+    return resp
 
 
 @login_required
@@ -554,18 +663,23 @@ def delete_social_link(request, link_id):
 @login_required
 def tabs_partial(request, id):
     card = get_object_or_404(Card, id=id, owner=request.user)
-    if getattr(card, "mode", "appointment") == "delivery":
-        allowed = ["menu", "links", "gallery"]
-        default_order = "menu,links,gallery"
-    else:
-        allowed = ["links", "gallery", "services"]
-        default_order = "links,gallery,services"
+    allowed, default_order = _allowed_tabs_for(card)
     order = [k for k in (card.tabs_order or default_order).split(",") if k in allowed]
     # Normalize to full permutation if missing any
     for k in allowed:
         if k not in order:
             order.append(k)
-    return render(request, "cards/_tabs.html", {"card": card, "current": order})
+    options = _tab_options(allowed)
+    return render(
+        request,
+        "cards/_tabs.html",
+        {
+            "card": card,
+            "current": order,
+            "options": options,
+            "has_about": "about" in allowed,
+        },
+    )
 
 
 @login_required
@@ -575,7 +689,7 @@ def set_tabs_order(request, id):
     if getattr(card, "deactivation_marked", False):
         return HttpResponseForbidden("Card marked for deactivation")
     raw = (request.POST.get("tabs_order") or "").strip()
-    allowed = ["menu", "links", "gallery"] if getattr(card, "mode", "appointment") == "delivery" else ["links", "gallery", "services"]
+    allowed, _ = _allowed_tabs_for(card)
     parts = [p.strip() for p in raw.split(",") if p.strip()]
     # accept values like "links,gallery,services" or space separated
     if not parts and raw:

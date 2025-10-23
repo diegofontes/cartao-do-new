@@ -192,6 +192,21 @@ Garanta que seu app `theme` esteja gerando a saída nesse caminho (ajuste output
 
 ---
 
+### Campo "Sobre" (Markdown)
+
+Cards possuem agora uma aba **Sobre** com suporte a Markdown sanitizado:
+
+- O conteúdo é editado no dashboard em uma tela com preview ao vivo.
+- O editor utiliza **EasyMDE** para oferecer barra de ferramentas Markdown.
+- Limite de **20.000 caracteres** para Markdown (HTML sanitizado máximo 100.000).
+- Tags permitidas: títulos (`h1`–`h6`), parágrafos, listas, blockquote, code/pre, tabelas, links e imagens com URLs públicas.
+- Links externos abrem em nova aba com `rel="noopener noreferrer nofollow"`.
+- A aba só aparece no viewer quando houver conteúdo válido.
+
+Se precisar ajustar a ordem das outras abas (Links, Galeria, Serviços/Menu), use a seção “Ordem das abas”; o “Sobre” sempre é exibido automaticamente quando houver texto.
+
+---
+
 ## Notas
 
 - Este projeto é **educacional**. Antes de ir a produção, trate *idempotência*, *retries*, *observabilidade*, segurança de webhooks, etc.
@@ -203,4 +218,3 @@ Garanta que seu app `theme` esteja gerando a saída nesse caminho (ajuste output
 ## Daily via CLI:
 
 python manage.py billing_run_daily
-

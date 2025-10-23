@@ -1,0 +1,6 @@
+{% if about_html %}
+  <div class="markdown-body">{{ about_html|safe }}</div>
+{% else %}
+  <p class="muted">Sem conteúdo disponível.</p>
+{% endif %}
+

@@ -11,9 +11,12 @@ urlpatterns = [
     path("<uuid:id>/publish", views.publish_card, name="publish"),
     path("<uuid:id>/publish-modal", views.publish_modal, name="publish_modal"),
     path("<uuid:id>/mark-deactivation", views.mark_deactivation, name="mark_deactivation"),
-    path("<uuid:id>/reactivate", views.reactivate, name="reactivate"),
+   path("<uuid:id>/reactivate", views.reactivate, name="reactivate"),
     path("nicknames/check", views.check_nickname, name="check_nickname"),
     path("<uuid:id>/avatar", views.upload_avatar, name="upload_avatar"),
+    path("<uuid:id>/about", views.about_partial, name="about_partial"),
+    path("<uuid:id>/about/save", views.save_about, name="save_about"),
+    path("<uuid:id>/about/preview", views.preview_about, name="preview_about"),
     # HTMX partials
     path("<uuid:id>/links", views.links_partial, name="links_partial"),
     path("<uuid:id>/links/add", views.add_link, name="add_link"),

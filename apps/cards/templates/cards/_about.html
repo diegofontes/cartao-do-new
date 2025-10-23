@@ -1,0 +1,55 @@
+<section class="card">
+  <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-2)">
+    <h2 style="margin:0">Sobre</h2>
+    <span class="muted" style="font-size:13px">Markdown simples, até {{ max_chars }} caracteres.</span>
+  </div>
+  {% if error %}
+    <div class="box error" role="alert">{{ error }}</div>
+  {% endif %}
+  <form id="about-form"
+        hx-post="{% url 'cards:save_about' card.id %}"
+        hx-target="#card-about"
+        hx-swap="innerHTML"
+        data-no-load>
+    {% csrf_token %}
+    <div class="grid about-editor-grid" style="gap:var(--space-4)">
+      <div class="about-editor">
+        <label class="field">
+          <span>Conteúdo (Markdown)</span>
+          <textarea name="about_markdown"
+                    class="textarea"
+                    rows="14"
+                    maxlength="{{ max_chars }}"
+                    spellcheck="true"
+                    {% if card.deactivation_marked %}disabled{% endif %}
+                    hx-post="{% url 'cards:preview_about' card.id %}"
+                    hx-trigger="input changed delay:400ms"
+                    hx-target="#about-preview"
+                    hx-swap="outerHTML"
+                    hx-include="#about-form input[name='csrfmiddlewaretoken']"
+                    hx-sync="closest form:abort"
+                    data-no-load>{{ about_markdown }}</textarea>
+          <small class="help">Use títulos (#), listas, links, blocos de código e tabelas. Sem imagens privadas.</small>
+        </label>
+      </div>
+      <div class="about-preview" style="display:flex; flex-direction: column;gap: 6px; margin-bottom: 9px;">
+        <span>Pré-visualização</span>
+        {% include "cards/_about_preview.html" %}
+      </div>
+    </div>
+    <div class="row" style="justify-content:flex-end;gap:var(--space-2);margin-top:var(--space-3)">
+      <button type="button"
+              class="btn ghost"
+              hx-get="{% url 'cards:about_partial' card.id %}"
+              hx-target="#card-about"
+              hx-swap="innerHTML"
+              data-no-load>Reverter alterações</button>
+      <button type="submit"
+              class="btn primary"
+              {% if card.deactivation_marked %}disabled title="Edição bloqueada enquanto o cartão estiver marcado para desativação."{% endif %}>Salvar</button>
+    </div>
+  {% if card.deactivation_marked %}
+      <p class="help" style="margin-top:var(--space-2)">Card marcado para desativação: edição temporariamente bloqueada.</p>
+    {% endif %}
+  </form>
+</section>

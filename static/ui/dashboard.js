@@ -151,3 +151,114 @@
   // Ensure it exists on initial load
   document.addEventListener('DOMContentLoaded', ensureNowLine);
 })();
+
+// EasyMDE integration for Card "Sobre" editor
+(function(){
+  function initEditor(container){
+    try{
+      if (!container) return;
+      var textarea = container.querySelector('textarea[name="about_markdown"]');
+      if (!textarea) return;
+      if (!window.EasyMDE) {
+        // Retry once EasyMDE loads
+        setTimeout(function(){ initEditor(container); }, 120);
+        return;
+      }
+      if (textarea._easyMDEInstance) {
+        return;
+      }
+      var readOnly = textarea.hasAttribute('disabled');
+      var editor = new EasyMDE({
+        element: textarea,
+        autoDownloadFontAwesome: true,
+        spellChecker: false,
+        status: ["words", "lines"],
+        toolbar: [
+          "heading", "bold", "italic", "strikethrough",
+          "|",
+          "unordered-list", "ordered-list", "quote",
+          "|",
+          "link", "image", "code", "table", "horizontal-rule",
+          "|",
+          {
+            name: "guide",
+            action: function customGuide(){
+              window.open("https://commonmark.org/help/", "_blank", "noopener,noreferrer");
+            },
+            className: "fa fa-question-circle",
+            title: "Guia Markdown"
+          }
+        ],
+        renderingConfig: {
+          singleLineBreaks: false
+        }
+      });
+      textarea._easyMDEInstance = editor;
+      if (readOnly){
+        editor.codemirror.setOption("readOnly", "nocursor");
+        var toolbar = container.querySelector(".editor-toolbar");
+        if (toolbar){
+          toolbar.style.pointerEvents = "none";
+          toolbar.style.opacity = "0.5";
+        }
+      }
+      editor.codemirror.on("change", function(){
+        try{
+          textarea.value = editor.value();
+          textarea.dispatchEvent(new Event("input", { bubbles: true }));
+          textarea.dispatchEvent(new Event("change", { bubbles: true }));
+        }catch(_){/* noop */}
+      });
+    }catch(_){/* noop */}
+  }
+
+  function destroyEditor(container){
+    try{
+      if (!container) return;
+      var textarea = container.querySelector('textarea[name="about_markdown"]');
+      if (!textarea) return;
+      var inst = textarea._easyMDEInstance;
+      if (inst && typeof inst.toTextArea === "function"){
+        inst.toTextArea();
+      }
+      delete textarea._easyMDEInstance;
+    }catch(_){/* noop */}
+  }
+
+  function handleInitial(){
+    var block = document.getElementById("card-about");
+    if (block){
+      initEditor(block);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", handleInitial);
+
+  if (window.htmx && typeof window.htmx.on === "function"){
+    window.htmx.on("htmx:beforeSwap", function(evt){
+      if (evt && evt.target && evt.target.id === "card-about"){
+        destroyEditor(evt.target);
+      }
+    });
+    window.htmx.on("htmx:afterSwap", function(evt){
+      if (evt && evt.target && evt.target.id === "card-about"){
+        initEditor(evt.target);
+      }
+    });
+  } else {
+    document.addEventListener("htmx:load", function(){
+      try{
+        window.htmx.on("htmx:beforeSwap", function(evt){
+          if (evt && evt.target && evt.target.id === "card-about"){
+            destroyEditor(evt.target);
+          }
+        });
+        window.htmx.on("htmx:afterSwap", function(evt){
+          if (evt && evt.target && evt.target.id === "card-about"){
+            initEditor(evt.target);
+          }
+        });
+      }catch(_){/* noop */}
+    });
+  }
+})();

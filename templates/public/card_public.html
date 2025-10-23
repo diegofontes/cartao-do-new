@@ -47,8 +47,8 @@
   <section class="desc"><p>{{ card.description }}</p></section>
   {% endif %}
 
-  {% with links_len=links|length gallery_len=gallery|length services_len=services|length %}
-  {% if links_len or gallery_len or services_len %}
+{% with links_len=links|length gallery_len=gallery|length services_len=services|length %}
+  {% if links_len or gallery_len or services_len or about_enabled %}
   <section class="tabs">
     <div class="tablist" role="tablist">
       {% for key in tab_order %}
@@ -61,6 +61,8 @@
         {% elif key == 'services' and services_len %}
           <button role="tab" aria-controls="panel-services" class="tab  primary {% if forloop.first %}is-active{% endif %}"
                   hx-get="{% url 'tabs_services' card.nickname %}" hx-target="#panel-services" hx-swap="outerHTML">Serviços</button>
+        {% elif key == 'about' and about_enabled %}
+          <button role="tab" aria-controls="panel-about" class="tab  primary {% if forloop.first %}is-active{% endif %}">Sobre</button>
         {% endif %}
       {% endfor %}
     </div>
@@ -79,6 +81,10 @@
         {% elif key == 'services' and services_len %}
           <div id="panel-services" role="tabpanel" class="panel" {% if not forloop.first %}hidden{% endif %}>
             {% include 'public/tabs_services.html' %}
+          </div>
+        {% elif key == 'about' and about_enabled %}
+          <div id="panel-about" role="tabpanel" class="panel" {% if not forloop.first %}hidden{% endif %}>
+            {% include 'public/tabs_about.html' %}
           </div>
         {% endif %}
       {% endfor %}

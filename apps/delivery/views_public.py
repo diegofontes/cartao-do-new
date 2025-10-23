@@ -17,6 +17,7 @@ import json, re, urllib.request
 #from apps.cards.views_public import _get_card_by_nickname
 from .models import MenuGroup, MenuItem, ModifierGroup, ModifierOption, Order, OrderItem, OrderItemOption, OrderItemText
 from apps.cards.models import Card, LinkButton, GalleryItem, SocialLink
+from apps.cards.markdown import has_about_content, sanitize_about_markdown
 
 def _get_card_by_nickname(nickname: str) -> Card:
     q = Card.objects.filter(nickname__iexact=nickname, status="published", deactivation_marked=False)
@@ -38,22 +39,46 @@ def menu_home(request, nickname: str):
         .order_by("order", "created_at")
     )
     # Tabs order: menu, links, gallery (customizable)
-    allowed = ("menu", "links", "gallery")
+    about_html = ""
+    about_enabled = False
+    if has_about_content(card.about_markdown):
+        try:
+            about_html = sanitize_about_markdown(card.about_markdown or "")
+            about_enabled = bool(about_html.strip())
+        except ValueError:
+            about_html = ""
+            about_enabled = False
+    allowed_base = ["menu", "links", "gallery"]
+    if about_enabled:
+        allowed_base.append("about")
+    allowed = tuple(allowed_base)
     raw_order = (card.tabs_order or "menu,links,gallery")
     tab_order = [k.strip() for k in raw_order.split(',') if k.strip() in allowed]
     # Ensure menu tab is always present for delivery cards
     if "menu" not in tab_order:
         tab_order = ["menu"] + tab_order
+    if about_enabled and "about" not in tab_order:
+        tab_order.append("about")
     # Fallback to full default if still empty
     if not tab_order:
         tab_order = ["menu", "links", "gallery"]
+        if about_enabled:
+            tab_order.append("about")
     # Fetch links/gallery for tabs
     links = LinkButton.objects.filter(card=card).order_by("order", "created_at")
     gallery = GalleryItem.objects.filter(card=card, visible_in_gallery=True).order_by("importance", "order", "created_at")
     return render(
         request,
         "public/menu_public.html",
-        {"card": card, "groups": groups, "tab_order": tab_order, "links": links, "gallery": gallery},
+        {
+            "card": card,
+            "groups": groups,
+            "tab_order": tab_order,
+            "links": links,
+            "gallery": gallery,
+            "about_html": about_html,
+            "about_enabled": about_enabled,
+        },
     )
 
 
