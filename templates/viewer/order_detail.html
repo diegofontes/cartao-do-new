@@ -1,8 +1,17 @@
 {% extends "public/base_public.html" %}
 {% block title %}Detalhe do Pedido{% endblock %}
 {% block content %}
+{% load static %}
 <div class="viewer-shell">
 
+  <div style="display:flex; justify-content:center;">
+    <img id="logo"
+        src="{% static 'img/logo-cap-v1.png' %}"
+        data-logo-darklight="{% static 'img/logo-cap-v1.png' %}"
+        data-logo-light="{% static 'img/logo-cap-v1-dark.png' %}"
+        alt="Logo"
+        style="height:154px">
+  </div>
 
   <section id="verify-gate" class="viewer-gate" hx-target="this" hx-swap="outerHTML">
     {% include "viewer/_verify_gate.html" %}
@@ -27,5 +36,6 @@
       </div>
     {% endif %}
   </section>
+  <div style="height: 100px;" ></div>
 </div>
 {% endblock %}
