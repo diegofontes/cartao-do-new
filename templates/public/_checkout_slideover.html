@@ -31,8 +31,8 @@
         <label class="field"><span>Nome</span><input class="input" type="text" name="name" required /></label>
         <label class="field"><span>E-mail (opcional)</span><input class="input" type="email" name="email" /></label>
         <fieldset class="box" style="grid-column:1/-1" >
-          <label class="field"><span>Telefone (BR/E.164)</span>
-            <input class="input" name="phone" id="co-phone" inputmode="tel" placeholder="+55 11 9XXXX-XXXX" required />
+          <label class="field"><span>Telefone (BR)</span>
+            <input class="input" name="phone" id="co-phone" inputmode="tel" placeholder="+55 (11) 9XXXX-XXXX" data-phone-mask required />
           </label>
           <div id="verify-dv"  data-verified="{% if phone_verified %}true{% else %}false{% endif %}"
                hx-post="{% url 'delivery_send_code' card.nickname %}"
