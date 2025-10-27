@@ -373,7 +373,7 @@ def checkout_submit(request, nickname: str):
                 type='sms',
                 to=card.notification_phone,
                 template_code='owner_new_order',
-                payload={'code': order.code, 'orders_url': f"/delivery/cards/{card.id}/orders/page"},
+                payload={'code': order.code, 'orders_url': f"{settings.DASHBOARD_BASE_URL}/delivery/cards/{card.id}/orders/page"},
                 idempotency_key=f'owner_new_order:{order.id}'
             )
     except Exception:
