@@ -55,7 +55,7 @@
     <div class="tablist" role="tablist">
       {% for key in tab_order %}
         {% if key == 'menu' %}
-          <button role="tab" aria-controls="panel-menu" class="tab {% if forloop.first %}is-active{% endif %}">Cardápio</button>
+          <button role="tab" aria-controls="panel-menu" class="tab {% if forloop.first %}is-active{% endif %}">Delivery</button>
         {% elif key == 'links' and links_len %}
           <button role="tab" aria-controls="panel-links" class="tab {% if forloop.first %}is-active{% endif %}"
                   hx-get="{% url 'tabs_links' card.nickname %}" hx-target="#panel-links" hx-swap="outerHTML">Links</button>
