@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import pprint
 from typing import Any
 
 from django.http import Http404, JsonResponse
@@ -377,6 +378,7 @@ def checkout_submit(request, nickname: str):
                 idempotency_key=f'owner_new_order:{order.id}'
             )
     except Exception:
+        #pprint.pprint("Failed to enqueue owner notification:", e)
         pass
 
     viewer_path = reverse("viewer:order_detail", args=[order.public_code])
