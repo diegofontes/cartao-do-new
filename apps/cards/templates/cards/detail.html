@@ -2,8 +2,6 @@
 {% load static %}
 {% block breadcrumb %}Cartões / {{ card.title }}{% endblock %}
 {% block head %}
-    <!-- Theme + HTMX CSRF helper (lê csrftoken do cookie) -->
-    <script defer src="{% static 'ui/theme.js' %}"></script>
     <script defer src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 {% endblock %}
 {% block content %}

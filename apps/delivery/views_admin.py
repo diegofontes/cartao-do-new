@@ -256,8 +256,8 @@ def update_order_status(request, order_id):
     }
     if status not in allowed.get(current, set()):
         return HttpResponseBadRequest("invalid transition")
-    order.status = status
-    order.save(update_fields=["status"])
+    order.set_status(status, source="dashboard")
+    order.refresh_from_db()
     # Metering: accepted delivery order (pending -> accepted)
     try:
         if current == "pending" and status == "accepted":

@@ -1,0 +1,29 @@
+{% load static %}
+{% if verified %}
+<div class="viewer-verified">
+  <h2>Acesso liberado</h2>
+  <p>Telefone cadastrado: <strong>{{ masked_phone }}</strong></p>
+  <p>Você pode atualizar esta página para acompanhar mudanças no status do pedido.</p>
+</div>
+{% else %}
+<form
+  method="post"
+  class="viewer-form"
+  hx-post="{% url 'viewer:order_verify' target.code %}"
+  hx-target="#verify-gate"
+  hx-swap="outerHTML"
+  data-no-load
+>
+  {% csrf_token %}
+  <h2>Confirme seu pedido</h2>
+  <p>Informe os 4 últimos dígitos do telefone cadastrado para visualizar o pedido.</p>
+  <div class="viewer-form__fields">
+    <label for="last4" class="viewer-label">Últimos 4 dígitos</label>
+    <div class="viewer-input-group">
+      <input id="last4" name="last4" inputmode="numeric" pattern="\d{4}" maxlength="4" required class="viewer-input" autocomplete="one-time-code" placeholder="1234" />
+      <button type="submit" class="btn primary">Validar</button>
+    </div>
+  </div>
+  <p class="viewer-mask">Telefone cadastrado: {{ masked_phone }}</p>
+</form>
+{% endif %}

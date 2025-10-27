@@ -13,8 +13,10 @@
     <!-- EasyMDE (Markdown editor) -->
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
     <!-- HTMX (via django-htmx helper) -->
+     
     {% htmx_script %}
-
+    <!-- Theme + HTMX CSRF helper (lê csrftoken do cookie) -->
+    <script defer src="{% static 'ui/theme.js' %}"></script>
     <!-- Dashboard helpers (agenda sizing/scroll) -->
     <script defer src="{% static 'ui/dashboard.js' %}"></script>
     {% block head %}{% endblock %}

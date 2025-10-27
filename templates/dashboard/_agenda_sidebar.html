@@ -1,0 +1,169 @@
+<div class="slideover" id="agenda-sidebar-panel" role="dialog" aria-modal="true" aria-labelledby="agenda-sidebar-title" data-appt-id="{{ ap.id }}" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <header class="row between" style="align-items:center;gap:12px;">
+    <div>
+      <h3 id="agenda-sidebar-title" style="margin:0;">{{ ap.service.name }}</h3>
+      <p class="muted" style="margin:4px 0 0;">{{ start_local|date:"d/m/Y H:i" }} – {{ end_local|date:"H:i" }} ({{ tz_label }})</p>
+    </div>
+    <button class="btn" type="button" data-action="close-sidebar" aria-label="Fechar">✕</button>
+  </header>
+
+  <div class="body stack" style="gap:16px;" tabindex="-1">
+    <section class="stack" style="gap:12px;">
+      <h4 style="margin:0;">Detalhes do agendamento</h4>
+      <ul class="list" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;">
+        <li class="row" style="gap:8px;align-items:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span class="muted">{{ ap.service.type|title }} • {{ ap.service.card.title }}</span>
+        </li>
+        <li class="row" style="gap:8px;align-items:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span><strong>Cliente:</strong> {{ ap.user_name }}</span>
+        </li>
+        <li class="row" style="gap:8px;align-items:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span><strong>Status:</strong> {{ ap.status }}</span>
+        </li>
+        {% if ap.status == 'confirmed' %}
+          <li class="row" style="gap:8px;align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg>
+            <span><strong>E‑mail:</strong> <a href="mailto:{{ ap.user_email }}">{{ ap.user_email }}</a></span>
+          </li>
+          {% if ap.user_phone %}
+            <li class="row" style="gap:8px;align-items:center;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07A19.5 19.5 0 0 1 3.16 12 19.86 19.86 0 0 1 .09 3.37 2 2 0 0 1 2.06 1h3a2 2 0 0 1 2 1.72c.12.9.32 1.77.59 2.61a2 2 0 0 1-.45 2.11L6.1 8.91a16 16 0 0 0 7 7l1.47-1.1a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.61.59A2 2 0 0 1 22 16.92z"/></svg>
+              <span><strong>Telefone:</strong> {{ ap.user_phone }}</span>
+            </li>
+          {% endif %}
+        {% else %}
+          <li class="row" style="gap:8px;align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <span class="muted">Contatos serão exibidos após a aprovação.</span>
+          </li>
+        {% endif %}
+        {% if ap.location_choice in 'local onsite' and ap.address_json %}
+          <li class="row" style="gap:8px;align-items:flex-start;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>{{ ap.address_json.street }}{% if ap.address_json.number %}, {{ ap.address_json.number }}{% endif %}{% if ap.address_json.city %} • {{ ap.address_json.city }}{% endif %}</span>
+          </li>
+        {% elif ap.location_choice == 'remote' and ap.service.video_link_template %}
+          <li class="row" style="gap:8px;align-items:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            <span><strong>Link:</strong> {{ ap.service.video_link_template }}</span>
+          </li>
+        {% endif %}
+      </ul>
+    </section>
+
+    <section class="stack" style="gap:12px;">
+      <h4 style="margin:0;">Re-agendamento</h4>
+      <div id="reschedule-detail">
+        {% if reschedule_detail_html %}
+          {{ reschedule_detail_html|safe }}
+        {% elif reschedule_detail %}
+          {% include "dashboard/_reschedule_detail.html" with
+            appointment=reschedule_detail.appointment
+            request_obj=reschedule_detail.request_obj
+            timeline=reschedule_detail.timeline
+            slot_calendar=reschedule_detail.slot_calendar
+            can_act=reschedule_detail.can_act
+            start_local=reschedule_detail.start_local
+            end_local=reschedule_detail.end_local
+            timezone=reschedule_detail.timezone
+            customer_phone_mask=reschedule_detail.customer_phone_mask
+            customer_email=reschedule_detail.customer_email
+            status_label=reschedule_detail.status_label
+            requested_slot_local=reschedule_detail.requested_slot_local
+            requested_slot_value=reschedule_detail.requested_slot_value
+            hide_header=True
+            hx_target=reschedule_hx_target
+            hx_swap=reschedule_hx_swap
+            reschedule_context=reschedule_context_value
+          only %}
+        {% else %}
+          <div class="card muted">Nenhum pedido de re-agendamento.</div>
+          {% if timeline %}
+            <ol class="timeline" style="margin-top:12px;">
+              {% for entry in timeline %}
+                <li class="timeline__item timeline__item--card timeline__item--{{ entry.status }}">
+                  <div class="timeline__event">
+                    <header class="timeline__head">
+                      <span class="timeline__label">{{ entry.label }}</span>
+                      <time class="timeline__time">{{ entry.created|date:"d/m/Y H:i" }}</time>
+                    </header>
+                    <div class="timeline__body">
+                      {% if entry.reason %}<p class="timeline__detail"><strong>Cliente</strong> {{ entry.reason }}</p>{% endif %}
+                      {% if entry.owner_message %}<p class="timeline__detail"><strong>Profissional</strong> {{ entry.owner_message }}</p>{% endif %}
+                    </div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ol>
+          {% endif %}
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <footer class="actions">
+    {% if ap.status == 'pending' %}
+      <form method="post" hx-post="{% url 'dashboard:agenda_event_deny' ap.id %}" hx-target="#agenda-sidebar" hx-swap="innerHTML">
+        {% csrf_token %}
+        <button class="btn" type="submit">Negar</button>
+      </form>
+      <form method="post" hx-post="{% url 'dashboard:agenda_event_approve' ap.id %}" hx-target="#agenda-sidebar" hx-swap="innerHTML">
+        {% csrf_token %}
+        <button class="btn primary" type="submit">Aprovar</button>
+      </form>
+    {% else %}
+      <span class="muted">Status atual: {{ ap.status }}</span>
+    {% endif %}
+  </footer>
+</div>
+<script>
+(function(){
+  var container = document.getElementById('agenda-sidebar');
+  if (!container) { return; }
+  var panel = container.querySelector('#agenda-sidebar-panel');
+  if (!panel) { return; }
+  var previous = document.activeElement;
+  var focusableSelector = 'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  var focusables = Array.prototype.filter.call(panel.querySelectorAll(focusableSelector), function(el){
+    return el.offsetParent !== null;
+  });
+  if (focusables.length) {
+    focusables[0].focus();
+  } else {
+    panel.focus();
+  }
+  function closeSidebar(){
+    container.innerHTML = '';
+    if (previous && typeof previous.focus === 'function') {
+      previous.focus();
+    }
+  }
+  panel.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape') {
+      ev.preventDefault();
+      closeSidebar();
+      return;
+    }
+    if (ev.key === 'Tab' && focusables.length) {
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (ev.shiftKey && document.activeElement === first) {
+        ev.preventDefault();
+        last.focus();
+      } else if (!ev.shiftKey && document.activeElement === last) {
+        ev.preventDefault();
+        first.focus();
+      }
+    }
+  });
+  Array.prototype.forEach.call(panel.querySelectorAll('[data-action="close-sidebar"]'), function(btn){
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      closeSidebar();
+    });
+  });
+})();
+</script>

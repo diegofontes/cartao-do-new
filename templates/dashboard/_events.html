@@ -1,11 +1,10 @@
 {% for ev in events %}
   <div class="event {{ ev.status }}" style="grid-column: {{ ev.day_col }}; grid-row: {{ ev.row_start }} / {{ ev.row_end }};"
        hx-get="{% url 'dashboard:agenda_event_sidebar' ev.id %}"
-       hx-target="#sidebar" hx-swap="innerHTML">
+       hx-target="#agenda-sidebar" hx-swap="innerHTML">
     <strong>{{ ev.customer_name }}</strong>
     <div class="muted">{{ ev.start_label }}–{{ ev.end_label }} • {{ ev.service_name }}</div>
   </div>
 {% empty %}
   <!-- no events -->
 {% endfor %}
-

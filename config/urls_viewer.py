@@ -18,6 +18,7 @@ urlpatterns = [
     # Auth endpoints for login/signup in the public viewer
     path("auth/", include(("apps.accounts.auth_urls", "accounts"), namespace="accounts")),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/?$", card_public.card_public, name="card_public"),
+    path("", include(("apps.viewer.urls", "viewer"), namespace="viewer")),
     # Delivery viewer endpoints
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/item/(?P<slug>[a-z0-9\-_.]{1,160})$", delivery_public.item_modal, name="delivery_item_modal"),
     re_path(r"^@(?P<nickname>[a-z0-9_.]{3,32})/cart$", delivery_public.cart_drawer, name="delivery_cart"),

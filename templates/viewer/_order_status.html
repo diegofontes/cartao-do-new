@@ -1,0 +1,254 @@
+{% load currency %}
+{% if target.kind == "appointment" %}
+<article class="viewer-card">
+  <header class="viewer-card__header">
+    <h2>Detalhes do agendamento</h2>
+    <span class="status status--{{ appointment.status }}">{{ appointment.get_status_display }}</span>
+  </header>
+  <dl class="viewer-meta">
+    <div>
+      <dt>Serviço</dt>
+      <dd>{{ appointment.service.name }}</dd>
+    </div>
+    <div>
+      <dt>Data</dt>
+      <dd>{{ start_local|date:"d/m/Y" }}</dd>
+    </div>
+    <div>
+      <dt>Horário</dt>
+      <dd>{{ start_local|date:"H:i" }} — {{ end_local|date:"H:i" }} ({{ appointment.timezone }})</dd>
+    </div>
+  </dl>
+
+  <div class="viewer-actions">
+    {% if can_cancel %}
+      <form
+        hx-post="{% url 'viewer:order_cancel' target.code %}"
+        hx-target="#order-details"
+        hx-swap="innerHTML"
+        hx-confirm="Deseja cancelar este agendamento?"
+        data-no-load
+        method="post"
+      >
+        {% csrf_token %}
+        <button class="btn outline" type="submit">Cancelar agendamento</button>
+      </form>
+    {% endif %}
+  </div>
+
+  <section class="viewer-reschedule">
+    <h3>Solicitar re-agendamento</h3>
+    {% if not can_reschedule %}
+      <p>Re-agendamento indisponível para o status atual.</p>
+    {% elif pending_reschedule %}
+      <p>Você já possui um pedido aguardando aprovação enviado em {{ pending_reschedule.created_at|date:"d/m/Y H:i" }}{% if pending_requested_slot %} (horário solicitado: {{ pending_requested_slot|date:"d/m/Y H:i" }}).{% else %}.{% endif %}</p>
+    {% else %}
+      <form
+        method="post"
+        hx-post="{% url 'viewer:order_reschedule_request' target.code %}"
+        hx-target="#order-details"
+        hx-swap="innerHTML"
+        data-no-load
+      >
+        {% csrf_token %}
+        <div class="viewer-form__fields">
+          <label class="viewer-label" for="reason">Motivo (opcional)</label>
+          <textarea id="reason" name="reason" rows="2" class="viewer-input"></textarea>
+        </div>
+        <div class="viewer-form__fields">
+          <label class="viewer-label" for="resched-date">Escolha uma data</label>
+          <input id="resched-date" name="date" type="date" class="viewer-input" required
+                 min="{{ reschedule_min_date }}"
+                 hx-get="{% url 'viewer:order_reschedule_slots' target.code %}"
+                 hx-trigger="change"
+                 hx-target="#reschedule-slot-list"
+                 hx-include="this">
+        </div>
+        <div id="reschedule-slot-list" class="viewer-form__fields viewer-slots-wrapper">
+          <p class="viewer-empty">Selecione uma data para ver horários disponíveis.</p>
+        </div>
+        <button class="btn primary" type="submit">Solicitar troca</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section class="viewer-timeline">
+    <h3>Status do re-agendamento</h3>
+    {% if reschedule_timeline %}
+      <ol class="timeline">
+        {% for entry in reschedule_timeline %}
+          <li class="timeline__item timeline__item--{{ entry.status }}{% if pending_reschedule and entry.obj.id == pending_reschedule.id %} is-active{% endif %}">
+            <div class="timeline__label">{{ entry.label }}</div>
+            <div class="timeline__time">{{ entry.created|date:"d/m/Y H:i" }}</div>
+            {% if entry.obj.reason %}<div class="timeline__detail">Cliente: {{ entry.obj.reason }}</div>{% endif %}
+            {% if entry.obj.owner_message %}<div class="timeline__detail">Profissional: {{ entry.obj.owner_message }}</div>{% endif %}
+            {% if entry.requested %}
+              <div class="timeline__detail">Horário solicitado: {{ entry.requested|date:"d/m/Y H:i" }}</div>
+            {% endif %}
+            {% if entry.approved_window %}
+              <div class="timeline__detail">Novo horário: {{ entry.approved_window.start|date:"d/m/Y H:i" }}{% if entry.approved_window.end %} – {{ entry.approved_window.end|date:"H:i" }}{% endif %}</div>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p>Nenhum pedido de re-agendamento até o momento.</p>
+    {% endif %}
+  </section>
+</article>
+{% else %}
+<article class="viewer-card viewer-card--delivery">
+  <header class="viewer-card__header">
+    <div class="viewer-card__title">
+      <h2>Detalhes do pedido</h2>
+      <p class="viewer-card__subtitle">Pedido {{ target.code }} · criado em {{ order_created_local|date:"d/m/Y H:i" }}</p>
+    </div>
+    <span class="status status--{{ order.status }}">{{ order.get_status_display }}</span>
+  </header>
+
+  <dl class="viewer-meta">
+    <div>
+      <dt>Cliente</dt>
+      <dd>{{ order.customer_name }}</dd>
+    </div>
+    <div>
+      <dt>Contato</dt>
+      <dd>{{ masked_phone }}</dd>
+    </div>
+    <div>
+      <dt>Tipo</dt>
+      <dd>{{ order.get_fulfillment_display }}</dd>
+    </div>
+    <div>
+      <dt>Código interno</dt>
+      <dd>{{ order.code }}</dd>
+    </div>
+  </dl>
+
+  <section class="viewer-summary">
+    <h3>Resumo</h3>
+    <dl class="viewer-summary__grid">
+      <div>
+        <dt>Subtotal</dt>
+        <dd>{{ order_subtotal|brl_cents }}</dd>
+      </div>
+      <div>
+        <dt>Taxa de entrega</dt>
+        <dd>{% if order_delivery_fee %}+{% endif %}{{ order_delivery_fee|brl_cents }}</dd>
+      </div>
+      <div>
+        <dt>Desconto</dt>
+        <dd class="viewer-summary__discount">{% if order_discount %}-{% endif %}{{ order_discount_abs|brl_cents }}</dd>
+      </div>
+      <div class="viewer-summary__total">
+        <dt>Total</dt>
+        <dd>{{ order_total|brl_cents }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="viewer-items">
+    <h3>Itens</h3>
+    <ul class="viewer-items__list">
+      {% for item in order_items %}
+        <li class="viewer-item">
+          <div class="viewer-item__row">
+            <span class="qty">{{ item.qty }}×</span>
+            <div class="viewer-item__info">
+              <span class="viewer-item__name">{{ item.name }}</span>
+              {% if item.options %}
+                <ul class="viewer-item__mods">
+                  {% for opt in item.options %}
+                    <li>
+                      {% if opt.group %}<span class="viewer-item__mod-group">{{ opt.group }}:</span>{% endif %}
+                      <span class="viewer-item__mod-label">{{ opt.label }}</span>
+                      {% if opt.delta %}
+                        <span class="viewer-item__mod-delta">
+                          {% if opt.delta_sign >= 0 %}+{% else %}-{% endif %}{{ opt.delta_abs|brl_cents }}
+                        </span>
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              {% if item.texts %}
+                <ul class="viewer-item__mods viewer-item__mods--text">
+                  {% for txt in item.texts %}
+                    <li>
+                      {% if txt.group %}<span class="viewer-item__mod-group">{{ txt.group }}:</span>{% endif %}
+                      <span class="viewer-item__mod-label">{{ txt.value }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              {% if item.notes %}
+                <div class="viewer-item__note">Observação: {{ item.notes }}</div>
+              {% endif %}
+            </div>
+            <span class="price">{{ item.subtotal|brl_cents }}</span>
+          </div>
+        </li>
+      {% empty %}
+        <li class="viewer-empty">Nenhum item cadastrado para este pedido.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="viewer-fulfillment">
+    <h3>{% if order.fulfillment == "delivery" %}Entrega{% else %}Retirada{% endif %}</h3>
+    {% if order.fulfillment == "delivery" %}
+      {% if address_lines %}
+        <ul class="viewer-address">
+          {% for line in address_lines %}
+            <li>{{ line }}</li>
+          {% endfor %}
+          {% if address_cep %}<li>CEP {{ address_cep }}</li>{% endif %}
+        </ul>
+      {% else %}
+        <p class="viewer-empty">Endereço não informado.</p>
+      {% endif %}
+    {% else %}
+      <p>Retirada no estabelecimento. Apresente o código {{ order.code }} ao chegar.</p>
+    {% endif %}
+    {% if order.notes %}
+      <p class="viewer-notes">Observações do cliente: {{ order.notes }}</p>
+    {% endif %}
+  </section>
+
+  <section class="viewer-timeline">
+    <h3>Status do pedido</h3>
+    <ol class="timeline">
+      {% for step in delivery_timeline %}
+        <li class="timeline__item{% if step.current %} is-active{% elif step.done %} is-done{% endif %}">
+          <div class="timeline__label">{{ step.label }}</div>
+          {% if step.timestamp %}<div class="timeline__time">{{ step.timestamp|date:"d/m/Y H:i" }}</div>{% endif %}
+          {% if step.note %}<div class="timeline__detail">{{ step.note }}</div>{% endif %}
+        </li>
+      {% endfor %}
+      {% for extra in delivery_timeline_extras %}
+        <li class="timeline__item is-done{% if extra.current %} is-active{% endif %}">
+          <div class="timeline__label">{{ extra.label }}</div>
+          {% if extra.timestamp %}<div class="timeline__time">{{ extra.timestamp|date:"d/m/Y H:i" }}</div>{% endif %}
+          {% if extra.note %}<div class="timeline__detail">{{ extra.note }}</div>{% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  {% if can_cancel %}
+    <form
+      hx-post="{% url 'viewer:order_cancel' target.code %}"
+      hx-target="#order-details"
+      hx-swap="innerHTML"
+      hx-confirm="Deseja cancelar este pedido?"
+      data-no-load
+      method="post"
+    >
+      {% csrf_token %}
+      <button class="btn outline" type="submit">Cancelar pedido</button>
+    </form>
+  {% else %}
+    <p class="viewer-alert">Cancelamento não disponível para o status atual.</p>
+  {% endif %}
+</article>
+{% endif %}

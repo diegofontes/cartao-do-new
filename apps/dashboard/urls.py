@@ -15,4 +15,10 @@ urlpatterns = [
     path("agenda/events/<uuid:id>/sidebar", views.agenda_event_sidebar, name="agenda_event_sidebar"),
     path("agenda/events/<uuid:id>/approve", views.agenda_event_approve, name="agenda_event_approve"),
     path("agenda/events/<uuid:id>/deny", views.agenda_event_deny, name="agenda_event_deny"),
+    path("agenda/reschedule", views.reschedule_index, name="reschedule_index"),
+    path("agenda/reschedule/list", views.reschedule_list, name="reschedule_list"),
+    path("agenda/reschedule/<uuid:id>/detail", views.reschedule_detail, name="reschedule_detail"),
+    path("agenda/reschedule/<uuid:id>/slots", views.reschedule_slots, name="reschedule_slots"),
+    path("agenda/reschedule/<uuid:id>/approve", views.reschedule_approve, name="reschedule_approve"),
+    path("agenda/reschedule/<uuid:id>/reject", views.reschedule_reject, name="reschedule_reject"),
 ]

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.metering",
     "apps.notifications",
     "apps.pages",
+    "apps.viewer",
 ]
 
 MIDDLEWARE = [
@@ -130,7 +131,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "pt-br"
 # Allow timezone override via environment (e.g., TIME_ZONE=America/Sao_Paulo)
-TIME_ZONE = os.getenv("TIME_ZONE", "UTC")
+TIME_ZONE = os.getenv("TZ", "UTC")
 USE_I18N = True
 USE_TZ = True
 

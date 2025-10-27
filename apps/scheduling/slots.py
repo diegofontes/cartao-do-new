@@ -45,7 +45,7 @@ def _overlaps(a_start, a_end, b_start, b_end) -> bool:
     return not (a_end <= b_start or b_end <= a_start)
 
 
-def _blocked_intervals(service: SchedulingService, date: dt.date):
+def _blocked_intervals(service: SchedulingService, date: dt.date, ignore_appointment_id: str | None = None):
     # Pending/confirmed appointments expanded by buffers
     start_day = dt.datetime.combine(date, dt.time.min, tzinfo=ZoneInfo("UTC"))
     end_day = dt.datetime.combine(date, dt.time.max, tzinfo=ZoneInfo("UTC"))
@@ -55,6 +55,8 @@ def _blocked_intervals(service: SchedulingService, date: dt.date):
         start_at_utc__lte=end_day,
         end_at_utc__gte=start_day,
     )
+    if ignore_appointment_id:
+        qs = qs.exclude(id=ignore_appointment_id)
     blocks = []
     for ap in qs:
         s = ap.start_at_utc - dt.timedelta(minutes=service.buffer_before)
@@ -71,13 +73,13 @@ def _blocked_intervals(service: SchedulingService, date: dt.date):
     return [(s, e) for s, e in merged]
 
 
-def generate_slots(service: SchedulingService, date: dt.date):
+def generate_slots(service: SchedulingService, date: dt.date, *, ignore_appointment_id: str | None = None):
     now_utc = timezone.now().astimezone(ZoneInfo("UTC"))
     lead_delta = dt.timedelta(minutes=service.lead_time_min)
     min_start = now_utc + lead_delta
 
     windows = _collect_windows(service, date)
-    blocks = _blocked_intervals(service, date)
+    blocks = _blocked_intervals(service, date, ignore_appointment_id)
     dur = dt.timedelta(minutes=service.duration_minutes)
 
     slots = []
@@ -100,4 +102,3 @@ def generate_slots(service: SchedulingService, date: dt.date):
         "start_at_utc": s.isoformat(),
         "end_at_utc": e.isoformat(),
     } for s, e in slots]
-

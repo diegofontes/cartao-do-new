@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Re-agendamentos{% endblock %}
+{% block head %}
+  <style>
+    .reschedule-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: start; }
+    .reschedule-sidebar { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+    .reschedule-detail { min-height: 360px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .reschedule-filters { display: flex; flex-direction: column; gap: 12px; }
+    .reschedule-filters .row { display: flex; gap: 12px; }
+    .reschedule-list { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; }
+    .reschedule-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+    .reschedule-card__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .reschedule-card__title { font-weight: 600; }
+    .reschedule-card__meta { font-size: 0.85rem; color: var(--fg-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+    .reschedule-card__actions { display: flex; gap: 8px; }
+    .reschedule-card.is-pending { border-color: var(--accent); }
+    .timeline { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+    .timeline__item { border-left: 3px solid var(--border); padding-left: 18px; position: relative; --timeline-dot-offset: 6px; }
+    .timeline__item::before { content: ""; position: absolute; width: 10px; height: 10px; border-radius: 50%; left: -6px; top: var(--timeline-dot-offset); background: var(--border); }
+    .timeline__item.is-active::before { background: var(--accent); }
+    .timeline__item--approved::before { background: var(--primary); }
+    .timeline__item--rejected::before, .timeline__item--expired::before { background: var(--danger); }
+    .timeline__item--card { --timeline-dot-offset: 18px; }
+    .timeline__event { border: 1px solid var(--border); border-radius: 10px; background: var(--bg); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .timeline__event.is-active { border-color: var(--accent); background: var(--bg-elev); }
+    .timeline__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .timeline__body { display: flex; flex-direction: column; gap: 6px; }
+    .timeline__label { font-weight: 600; }
+    .timeline__time { font-size: 0.85rem; color: var(--fg-muted); }
+    .timeline__detail { font-size: 0.9rem; color: var(--fg-muted); }
+    @media (max-width: 960px) { .reschedule-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .reschedule-filters .row { flex-direction: column; } }
+  </style>
+{% endblock %}
+{% block breadcrumb %}Re-agendamentos{% endblock %}
+{% block content %}
+<section class="stack" style="gap: 24px;">
+  <header class="row between" style="align-items: center;">
+    <div>
+      <h1 class="title">Solicitações de Re-agendamento</h1>
+      <p class="muted">{{ pending_count }} pendente{% if pending_count != 1 %}s{% endif %}</p>
+    </div>
+    <a class="btn" href="{% url 'dashboard:agenda' %}?view=list">Voltar à agenda</a>
+  </header>
+
+  <div class="reschedule-grid" id="reschedule-grid">
+    <aside class="reschedule-sidebar">
+      <form id="reschedule-filters" class="reschedule-filters" hx-get="{% url 'dashboard:reschedule_list' %}" hx-target="#reschedule-list" hx-swap="innerHTML" hx-push-url="true">
+        {% csrf_token %}
+        <label>
+          <span>Status</span>
+          <select class="select" name="status">
+            <option value="">Todos</option>
+            {% for key, label in RESCHEDULE_LABELS.items %}
+              <option value="{{ key }}"{% if selected_status == key %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Card</span>
+          <select class="select" name="card">
+            <option value="">Todos</option>
+            {% for card in cards %}
+              <option value="{{ card.id }}"{% if initial_filters.card == card.id|stringformat:'s' %} selected{% endif %}>{{ card.title }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Serviço</span>
+          <select class="select" name="service">
+            <option value="">Todos</option>
+            {% for svc in services %}
+              <option value="{{ svc.id }}"{% if initial_filters.service == svc.id|stringformat:'s' %} selected{% endif %}>{{ svc.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="row">
+          <label class="grow">
+            <span>De</span>
+            <input class="input" type="date" name="start" value="{{ initial_filters.start }}" />
+          </label>
+          <label class="grow">
+            <span>Até</span>
+            <input class="input" type="date" name="end" value="{{ initial_filters.end }}" />
+          </label>
+        </div>
+        <button class="btn primary" type="submit">Aplicar</button>
+      </form>
+
+      <div id="reschedule-list" class="reschedule-list" hx-get="{% url 'dashboard:reschedule_list' %}{% if initial_query %}?{{ initial_query }}{% endif %}" hx-trigger="load, reschedule:reload" hx-target="this" hx-swap="innerHTML" aria-live="polite">
+        <div class="card muted">Carregando solicitações…</div>
+      </div>
+    </aside>
+
+    <div id="reschedule-detail" class="reschedule-detail" aria-live="polite">
+      <p class="muted">Selecione uma solicitação para ver detalhes.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

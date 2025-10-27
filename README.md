@@ -207,6 +207,14 @@ Se precisar ajustar a ordem das outras abas (Links, Galeria, Serviços/Menu), us
 
 ---
 
+## Delivery — Página pública de status
+
+- Pedidos criados no fluxo de Delivery agora disparam (best effort) um SMS e, se houver e-mail informado, um e-mail com o link público `/order/<public_code>`. A URL é construída com `request.build_absolute_uri` e usa HTMX para auto-atualizar a cada 20s.
+- O cliente precisa informar os **4 últimos dígitos** do telefone cadastrado. Após sucesso, geramos uma sessão assinada válida por 24h e aplicamos rate limit de 5 tentativas por 15 minutos por IP + código.
+- A página mostra código público, totais, endereço/retirada, itens (com modificadores e observações) e uma timeline vertical com timestamps para os status `pending → accepted → preparing → ready → shipped → completed`, além de eventos extras como `cancelled` ou `rejected`.
+- O cancelamento fica disponível até o status `accepted`; depois exibimos uma mensagem clara informando que a operação não é mais permitida.
+- A timeline é alimentada por `delivery.OrderStatusChange`, criada automaticamente (inclusive para pedidos legados via migração) sempre que o status muda.
+
 ## Notas
 
 - Este projeto é **educacional**. Antes de ir a produção, trate *idempotência*, *retries*, *observabilidade*, segurança de webhooks, etc.

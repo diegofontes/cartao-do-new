@@ -10,11 +10,11 @@
 {% endif %}
 <form method="post" action="{% url 'accounts:auth_reset' %}" hx-post="{% url 'accounts:auth_reset' %}" hx-target="#auth-card" hx-swap="innerHTML">
   {% csrf_token %}
-  <label>
+  <label class="label-input">
     <span>Código</span>
     <input class="input" name="code" inputmode="numeric" maxlength="6" pattern="^\d{6}$" required>
   </label>
-  <label>
+  <label class="label-input">
     <span>Nova senha</span>
     <input class="input" type="password" name="new_password" autocomplete="new-password" required>
   </label>

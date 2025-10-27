@@ -1,0 +1,12 @@
+{% if slots %}
+<div class="viewer-slots">
+  {% for slot in slots %}
+    <label class="viewer-slot">
+      <input type="radio" name="slot_start_at" value="{{ slot.value }}" required{% if slot.selected %} checked{% endif %}>
+      <span>{{ slot.label }}</span>
+    </label>
+  {% endfor %}
+</div>
+{% else %}
+<p class="viewer-empty">Nenhum horário disponível para esta data.</p>
+{% endif %}

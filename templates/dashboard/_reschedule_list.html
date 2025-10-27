@@ -1,0 +1,22 @@
+{% if requests %}
+  {% for req in requests %}
+    <article class="reschedule-card{% if req.status == 'requested' %} is-pending{% endif %}" hx-get="{% url 'dashboard:reschedule_detail' req.id %}" hx-target="#reschedule-detail" hx-swap="innerHTML" data-no-load tabindex="0" role="button" aria-pressed="false">
+      <div class="reschedule-card__head">
+        <div>
+          <div class="reschedule-card__title">{{ req.appointment.service.name }}</div>
+          <div class="reschedule-card__meta">
+            <span>{{ req.appointment.user_name }}</span>
+            <span>{{ req.created_at|date:"d/m/Y H:i" }}</span>
+            {% if req.requested_start_at_utc %}<span>Solicitado: {{ req.requested_start_at_utc|date:"d/m/Y H:i" }}</span>{% endif %}
+          </div>
+        </div>
+        <span class="badge">{{ req.status_label }}</span>
+      </div>
+      {% if req.reason %}<div class="muted">Cliente: {{ req.reason }}</div>{% endif %}
+      {% if req.preferred_windows %}<div class="muted">Preferências: {{ req.preferred_windows|join:', ' }}</div>{% endif %}
+      <div class="reschedule-card__actions"><span class="muted">Ver detalhes</span></div>
+    </article>
+  {% endfor %}
+{% else %}
+  <div class="card muted">Nenhuma solicitação encontrada para os filtros atuais.</div>
+{% endif %}

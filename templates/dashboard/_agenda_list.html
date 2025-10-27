@@ -1,21 +1,22 @@
 <section class="timeline" role="list">
   {% if groups and groups|length > 0 %}
     {% for g in groups %}
-      <h3 class="day sticky" role="heading" aria-level="3">{{ g.label }} • {{ g.count }} agendamento{% if g.count != 1 %}s{% endif %}</h3>
-      <ol class="col" role="list">
-        {% for it in g.items %}
-          {% include "dashboard/_agenda_list_item.html" with it=it only %}
-        {% endfor %}
-      </ol>
+      <section class="day-group" data-day="{{ g.date_iso }}" id="group-{{ g.date_iso }}">
+        <h3 class="day sticky" role="heading" aria-level="3" data-day="{{ g.date_iso }}" data-label="{{ g.label }}">{{ g.label }} • {{ g.count }} agendamento{% if g.count != 1 %}s{% endif %}</h3>
+        <ol class="col" role="list" data-day="{{ g.date_iso }}" aria-live="polite">
+          {% for it in g.items %}
+            {% include "dashboard/_agenda_list_item.html" with it=it only %}
+          {% endfor %}
+        </ol>
+      </section>
     {% endfor %}
     {% if next_cursor %}
       <div class=""
-           hx-get="{% url 'dashboard:agenda_list_partial' %}?cursor={{ next_cursor|urlencode }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.service_id %}&service_id={{ request.GET.service_id }}{% endif %}{% if request.GET.card_id %}&card_id={{ request.GET.card_id }}{% endif %}{% if request.GET.channel %}&channel={{ request.GET.channel }}{% endif %}{% if request.GET.name %}&name={{ request.GET.name|urlencode }}{% endif %}{% if request.GET.contact %}&contact={{ request.GET.contact|urlencode }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start|urlencode }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end|urlencode }}{% endif %}"
+           hx-get="{% url 'dashboard:agenda_list_partial' %}?cursor={{ next_cursor|urlencode }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.service_id %}&service_id={{ request.GET.service_id }}{% endif %}{% if request.GET.card_id %}&card_id={{ request.GET.card_id }}{% endif %}{% if request.GET.channel %}&channel={{ request.GET.channel }}{% endif %}{% if request.GET.name %}&name={{ request.GET.name|urlencode }}{% endif %}{% if request.GET.contact %}&contact={{ request.GET.contact|urlencode }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q|urlencode }}{% endif %}{% if request.GET.start %}&start={{ request.GET.start|urlencode }}{% endif %}{% if request.GET.end %}&end={{ request.GET.end|urlencode }}{% endif %}{% if request.GET.needs_action %}&needs_action={{ request.GET.needs_action|urlencode }}{% endif %}"
            hx-trigger="revealed"
            hx-target="#list" hx-swap="beforeend">
       </div>
     {% endif %}
-    <aside id="sidebar" aria-live="polite"></aside>
   {% else %}
     <div class="card">Fim dos agendamentos encontrado.</div>
   {% endif %}

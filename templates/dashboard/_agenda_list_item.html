@@ -1,22 +1,27 @@
-<li class="node" role="listitem" id="appt-{{ it.id }}">
-  <div class="card appt">
-    <div class="row">
+<li class="node" role="listitem" id="appt-{{ it.id }}" data-day="{{ it.day_iso }}" data-appt-id="{{ it.id }}" data-start="{{ it.start_iso }}">
+  <div class="card appt" data-status="{{ it.status }}" data-action-needed="{{ it.reschedule_action_needed|yesno:'true,false' }}">
+    <div class="row" style="align-items:center;gap:12px;flex-wrap:wrap;">
       <div class="time">{{ it.start_label }}–{{ it.end_label }} • {{ it.duration_min }}min</div>
-      <span class="badge {{ it.status }}">{{ it.status_label }}</span>
+      <div class="row" style="gap:6px;align-items:center;">
+        <span class="badge {{ it.status }}">{{ it.status_label }}</span>
+        {% if it.reschedule_action_needed %}
+          <span class="badge warning" data-role="reschedule-badge">Ação necessária</span>
+        {% elif it.reschedule_latest_status %}
+          <span class="badge neutral" data-role="reschedule-badge">{{ it.reschedule_latest_label }}</span>
+        {% endif %}
+      </div>
     </div>
+    {% if it.reschedule_action_needed and it.reschedule_pending_requested_label %}
+      <p class="muted" data-role="reschedule-note">Pedido: {{ it.reschedule_pending_requested_label }}</p>
+    {% endif %}
     <div class="title">{{ it.customer_name }}{% if it.phone %} <span class="muted">({{ it.phone }})</span>{% endif %}</div>
     <div class="row">
       <div>
         {{ it.service_name }} • @{{ it.card_nick }} • {{ it.channel_label }} {% if it.address_or_link %}• {{ it.address_or_link }}{% endif %}
       </div>
       <div>
-      <button class="btn ghost" hx-get="{% url 'dashboard:agenda_event_sidebar' it.id %}" hx-target="#sidebar" hx-swap="beforeend">Detalhes</button>
+      <button class="btn ghost" hx-get="{% url 'dashboard:agenda_event_sidebar' it.id %}" hx-target="#agenda-sidebar" hx-swap="innerHTML">Detalhes</button>
       </div>
     </div>
-    <!-- <div class="actions">
-      <button class="btn"  hx-post="{% url 'dashboard:agenda_list_confirm' it.id %}" hx-target="#appt-{{ it.id }}" hx-swap="outerHTML">Aprovar</button>
-      <button class="btn"  hx-post="{% url 'dashboard:agenda_list_reject' it.id %}"  hx-target="#appt-{{ it.id }}" hx-swap="outerHTML">Negar</button>
-      <button class="btn"  hx-post="{% url 'dashboard:agenda_list_cancel' it.id %}"  hx-target="#appt-{{ it.id }}" hx-swap="outerHTML">Cancelar</button>
-    </div> -->
   </div>
 </li>

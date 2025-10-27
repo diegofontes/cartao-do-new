@@ -1,0 +1,31 @@
+{% extends "public/base_public.html" %}
+{% block title %}Detalhe do Pedido{% endblock %}
+{% block content %}
+<div class="viewer-shell">
+
+
+  <section id="verify-gate" class="viewer-gate" hx-target="this" hx-swap="outerHTML">
+    {% include "viewer/_verify_gate.html" %}
+  </section>
+
+  <section
+    id="order-details"
+    class="viewer-details"
+    {% if verified %}
+    hx-get="{% url 'viewer:order_status_partial' target.code %}"
+    hx-trigger="load, every 20s"
+    hx-target="#order-details"
+    hx-swap="innerHTML"
+    {% endif %}
+  >
+    {% if verified %}
+      {% include "viewer/_order_status.html" %}
+    {% else %}
+      <div class="viewer-locked">
+        <p>Informe os 4 últimos dígitos do telefone cadastrado para liberar os detalhes do pedido.</p>
+        <p class="viewer-mask">Telefone cadastrado: {{ masked_phone }}</p>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

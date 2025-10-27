@@ -1,0 +1,19 @@
+{% if slot_date_label %}
+  <p class="slot-picker__hint muted">Data selecionada: {{ slot_date_label }}</p>
+{% endif %}
+
+{% if slots %}
+  <div class="slot-grid" role="radiogroup" aria-label="Horários disponíveis">
+    {% for slot in slots %}
+      <label class="slot-card">
+        <input type="radio" name="slot" value="{{ slot.value }}" {% if slot.selected %}checked{% endif %} required>
+        <div class="slot-card__body">
+          <span class="slot-card__time">{{ slot.start_label }}</span>
+          <span class="slot-card__range">{{ slot.range_label }}</span>
+        </div>
+      </label>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="muted">Nenhum horário disponível nesta data.</p>
+{% endif %}

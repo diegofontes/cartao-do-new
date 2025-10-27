@@ -1,0 +1,110 @@
+<article class="stack" style="gap: 20px;">
+  {% if not hide_header %}
+    <header class="row between" style="align-items: flex-start;">
+      <div>
+        <h2 class="title" style="margin-bottom: 4px;">{{ appointment.service.name }}</h2>
+      <p class="muted">{{ start_label }} – {{ end_label }} ({{ timezone }})</p>
+        <p class="muted">Cliente: {{ appointment.user_name }} {% if customer_phone_mask %}• {{ customer_phone_mask }}{% endif %}{% if customer_email %} • {{ customer_email }}{% endif %}</p>
+        {% if requested_slot_local %}<p class="muted">Solicitado: {{ requested_slot_local|date:"d/m/Y H:i" }}</p>{% endif %}
+      </div>
+      <span class="badge">{{ status_label }}</span>
+    </header>
+  {% endif %}
+
+  <section class="stack" style="gap: 8px;">
+    <h3>Pedido do cliente</h3>
+    {% if request_obj.reason %}<p>{{ request_obj.reason }}</p>{% else %}<p class="muted">Sem justificativa.</p>{% endif %}
+    {% if requested_slot_label %}
+      <p class="muted">Horário desejado pelo cliente: {{ requested_slot_label }}</p>
+    {% endif %}
+  </section>
+
+  {% if can_act %}
+  <section class="stack" style="gap: 12px;">
+    <h3>Aprovar novo horário</h3>
+    {% if slot_calendar %}
+      <form
+        hx-post="{% url 'dashboard:reschedule_approve' request_obj.id %}"
+        hx-target="{{ hx_target|default:'#reschedule-detail' }}"
+        hx-swap="{{ hx_swap|default:'innerHTML' }}"
+        data-no-load
+        method="post"
+        class="stack"
+        style="gap: 12px;"
+      >
+        {% csrf_token %}
+        {% if reschedule_context %}<input type="hidden" name="context" value="{{ reschedule_context }}">{% endif %}
+        <div class="slot-picker">
+          <label class="field">
+            <span>Data disponível</span>
+            <input
+              class="input"
+              type="date"
+              name="date"
+              value="{{ slot_calendar.initial_date }}"
+              min="{{ slot_calendar.min_date }}"
+              max="{{ slot_calendar.max_date }}"
+              hx-get="{% url 'dashboard:reschedule_slots' request_obj.id %}"
+              hx-trigger="change"
+              hx-target="#reschedule-slot-options"
+              hx-swap="innerHTML"
+              hx-include="#reschedule-slot-options input[name='slot']:checked"
+            >
+          </label>
+          <div id="reschedule-slot-options" class="slot-picker__options">
+            {% include "dashboard/_reschedule_slot_options.html" with slots=slot_calendar.slots slot_date_label=slot_calendar.initial_date_label only %}
+          </div>
+        </div>
+        <label class="field">
+          <span>Mensagem para o cliente (opcional)</span>
+          <textarea class="textarea" name="message" rows="2" placeholder="Ex.: Confirme se o novo horário funciona."></textarea>
+        </label>
+        <button class="btn primary" type="submit">Aprovar re-agendamento</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section class="stack" style="gap: 12px;">
+    <h3>Rejeitar</h3>
+    <form hx-post="{% url 'dashboard:reschedule_reject' request_obj.id %}" hx-target="{{ hx_target|default:'#reschedule-detail' }}" hx-swap="{{ hx_swap|default:'innerHTML' }}" data-no-load method="post" class="stack" style="gap: 12px;">
+      {% csrf_token %}
+      {% if reschedule_context %}<input type="hidden" name="context" value="{{ reschedule_context }}">{% endif %}
+      <label class="field">
+        <span>Motivo (opcional)</span>
+        <textarea class="textarea" name="message" rows="2" placeholder="Ex.: Horário sem disponibilidade."></textarea>
+      </label>
+      <button class="btn" type="submit">Rejeitar pedido</button>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="stack" style="gap: 12px;">
+    <h3>Histórico</h3>
+    {% if timeline %}
+      <ol class="timeline">
+        {% for entry in timeline %}
+          <li class="timeline__item timeline__item--card timeline__item--{{ entry.status }}{% if entry.obj.id == request_obj.id %} is-active{% endif %}">
+            <div class="timeline__event{% if entry.obj.id == request_obj.id %} is-active{% endif %}">
+              <header class="timeline__head">
+                <span class="timeline__label">{{ entry.label }}</span>
+                <time class="timeline__time">{{ entry.created_label }}</time>
+              </header>
+              <div class="timeline__body">
+                {% if entry.reason %}<p class="timeline__detail"><strong>Cliente</strong> {{ entry.reason }}</p>{% endif %}
+                {% if entry.owner_message %}<p class="timeline__detail"><strong>Profissional</strong> {{ entry.owner_message }}</p>{% endif %}
+                {% if entry.requested_label %}<p class="timeline__detail">Solicitado: {{ entry.requested_label }}</p>{% endif %}
+                {% if entry.approved_window_label %}
+                  <p class="timeline__detail">
+                    Novo horário: {{ entry.approved_window_label.start }}{% if entry.approved_window_label.end %} – {{ entry.approved_window_label.end }}{% endif %}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="muted">Sem eventos registrados.</p>
+    {% endif %}
+  </section>
+</article>

@@ -84,6 +84,7 @@ class Order(BaseModel):
 
     card = models.ForeignKey("cards.Card", on_delete=models.CASCADE, related_name="orders")
     code = models.CharField(max_length=12, db_index=True)
+    public_code = models.CharField(max_length=12, unique=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     customer_name = models.CharField(max_length=160)
     customer_phone = models.CharField(max_length=40)
@@ -98,6 +99,62 @@ class Order(BaseModel):
 
     class Meta:
         indexes = [models.Index(fields=["card", "status", "created_at"]) ]
+
+    def save(self, *args, **kwargs):
+        from apps.common.codes import generate_unique_code
+
+        is_new = self._state.adding
+        prev_status = None
+        should_track_status = True
+        source = getattr(self, "_status_change_source", None)
+        note = getattr(self, "_status_change_note", "")
+        if not is_new and self.pk:
+            update_fields = kwargs.get("update_fields")
+            should_track_status = update_fields is None or "status" in update_fields
+            if should_track_status:
+                prev_status = (
+                    type(self)
+                    .objects.filter(pk=self.pk)
+                    .values_list("status", flat=True)
+                    .first()
+                )
+
+        if not self.public_code:
+            def _exists(code: str) -> bool:
+                qs = type(self).objects.filter(public_code=f"D{code}")
+                if self.pk:
+                    qs = qs.exclude(pk=self.pk)
+                return qs.exists()
+
+            base_code = generate_unique_code(length=7, exists=_exists)
+            self.public_code = f"D{base_code}"
+        super().save(*args, **kwargs)
+        if hasattr(self, "_status_change_source"):
+            delattr(self, "_status_change_source")
+        if hasattr(self, "_status_change_note"):
+            delattr(self, "_status_change_note")
+        if is_new:
+            OrderStatusChange.objects.create(
+                order=self,
+                status=self.status,
+                source=source or "initial",
+                note=note or "",
+            )
+        elif should_track_status and prev_status != self.status:
+            OrderStatusChange.objects.create(
+                order=self,
+                status=self.status,
+                source=source or "",
+                note=note or "",
+            )
+
+    def set_status(self, status: str, *, source: str | None = None, note: str = "") -> None:
+        self.status = status
+        if source:
+            self._status_change_source = source
+        if note:
+            self._status_change_note = note
+        self.save(update_fields=["status"])
 
 
 class OrderItem(BaseModel):
@@ -119,3 +176,16 @@ class OrderItemText(BaseModel):
     order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name="texts")
     modifier_group = models.ForeignKey(ModifierGroup, on_delete=models.SET_NULL, null=True)
     text_value = models.CharField(max_length=100)
+
+
+class OrderStatusChange(BaseModel):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="status_changes")
+    status = models.CharField(max_length=20, choices=Order.STATUS_CHOICES)
+    source = models.CharField(max_length=32, blank=True)
+    note = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["order", "created_at"], name="delivery_ord_idx"),
+        ]
+        ordering = ["created_at"]

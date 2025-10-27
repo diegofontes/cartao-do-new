@@ -24,6 +24,7 @@
     .slideover header{display:flex;justify-content:space-between;align-items:center}
     .slideover .body{flex:1;overflow:auto}
     .slideover .actions{display:flex;gap:12px;justify-content:flex-end}
+    #agenda-sidebar{position:relative;z-index:150;}
     /* Responsive: stack sections on mobile, default to day view via JS */
     @media (max-width:1024px){
       .agenda{grid-template-columns:1fr}
@@ -50,9 +51,14 @@
     .card .row{display:flex;gap:8px;justify-content:space-between;align-items:center}
     .badge{border:1px solid var(--border);border-radius:999px;padding:2px 8px;color:var(--muted);font-size:.85rem}
     .badge.confirmed{border-color:#111;color:#111}
+    .badge.warning{border-color:var(--accent);color:var(--accent);}
+    .badge.neutral{border-color:var(--border);color:var(--fg-muted);}
     .muted{color:var(--muted)}
     .actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
     .is-hidden{display:none !important}
+    .day-group{margin-bottom:20px;}
+    .day-group h3{margin-bottom:8px;}
+    [data-role="reschedule-note"]{font-size:0.85rem;}
     @media(max-width:720px){ 
         aside .row{flex-direction:row;align-items:flex-start} 
         .agenda .row{flex-direction:column;align-items:flex-start}
@@ -74,12 +80,19 @@
     <div class="toggle" role="tablist" aria-label="Alternar visualização">
       <a href="{% url 'dashboard:agenda' %}?view=week" class="btn" role="tab" aria-selected="false">Calendário</a>
       <a href="{% url 'dashboard:agenda' %}?view=list" class="btn primary" role="tab" aria-selected="true">Lista</a>
-      <button type="button" id="filters-btn" class="btn ghost" title="Mostrar/ocultar filtros" aria-label="Mostrar ou ocultar filtros" aria-controls="filters" aria-expanded="{% if request.GET.status or request.GET.name or request.GET.contact or request.GET.start or request.GET.end %}true{% else %}false{% endif %}">
+      <button type="button" id="filters-btn" class="btn ghost" title="Mostrar/ocultar filtros" aria-label="Mostrar ou ocultar filtros" aria-controls="filters" aria-expanded="{% if request.GET.status or request.GET.name or request.GET.contact or request.GET.start or request.GET.end or request.GET.needs_action %}true{% else %}false{% endif %}">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12 10 19 14 21 14 12 22 3"/></svg>
       </button>
     </div>
+    <div class="row" style="gap:8px;align-items:center;">
+      {% if reschedule_pending_count %}
+        <span class="badge warning" data-role="pending-counter" aria-live="polite">Pendências: {{ reschedule_pending_count }}</span>
+      {% else %}
+        <span class="badge neutral" data-role="pending-counter" aria-live="polite">Sem pendências</span>
+      {% endif %}
+    </div>
     <div class="row">
-    <form id="filters" class="row{% if not request.GET.status and not request.GET.name and not request.GET.contact and not request.GET.start and not request.GET.end %} is-hidden{% endif %}" role="search" aria-label="Filtros de agenda"
+    <form id="filters" class="row{% if not request.GET.status and not request.GET.name and not request.GET.contact and not request.GET.start and not request.GET.end and not request.GET.needs_action %} is-hidden{% endif %}" role="search" aria-label="Filtros de agenda"
           hx-get="{% url 'dashboard:agenda_list_partial' %}"
           hx-trigger="submit"
           hx-target="#list" hx-swap="innerHTML" hx-push-url="true">
@@ -90,6 +103,10 @@
         <option value="denied" {% if request.GET.status == 'denied' %}selected{% endif %}>Negados</option>
         <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelados</option>
       </select>
+      <label class="row" style="gap:6px;align-items:center;">
+        <input type="checkbox" name="needs_action" value="1" {% if request.GET.needs_action %}checked{% endif %}>
+        <span>Com ação pendente</span>
+      </label>
       <!-- <input type="search" name="name" class="input" placeholder="Nome ou @nick" value="{{ request.GET.name }}" aria-label="Nome ou nickname" /> -->
       <input type="search" name="contact" class="input" placeholder="Telefone ou e‑mail (somente confirmados)" value="{{ request.GET.contact }}" aria-label="Contato" />
       <input type="date" name="start" class="input" value="{{ request.GET.start }}" aria-label="Início" />
@@ -102,12 +119,20 @@
        hx-trigger="load" hx-swap="innerHTML">
     <div class="card" role="status" aria-live="polite">Carregando…</div>
   </div>
+  <aside id="agenda-sidebar" aria-live="polite"></aside>
   {% else %}
   <header class="agenda-top">
     <div class="row" >
       <div class="toggle" role="tablist" aria-label="Alternar visualização">
         <a href="{% url 'dashboard:agenda' %}?view=week" class="btn primary" role="tab" aria-selected="false">Calendário</a>
         <a href="{% url 'dashboard:agenda' %}?view=list" class="btn" role="tab" aria-selected="true">Lista</a>
+      </div>
+      <div class="row" style="gap:8px;align-items:center;">
+        {% if reschedule_pending_count %}
+          <span class="badge warning" data-role="pending-counter" aria-live="polite">Pendências: {{ reschedule_pending_count }}</span>
+        {% else %}
+          <span class="badge neutral" data-role="pending-counter" aria-live="polite">Sem pendências</span>
+        {% endif %}
       </div>
     </div>
     <div class="row">
@@ -196,12 +221,11 @@
     {% endif %}
   </div>
 
-  <aside id="sidebar" aria-live="polite"></aside>
+  <aside id="agenda-sidebar" aria-live="polite"></aside>
   {% endif %}
 </section>
 
 <script>
-  // Default to day view on mobile if not already
   (function(){
     try{
       var isMobile = window.matchMedia('(max-width: 1024px)').matches;
@@ -210,39 +234,129 @@
         var url = '{% url 'dashboard:agenda' %}?view=day&date={{ anchor }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}';
         htmx.ajax('GET', url, { target: '#agenda-page', swap: 'outerHTML' });
       }
-    }catch(_){/* noop */}
+    }catch(_){ }
   })();
-  // Tamanho e posicionamento são tratados por static/ui/dashboard.js
 
-  // apresenta ou fecha o formulário de filtro (com persistência)
   (function(){
-    var f = document.getElementById('filters');
-    var b = document.getElementById('filters-btn');
-
-    console.log(f, b); // debug
-    if(!f || !b) return;
+    var filters = document.getElementById('filters');
+    var toggleBtn = document.getElementById('filters-btn');
+    if(!filters || !toggleBtn){ return; }
     function setFilters(open){
-      console.log('setFilters', open); // debug
-      if(open){ f.classList.remove('is-hidden'); f.style.display=''; b.setAttribute('aria-expanded','true'); }
-      else { f.classList.add('is-hidden'); f.style.display='none'; b.setAttribute('aria-expanded','false'); }
-      try{ localStorage.setItem('agendaFiltersOpen', open ? '1':'0'); }catch(_){ }
+      if(open){
+        filters.classList.remove('is-hidden');
+        filters.style.display = '';
+        toggleBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        filters.classList.add('is-hidden');
+        filters.style.display = 'none';
+        toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+      try{ localStorage.setItem('agendaFiltersOpen', open ? '1' : '0'); }catch(_){ }
     }
-    function toggle(){
-      console.log('toggle'); // debug
-      var open = !!(f && !f.classList.contains('is-hidden') && f.style.display !== 'none');
+    toggleBtn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      var open = !filters.classList.contains('is-hidden') && filters.style.display !== 'none';
       setFilters(!open);
-    }
-
-    b.addEventListener('click', function(ev){ ev.preventDefault(); toggle(); });
-    // Aplica preferência armazenada, se houver
+    });
     document.addEventListener('DOMContentLoaded', function(){
       try{
         var pref = localStorage.getItem('agendaFiltersOpen');
         if(pref !== null){ setFilters(pref === '1'); }
       }catch(_){ }
     });
-
   })();
 
+  (function(){
+    function updateDayHeader(group){
+      if(!group){ return; }
+      var list = group.querySelector('ol');
+      var heading = group.querySelector('h3');
+      if(!list || !heading){ return; }
+      var count = list.querySelectorAll('li.node').length;
+      if(count === 0){
+        group.remove();
+        return;
+      }
+      var label = heading.getAttribute('data-label') || heading.textContent.split(' • ')[0];
+      heading.setAttribute('data-label', label);
+      heading.textContent = label + ' • ' + count + (count === 1 ? ' agendamento' : ' agendamentos');
+    }
+
+    function insertSorted(container, item){
+      var inserted = false;
+      var newStart = item.dataset.start || '';
+      Array.prototype.forEach.call(container.querySelectorAll('li.node'), function(existing){
+        if(inserted){ return; }
+        var existingStart = existing.dataset.start || '';
+        if(newStart && existingStart && newStart < existingStart){
+          existing.before(item);
+          inserted = true;
+        }
+      });
+      if(!inserted){
+        container.appendChild(item);
+      }
+    }
+
+    document.body.addEventListener('agenda:item-updated', function(ev){
+      var detail = ev.detail || {};
+      var listRoot = document.getElementById('list');
+      if(!listRoot || !detail.id || !detail.html){ return; }
+      var template = document.createElement('template');
+      template.innerHTML = detail.html.trim();
+      var newItem = template.content.firstElementChild;
+      if(!newItem){ return; }
+      var newDay = detail.new_day || detail.newDay;
+      var oldDay = detail.old_day || detail.oldDay;
+      var existing = document.getElementById('appt-' + detail.id);
+      if(existing && (!newDay || existing.dataset.day !== newDay)){
+        existing.remove();
+      }
+      var targetList = newDay ? document.querySelector('.day-group[data-day="' + newDay + '"] ol') : null;
+      if(!targetList){
+        var url = listRoot.getAttribute('hx-get');
+        if(url){
+          htmx.ajax('GET', url, { target: '#list', swap: 'innerHTML' });
+        }
+        return;
+      }
+      var targetGroup = targetList.closest('.day-group');
+      var current = document.getElementById('appt-' + detail.id);
+      if(current && current.parentElement === targetList){
+        current.replaceWith(newItem);
+      } else {
+        insertSorted(targetList, newItem);
+      }
+      updateDayHeader(targetGroup);
+      if(oldDay && oldDay !== newDay){
+        var oldGroup = document.querySelector('.day-group[data-day="' + oldDay + '"]');
+        if(oldGroup){
+          var oldList = oldGroup.querySelector('ol');
+          if(oldList){
+            var oldItem = oldList.querySelector('#appt-' + detail.id);
+            if(oldItem){ oldItem.remove(); }
+          }
+          updateDayHeader(oldGroup);
+        }
+      }
+    });
+
+    document.body.addEventListener('agenda:pending-count', function(ev){
+      var count = ev.detail;
+      if(typeof count !== 'number'){ count = parseInt(count || '0', 10); }
+      if(isNaN(count)){ count = 0; }
+      document.querySelectorAll('[data-role="pending-counter"]').forEach(function(el){
+        if(count > 0){
+          el.textContent = 'Pendências: ' + count;
+          el.classList.remove('neutral');
+          el.classList.add('warning');
+        } else {
+          el.textContent = 'Sem pendências';
+          el.classList.remove('warning');
+          el.classList.add('neutral');
+        }
+      });
+    });
+  })();
 </script>
 {% endblock %}

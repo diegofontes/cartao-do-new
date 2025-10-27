@@ -10,6 +10,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from django.db import transaction
 from django.core.cache import cache
+from django.urls import reverse
 from apps.common.phone import to_e164, gen_code, hash_code
 from apps.notifications.api import enqueue
 import json, re, urllib.request
@@ -374,6 +375,43 @@ def checkout_submit(request, nickname: str):
                 template_code='owner_new_order',
                 payload={'code': order.code, 'orders_url': f"/delivery/cards/{card.id}/orders/page"},
                 idempotency_key=f'owner_new_order:{order.id}'
+            )
+    except Exception:
+        pass
+
+    viewer_path = reverse("viewer:order_detail", args=[order.public_code])
+    try:
+        viewer_url = request.build_absolute_uri(viewer_path)
+    except Exception:
+        viewer_url = viewer_path
+    link_payload = {
+        "title": card.title or "Seu pedido",
+        "code": order.code,
+        "public_code": order.public_code,
+        "url": viewer_url,
+    }
+
+    # Customer notifications (best effort)
+    try:
+        if order.customer_phone:
+            enqueue(
+                type='sms',
+                to=order.customer_phone,
+                template_code='viewer_order_link',
+                payload=link_payload,
+                idempotency_key=f'orderlink:sms:{order.id}'
+            )
+    except Exception:
+        pass
+
+    try:
+        if order.customer_email:
+            enqueue(
+                type='email',
+                to=order.customer_email,
+                template_code='viewer_order_link',
+                payload=link_payload,
+                idempotency_key=f'orderlink:email:{order.id}'
             )
     except Exception:
         pass

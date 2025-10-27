@@ -40,6 +40,15 @@ def render_template(code: str, channel: str, payload: dict) -> dict:
         # Owner notifications (defaults)
         ("sms", "owner_new_booking"): {"body_txt": "Novo agendamento: {{ service }} em {{ date }} {{ time }}. Agenda: {{ agenda_url }}"},
         ("sms", "owner_new_order"): {"body_txt": "Novo pedido {{ code }}. Pedidos: {{ orders_url }}"},
+        ("sms", "owner_reschedule_requested"): {"body_txt": "Novo pedido de re-agendamento {{ service }} — cliente {{ customer }}."},
+        ("sms", "customer_reschedule_approved"): {"body_txt": "Re-agendamento confirmado: {{ service }} em {{ date }} {{ time }}."},
+        ("sms", "customer_reschedule_rejected"): {"body_txt": "Pedido de re-agendamento não aprovado. {{ message|default:'Entre em contato para um novo horário.' }}"},
+        ("sms", "viewer_order_link"): {"body_txt": "{{ title }} — acompanhe seu pedido {{ code }} em {{ url }}."},
+        ("email", "viewer_order_link"): {
+            "subject": "Acompanhe seu pedido {{ code }}",
+            "body_txt": "{{ title }} — acompanhe seu pedido {{ code }} em {{ url }}.",
+            "body_html": "<p style=\"font-family:system-ui,Arial;line-height:1.5;color:#111\">{{ title }} — acompanhe seu pedido <strong>{{ code }}</strong> em <a href=\"{{ url }}\">{{ url }}</a>.</p>",
+        },
         ("email", "login_2fa"): {
             "subject": "Seu código de acesso (expira em {{ ttl_min }} min)",
             "body_txt": "Olá{% if name %} {{ name }}{% endif %}, seu código é {{ code }}. Válido por {{ ttl_min }} minutos.",

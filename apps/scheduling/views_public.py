@@ -15,6 +15,7 @@ from django.core.cache import cache
 from django.utils import timezone
 from apps.common.phone import to_e164, gen_code, hash_code
 from apps.notifications.api import enqueue
+from apps.common.urls import viewer_order_url
 
 log = logging.getLogger(__name__)
 
@@ -116,8 +117,27 @@ def public_create_appointment(request, nickname: str):
                 payload={'service': service.name, 'date': date_label, 'time': time_label, 'agenda_url': agenda_url},
                 idempotency_key=f'owner_new_booking:{appt.id}'
             )
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("failed to notify owner about new appointment %s: %s", appt.id, exc)
+
+    # Send viewer link to the customer (dev mode logs the SMS body)
+    try:
+        detail_url = viewer_order_url(appt.public_code)
+        enqueue(
+            type='sms',
+            to=phone,
+            template_code='viewer_order_link',
+            payload={
+                'title': card.title,
+                'service': service.name,
+                'code': appt.public_code,
+                'url': detail_url,
+            },
+            idempotency_key=f'viewer_link:{appt.id}'
+        )
+        log.info("viewer order link enqueued for appointment %s -> %s", appt.id, detail_url)
+    except Exception as exc:
+        log.warning("failed to notify customer about new appointment %s: %s", appt.id, exc)
     return render(request, "public/_appointment_result.html", {"ok": True, "appointment": appt})
 
 
