@@ -409,3 +409,12 @@ hr{border:0;border-top:1px solid var(--border)}
 .delivery-head-order{display: flex; flex-direction: column;gap: 6px;}
 .delivery-head-order strong{margin-left: .5rem; font-size: .9rem;}
 .delivery-head-order .muted{font-size: .9rem;}
+
+.alert-card-publish{
+    background: #ff000024;
+    padding: 8px;
+    display: flex;
+    margin: 10px;
+    border: 3px solid #e1b9b9;
+    border-radius: var(--radius);
+}

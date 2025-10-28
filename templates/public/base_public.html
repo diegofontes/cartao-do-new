@@ -10,6 +10,26 @@
     <!-- Theme handling (reuse dashboard logic) -->
     <script defer src="{% static 'ui/theme.js' %}"></script>
     <script defer src="{% static 'public/viewer.js' %}"></script>
+    {% block meta %}
+    {% static 'img/logo-cap-icon.png' as default_meta_image %}
+    {% with meta_title=share_title|default:"Cartão digital" %}
+    {% with meta_description=share_description|default:"Conheça nossos cartões digitais personalizados." %}
+    {% with meta_url=share_url|default:request.build_absolute_uri %}
+    {% with meta_image=share_image|default:default_meta_image %}
+    {% if '://' in meta_image %}
+      {% with og_image=meta_image %}
+      {% include 'public/_meta_tags.html' %}
+      {% endwith %}
+    {% else %}
+      {% with og_image=request.scheme|add:"://"|add:request.get_host|add:meta_image %}
+      {% include 'public/_meta_tags.html' %}
+      {% endwith %}
+    {% endif %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endblock %}
     <meta name="csrf-token" content="{{ csrf_token }}">
     <script>
       // CSRF helper for HTMX in the public viewer (uses viewer_csrftoken cookie)

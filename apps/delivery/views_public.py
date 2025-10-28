@@ -12,6 +12,7 @@ from django.conf import settings
 from django.db import transaction
 from django.core.cache import cache
 from django.urls import reverse
+from django.templatetags.static import static
 from apps.common.phone import to_e164, gen_code, hash_code
 from apps.notifications.api import enqueue
 import json, re, urllib.request
@@ -69,6 +70,25 @@ def menu_home(request, nickname: str):
     # Fetch links/gallery for tabs
     links = LinkButton.objects.filter(card=card).order_by("order", "created_at")
     gallery = GalleryItem.objects.filter(card=card, visible_in_gallery=True).order_by("importance", "order", "created_at")
+
+    # Sharing metadata (Open Graph / Twitter)
+    share_title = card.title
+    if card.nickname:
+        share_title = f"{card.title} • @{card.nickname}"
+    share_description = (card.description or "").strip()
+    if not share_description:
+        share_description = f"Conheça o cartão digital de {card.title}."
+    share_description = " ".join(share_description.split())
+    share_description = share_description[:240]
+    share_url = request.build_absolute_uri()
+    avatar_field = card.avatar or card.avatar_w128 or card.avatar_w64
+    if avatar_field and getattr(avatar_field, "name", None):
+        share_image = request.build_absolute_uri(
+            reverse("media:image_public", kwargs={"path": avatar_field.name})
+        )
+    else:
+        share_image = request.build_absolute_uri(static("img/logo-cap-icon.png"))
+
     return render(
         request,
         "public/menu_public.html",
@@ -80,6 +100,10 @@ def menu_home(request, nickname: str):
             "gallery": gallery,
             "about_html": about_html,
             "about_enabled": about_enabled,
+            "share_title": share_title,
+            "share_description": share_description,
+            "share_url": share_url,
+            "share_image": share_image,
         },
     )
 

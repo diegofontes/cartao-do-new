@@ -60,9 +60,10 @@ class Card(BaseModel):
             return False
         if not self.avatar:
             return False
-        has_link = self.linkbutton_set.exists()
-        has_address = self.addresses.exists()
-        return has_link or has_address
+        #has_link = self.linkbutton_set.exists()
+        #has_social = self.social_links.filter(is_active=True).exists()
+        #return has_link or has_social
+        return True
 
     def publish(self):
         if not self.can_publish():

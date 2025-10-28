@@ -2,7 +2,7 @@
   <div class="card" style="max-width:520px;margin:20px auto">
     <h3 id="pub-title" style="margin-top:0">Publicar cartão</h3>
     {% if not has_pm %}
-      <div class="box" role="alert">É necessário cadastrar um cartão de crédito antes de publicar. <a class="underline" href="{% url 'billing:payment_method' %}">Adicionar cartão</a></div>
+      <div class="box alert-card-publish" role="alert">É necessário cadastrar um cartão de crédito antes de publicar. <a class="underline" href="{% url 'billing:payment_method' %}">Adicionar cartão</a></div>
     {% endif %}
     <form hx-post="{% url 'cards:publish' card.id %}" hx-target="#publish-modal" hx-swap="innerHTML" class="grid" style="grid-template-columns:1fr;gap:10px">
       {% csrf_token %}

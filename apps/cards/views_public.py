@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.conf import settings
+from django.urls import reverse
+from django.templatetags.static import static
 from .models import Card, LinkButton, SocialLink, GalleryItem
 from .markdown import has_about_content, sanitize_about_markdown
 from apps.scheduling.models import SchedulingService
@@ -22,7 +23,6 @@ def _get_card_by_nickname(nickname: str) -> Card:
 @ensure_csrf_cookie
 def card_public(request, nickname: str):
     card = _get_card_by_nickname(nickname)
-    print(card.mode, delivery_menu_home)
     if getattr(card, "mode", "appointment") == "delivery" and delivery_menu_home:
         return delivery_menu_home(request, nickname)
     links = LinkButton.objects.filter(card=card).order_by("order", "created_at")
@@ -52,6 +52,24 @@ def card_public(request, nickname: str):
         tab_order = ["links", "gallery"] + (["services"] if card.mode != "delivery" else [])
         if about_enabled:
             tab_order.append("about")
+    # Sharing metadata (Open Graph / Twitter)
+    share_title = card.title
+    if card.nickname:
+        share_title = f"{card.title} • @{card.nickname}"
+    share_description = (card.description or "").strip()
+    if not share_description:
+        share_description = f"Conheça o cartão digital de {card.title}."
+    share_description = " ".join(share_description.split())
+    share_description = share_description[:240]
+    share_url = request.build_absolute_uri()
+    avatar_field = card.avatar or card.avatar_w128 or card.avatar_w64
+    if avatar_field and getattr(avatar_field, "name", None):
+        share_image = request.build_absolute_uri(
+            reverse("media:image_public", kwargs={"path": avatar_field.name})
+        )
+    else:
+        share_image = request.build_absolute_uri(static("img/logo-cap-icon.png"))
+
     return render(request, "public/card_public.html", {
         "card": card,
         "links": links,
@@ -61,6 +79,10 @@ def card_public(request, nickname: str):
         "tab_order": tab_order,
         "about_html": about_html,
         "about_enabled": about_enabled,
+        "share_title": share_title,
+        "share_description": share_description,
+        "share_url": share_url,
+        "share_image": share_image,
     })
 
 def tabs_links(request, nickname: str):
