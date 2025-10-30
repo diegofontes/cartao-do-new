@@ -1,0 +1,53 @@
+{% load i18n %}
+<article class="card jornal-news-card"
+         id="jornal-news-card"
+         data-news-carousel
+         data-autoplay="true"
+         data-autoplay-interval="9000"
+         hx-get="{% url 'jornal:news' %}"
+         hx-trigger="every 120s"
+         hx-swap="outerHTML">
+  <header class="jornal-news-card__header">
+    <div>
+      <h2>Quadro de Notícias</h2>
+      <p class="muted">Atualizações recentes sobre o dashboard.</p>
+    </div>
+    {% if posts %}
+      <div class="jornal-news-card__controls" role="group" aria-label="Navegação do carrossel">
+        <button type="button" class="btn ghost sm" data-carousel-prev aria-label="Notícia anterior">◀</button>
+        <button type="button" class="btn ghost sm" data-carousel-next aria-label="Próxima notícia">▶</button>
+      </div>
+    {% endif %}
+  </header>
+  {% if posts %}
+    <div class="jornal-news-card__viewport" role="region" aria-live="polite" aria-atomic="true">
+      <ul class="jornal-news-card__slides">
+        {% for post in posts %}
+          <li class="jornal-news-card__slide{% if forloop.first %} is-active{% endif %}" data-index="{{ forloop.counter0 }}">
+            <header class="jornal-news-card__slide-header">
+              <span class="badge">#{{ post.slug }}</span>
+              <time datetime="{{ post.updated_at|date:'c' }}" class="muted">
+                {{ post.updated_at|date:"d/m/Y H:i" }}
+              </time>
+            </header>
+            <h3 class="jornal-news-card__title">{{ post.title }}</h3>
+            <div class="markdown-body jornal-news-card__body">
+              {{ post.body_html|safe }}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="jornal-news-card__dots" role="tablist" aria-label="Selecionar notícia">
+        {% for post in posts %}
+          <button type="button"
+                  class="jornal-news-card__dot{% if forloop.first %} is-active{% endif %}"
+                  data-carousel-index="{{ forloop.counter0 }}"
+                  aria-label="Ir para {{ post.title }}"
+                  {% if forloop.first %}aria-current="true"{% endif %}></button>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <p class="muted">Nenhuma notícia publicada no momento.</p>
+  {% endif %}
+</article>

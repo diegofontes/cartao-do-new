@@ -1,0 +1,28 @@
+<div class="jornal-helper" data-helper-view="list">
+  <header class="jornal-helper__header">
+    <h2 id="jornal-helper-title">Ajuda da página</h2>
+    <p class="muted">Selecione um tópico para ver os detalhes.</p>
+  </header>
+  {% if helpers %}
+    <ul class="jornal-helper__list" role="list">
+      {% for helper in helpers %}
+        <li class="jornal-helper__item">
+          <button type="button"
+                  class="jornal-helper__link"
+                  hx-get="{% url 'jornal:helper_detail' helper.slug %}"
+                  hx-target="#jornal-helper-body"
+                  hx-swap="innerHTML"
+                  hx-include="#jornal-helper-path"
+                  aria-describedby="jornal-helper-title">
+            <span class="jornal-helper__link-label">{{ helper.title }}</span>
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Ainda não há conteúdos de ajuda para esta página.</p>
+  {% endif %}
+</div>

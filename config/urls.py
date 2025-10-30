@@ -34,6 +34,7 @@ urlpatterns = [
     path("billing/", include("apps.billing.urls")),
     path("delivery/", include("apps.delivery.urls")),
     path("metering/", include("apps.metering.urls")),
+    path("", include("apps.jornal.urls")),
     path("stripe/", include("apps.billing.webhooks")),  # /stripe/webhook/
     path("search/dashboard/", include(("apps.search.urls_dashboard", "search_dashboard"), namespace="search_dashboard")),
     path("search/", include(("apps.search.urls", "search_public"), namespace="search")),
