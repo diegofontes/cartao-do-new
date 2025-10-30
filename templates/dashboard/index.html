@@ -16,7 +16,21 @@
 </style>
 
 <section>
-  <header style="margin-bottom:var(--g4);">
+  <div id="jornal-news-card-placeholder"
+       hx-get="{% url 'jornal:news' %}"
+       hx-trigger="load"
+       hx-swap="outerHTML">
+    <article class="card jornal-news-card">
+      <header class="jornal-news-card__header">
+        <div>
+          <h2>Quadro de Notícias</h2>
+          <p class="muted">Carregando novidades…</p>
+        </div>
+      </header>
+      <p class="muted">Aguarde enquanto buscamos atualizações.</p>
+    </article>
+  </div>
+  <header style="margin-bottom:var(--g4);margin-top:var(--g4);">
     <h1>Resumo de Uso & Cobrança</h1>
     <div class="filters" style="display:flex; gap:8px; align-items:center">
       <input class="visually-hidden" type="month" id="period" name="period" value="{{ current_month }}"

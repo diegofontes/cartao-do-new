@@ -19,6 +19,7 @@
     <script defer src="{% static 'ui/theme.js' %}"></script>
     <!-- Dashboard helpers (agenda sizing/scroll) -->
     <script defer src="{% static 'ui/dashboard.js' %}"></script>
+    <script defer src="{% static 'ui/jornal.js' %}"></script>
     {% block head %}{% endblock %}
   </head>
   <body >
@@ -91,6 +92,44 @@
       </div>
     </div>
     
+
+    <input type="hidden" id="jornal-helper-path" name="path" value="" />
+    <button type="button"
+            class="jornal-helper-launcher"
+            id="jornal-helper-launcher"
+            aria-label="Ajuda"
+            data-helper-open>
+      <span aria-hidden="true">?</span>
+    </button>
+    <div class="jornal-helper-sidebar" id="jornal-helper-sidebar" aria-hidden="true">
+      <div class="jornal-helper-sidebar__backdrop" data-helper-close tabindex="-1"></div>
+      <aside class="jornal-helper-sidebar__panel"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="jornal-helper-panel-title"
+             aria-describedby="jornal-helper-panel-desc"
+             tabindex="-1">
+        <header class="jornal-helper-sidebar__header">
+          <div>
+            <h2 id="jornal-helper-panel-title">Ajuda contextual</h2>
+            <p id="jornal-helper-panel-desc" class="muted">Conteúdos de suporte para a página atual.</p>
+          </div>
+          <button type="button" class="btn ghost" data-helper-close aria-label="Fechar ajuda">
+            <svg aria-hidden="true" width="18" height="18"><use href="{% static 'ui/icons.svg' %}#icon-x"></use></svg>
+          </button>
+        </header>
+        <div class="jornal-helper-sidebar__body"
+             id="jornal-helper-body"
+             tabindex="-1"
+             hx-get="{% url 'jornal:helper_list' %}"
+             hx-target="#jornal-helper-body"
+             hx-trigger="helper:open"
+             hx-swap="innerHTML"
+             hx-include="#jornal-helper-path">
+          <p class="muted">Abra um tópico para carregar o conteúdo.</p>
+        </div>
+      </aside>
+    </div>
 
   <div id="load-modal" class="load-modal" aria-hidden="true" aria-live="polite">
     <div class="load-box" role="dialog" aria-modal="true" aria-label="Carregando" tabindex="-1">

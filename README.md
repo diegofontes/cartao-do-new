@@ -120,6 +120,16 @@ Veja `.env.example`. Principais:
 
 ---
 
+## Jornal (notícias e ajuda contextual)
+
+- Todas as notícias e helpers vivem no Django Admin, seção **Jornal** (`/admin/jornal/`).
+- O card **Quadro de Notícias** aparece como primeiro bloco da dashboard e é renderizado via HTMX (`/jornal/news`).
+- Helpers são associados por regex de rota (ex.: `^/d/cards/?$`) através de **Regras**; o botão flutuante “?” abre o painel lateral e busca os conteúdos em `/jornal/helpers`.
+- O markdown digitado é convertido para HTML sanitizado (links abrem em nova aba, scripts/inlines são removidos).
+- A sidebar respeita acessibilidade (dialog, foco, fechar via `Esc`) e mantém cache curto (60 s) com invalidação automática ao editar conteúdo.
+
+---
+
 ## Testes
 
 ```bash

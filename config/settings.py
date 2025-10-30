@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.metering",
     "apps.notifications",
     "apps.pages",
+    "apps.jornal",
     "apps.viewer",
 ]
 

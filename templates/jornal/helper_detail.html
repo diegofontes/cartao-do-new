@@ -1,0 +1,17 @@
+<div class="jornal-helper" data-helper-view="detail">
+  <header class="jornal-helper__header">
+    <button type="button"
+            class="btn ghost sm"
+            hx-get="{% url 'jornal:helper_list' %}"
+            hx-target="#jornal-helper-body"
+            hx-swap="innerHTML"
+            hx-include="#jornal-helper-path"
+            aria-label="Voltar para a lista de ajuda">
+      ← Voltar
+    </button>
+    <h2 class="jornal-helper__title">{{ helper.title }}</h2>
+  </header>
+  <article class="markdown-body jornal-helper__body">
+    {{ helper.body_html|safe }}
+  </article>
+</div>
