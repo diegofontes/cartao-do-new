@@ -7,7 +7,7 @@
   {% elif sent %}
     <p class="help">Enviamos um código por SMS. Digite abaixo para confirmar seu telefone.</p>
     <input type="hidden" name="phone" value="{{ phone }}" />
-    <input class="input" type="text" name="code" placeholder="Código" maxlength="6" />
+    <input class="input" type="text" name="code" placeholder="Código" maxlength="6" inputmode="numeric" />
     <div class="row" style="gap:12px;margin-top:8px;display:flex">
       <button type="button" class="btn primary" hx-post="{% url 'delivery_verify_code' card.nickname %}"
               hx-target="#verify-dv" hx-swap="outerHTML" hx-include="closest form">Validar código</button>
