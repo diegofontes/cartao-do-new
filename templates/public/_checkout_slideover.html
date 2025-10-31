@@ -28,19 +28,23 @@
       <div class="row between"><div class="strong">Subtotal</div><div>{{ cart.subtotal_cents|brl_cents }}</div></div>
       <form class="stack" style="gap:10px; margin-top: 1rem;" hx-post="{% url 'delivery_checkout_submit' card.nickname %}" hx-target="#slideover" hx-swap="innerHTML">
         {% csrf_token %}
-        <label class="field"><span>Nome</span><input class="input" type="text" name="name" required /></label>
-        <label class="field"><span>E-mail (opcional)</span><input class="input" type="email" name="email" /></label>
+        <p class="muted" style="margin:0">Conte pra gente quem vai receber o pedido e como avisar sobre atualizações.</p>
+        <label class="field"><span>Nome</span><input class="input" type="text" name="name" required />
+          <small class="muted">Use seu nome completo ou de quem vai receber o pedido.</small>
+        </label>
+        <label class="field"><span>E-mail (opcional)</span><input class="input" type="email" name="email" />
+          <small class="muted">Se informar, enviaremos o comprovante e notificações por e-mail.</small>
+        </label>
         <fieldset class="box" style="grid-column:1/-1" >
           <label class="field"><span>Telefone (BR)</span>
             <input class="input" name="phone" id="co-phone" inputmode="tel" placeholder="+55 (11) 9XXXX-XXXX" data-phone-mask required />
           </label>
-          <div id="verify-dv"  data-verified="{% if phone_verified %}true{% else %}false{% endif %}"
-               hx-post="{% url 'delivery_send_code' card.nickname %}"
-               hx-trigger="click from:#send-sms-dv"
-               hx-include="closest form"
-               hx-target="#verify-dv" hx-swap="outerHTML">
-            <button type="button" id="send-sms-dv" class="btn">Enviar código</button>
-          </div>
+          <small class="muted">Digite um celular com DDD para receber o código de confirmação via SMS.</small>
+          {% if phone_verified %}
+            {% include 'public/_verify_block_delivery.html' with verified=True card=card %}
+          {% else %}
+            {% include 'public/_verify_block_delivery.html' with card=card sent=False %}
+          {% endif %}
         </fieldset>
         <label class="field">
           <span>Retirada ou entrega?</span>
@@ -48,18 +52,23 @@
             <option value="pickup">Retirar</option>
             <option value="delivery">Entrega</option>
           </select>
+          <small class="muted">Escolha "Retirar" para buscar no local ou "Entrega" para receber em casa.</small>
         </label>
         <div id="addr" hidden class="stack" style="gap:8px">
+          <small class="muted" style="margin:0">Preencha o endereço completo para calcular a entrega.</small>
           <label class="field"><span>CEP</span>
             <input class="input" type="text" name="cep" id="co-cep"
                    hx-get="{% url 'delivery_cep_lookup' card.nickname %}"
                    hx-target="#addr-fields" hx-include="#co-cep" hx-trigger="change, keyup changed delay:1000ms" placeholder="00000-000" />
+            <small class="muted">Usaremos o CEP para sugerir rua e bairro automaticamente.</small>
           </label>
           <div id="addr-fields">
             {% include 'public/_checkout_addr_fields.html' %}
           </div>
         </div>
-        <label class="field"><span>Observações</span><textarea class="textarea" name="notes" rows="3"></textarea></label>
+        <label class="field"><span>Observações</span><textarea class="textarea" name="notes" rows="3"></textarea>
+          <small class="muted">Compartilhe preferências de entrega ou cuidados com o pedido.</small>
+        </label>
         <div class="row" style="justify-content:flex-end; margin: 15px;"><button id="co-submit" class="btn primary" {% if not phone_verified %}disabled{% endif %}>Concluir pedido</button></div>
       </form>
     </div>

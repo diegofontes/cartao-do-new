@@ -296,7 +296,13 @@ def checkout_form(request, nickname: str):
     card = _ensure_delivery_card(nickname)
     cart = _get_cart(request, str(card.id))
     cart_calc = _recalc_cart(card, cart)
-    return render(request, "public/_checkout_slideover.html", {"card": card, "cart": cart_calc, "phone_verified": bool(request.session.get("delivery_phone_verified"))})
+    # Sempre exigir uma nova validação quando o formulário é reaberto
+    request.session["delivery_phone_verified"] = False
+    return render(
+        request,
+        "public/_checkout_slideover.html",
+        {"card": card, "cart": cart_calc, "phone_verified": False},
+    )
 
 
 def _gen_order_code(card_id: str) -> str:
@@ -482,11 +488,19 @@ def delivery_send_code(request, nickname: str):
     try:
         phone = to_e164(phone_raw)
     except Exception as e:
-        return render(request, "public/_verify_block_delivery.html", {"error": str(e) or "Telefone inválido"})
+        return render(
+            request,
+            "public/_verify_block_delivery.html",
+            {"error": str(e) or "Telefone inválido", "card": card, "sent": False},
+        )
     sk = _session_key(request)
     cooldown_key = f"dv:cool:{sk}:{phone}"
     if cache.get(cooldown_key):
-        return render(request, "public/_verify_block_delivery.html", {"error": "Aguarde antes de reenviar.", "phone": phone})
+        return render(
+            request,
+            "public/_verify_block_delivery.html",
+            {"error": "Aguarde antes de reenviar.", "phone": phone, "card": card, "sent": True},
+        )
     code = gen_code(6)
     try:
         enqueue(
@@ -503,7 +517,11 @@ def delivery_send_code(request, nickname: str):
     cache.set(pv_key, {"code": hash_code(code), "attempts": 5}, 300)
     cache.set(cooldown_key, 1, 60)
     request.session["delivery_phone_verified"] = False
-    resp = render(request, "public/_verify_block_delivery.html", {"phone": phone, "card": card})
+    resp = render(
+        request,
+        "public/_verify_block_delivery.html",
+        {"phone": phone, "card": card, "sent": True},
+    )
     try:
         resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "SMS enviado", "message": "Enviamos um código para verificação."}})
     except Exception:
@@ -519,20 +537,36 @@ def delivery_verify_code(request, nickname: str):
     try:
         phone = to_e164(phone_raw)
     except Exception as e:
-        return render(request, "public/_verify_block_delivery.html", {"error": str(e) or "Telefone inválido"})
+        return render(
+            request,
+            "public/_verify_block_delivery.html",
+            {"error": str(e) or "Telefone inválido", "card": card, "sent": False},
+        )
     sk = _session_key(request)
     pv_key = f"dv:data:{sk}:{phone}"
     data = cache.get(pv_key)
     if not data:
-        resp = render(request, "public/_verify_block_delivery.html", {"phone": phone, "card": card, "error": "Código expirado. Reenvie."})
+        resp = render(
+            request,
+            "public/_verify_block_delivery.html",
+            {"phone": phone, "card": card, "error": "Código expirado. Reenvie.", "sent": True},
+        )
         resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Código expirado", "message": "Reenvie o SMS."}})
         return resp
     if data.get("attempts", 0) <= 0:
-        return render(request, "public/_verify_block_delivery.html", {"phone": phone, "error": "Muitas tentativas. Reenvie."})
+        return render(
+            request,
+            "public/_verify_block_delivery.html",
+            {"phone": phone, "card": card, "error": "Muitas tentativas. Reenvie.", "sent": True},
+        )
     if data.get("code") != hash_code(code):
         data["attempts"] = max(0, int(data.get("attempts", 1)) - 1)
         cache.set(pv_key, data, 300)
-        resp = render(request, "public/_verify_block_delivery.html", {"phone": phone, "card": card, "error": "Código incorreto."})
+        resp = render(
+            request,
+            "public/_verify_block_delivery.html",
+            {"phone": phone, "card": card, "error": "Código incorreto.", "sent": True},
+        )
         resp["HX-Trigger"] = json.dumps({"flash": {"type": "error", "title": "Código incorreto", "message": "Tente novamente."}})
         return resp
     request.session["delivery_phone_verified"] = True

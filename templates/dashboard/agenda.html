@@ -23,7 +23,7 @@
     .slideover{position:fixed;inset:0 0 0 auto;width:min(420px,100%);background:var(--bg);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:var(--space-4);z-index:1000;display:flex;flex-direction:column;gap:12px}
     .slideover header{display:flex;justify-content:space-between;align-items:center}
     .slideover .body{flex:1;overflow:auto}
-    .slideover .actions{display:flex;gap:12px;justify-content:flex-end}
+    .slideover .actions{display:flex;gap:12px;justify-content:flex-start}
     #agenda-sidebar{position:relative;z-index:150;}
     /* Responsive: stack sections on mobile, default to day view via JS */
     @media (max-width:1024px){
@@ -61,7 +61,7 @@
     [data-role="reschedule-note"]{font-size:0.85rem;}
     @media(max-width:720px){ 
         aside .row{flex-direction:row;align-items:flex-start} 
-        .agenda .row{flex-direction:column;align-items:flex-start}
+        .agenda .row{flex-direction:row;align-items:flex-start}
         .bar{flex-direction:column;align-items:stretch}
         .input, .select, .textarea {width: 100%;}
         #filters {width: 100%;}

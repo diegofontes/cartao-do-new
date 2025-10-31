@@ -1,22 +1,28 @@
+{% with sent=sent|default:False %}
 <div id="verify-dv" class="row" style="gap:8px;align-items:center;flex-direction: column;align-items: flex-start;" data-verified="{% if verified %}true{% else %}false{% endif %}">
   {% if verified %}
-    <span class="pill" style="border-color:#16a34a;color:#166534;background:color-mix(in srgb, #16a34a 18%, var(--bg))">
-      Telefone verificado
-    </span>
-  {% else %}
-    <p class="help">Enviamos um código por SMS. </p>
-    <input type="hidden" name="phone" value="{{ phone }}" />
-    <input class="input" type="text" name="code" placeholder="Código" maxlength="6"
-           hx-post="{% url 'delivery_verify_code' card.nickname %}"
-           hx-target="#verify-dv" hx-swap="outerHTML" hx-include="closest form" />
-    <div class="row" style="gap:12px;margin-top:8px;display:flex">
-      <button class="btn primary" hx-post="{% url 'delivery_send_code' card.nickname %}"
-              hx-target="#verify-dv" hx-swap="outerHTML" hx-include="closest form">Validar</button>
-      <button class="btn" hx-post="{% url 'delivery_send_code' card.nickname %}"
-              hx-target="#verify-dv" hx-swap="outerHTML" hx-include="closest form">Reenviar</button>
+    <div class="help">
+      Telefone verificado ✅
     </div>
+  {% elif sent %}
+    <p class="help">Enviamos um código por SMS. Digite abaixo para confirmar seu telefone.</p>
+    <input type="hidden" name="phone" value="{{ phone }}" />
+    <input class="input" type="text" name="code" placeholder="Código" maxlength="6" />
+    <div class="row" style="gap:12px;margin-top:8px;display:flex">
+      <button type="button" class="btn primary" hx-post="{% url 'delivery_verify_code' card.nickname %}"
+              hx-target="#verify-dv" hx-swap="outerHTML" hx-include="closest form">Validar código</button>
+      <button type="button" class="btn" hx-post="{% url 'delivery_send_code' card.nickname %}"
+              hx-target="#verify-dv" hx-swap="outerHTML" hx-include="closest form">Reenviar código</button>
+    </div>
+    {% if error %}
+      <span class="help" style="color:#b91c1c">{{ error }}</span>
+    {% endif %}
+  {% else %}
+    <button type="button" class="btn primary" hx-post="{% url 'delivery_send_code' card.nickname %}"
+            hx-target="#verify-dv" hx-swap="outerHTML" hx-include="closest form">Enviar código</button>
     {% if error %}
       <span class="help" style="color:#b91c1c">{{ error }}</span>
     {% endif %}
   {% endif %}
 </div>
+{% endwith %}

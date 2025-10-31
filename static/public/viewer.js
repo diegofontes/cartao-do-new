@@ -80,15 +80,36 @@
     scope.querySelectorAll('[data-phone-mask]').forEach(applyPhoneMask);
   }
 
+  function syncSlotSelection(root){
+    const scope = root instanceof Element ? root : document;
+    scope.querySelectorAll('.slot-option').forEach(function(label){
+      const radio = label.querySelector('input[type="radio"]');
+      const checked = radio && radio.checked;
+      label.classList.toggle('is-selected', !!checked);
+    });
+  }
+
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ initPhoneMask(document); });
+    document.addEventListener('DOMContentLoaded', function(){
+      initPhoneMask(document);
+      syncSlotSelection(document);
+    });
   }else{
     initPhoneMask(document);
+    syncSlotSelection(document);
   }
+
+  document.addEventListener('change', function(evt){
+    const el = evt.target;
+    if(el && el.matches && el.matches('input[type="radio"][name="start_at_utc"]')){
+      syncSlotSelection(el.closest('#panel-slots') || document);
+    }
+  });
 
   document.addEventListener('htmx:afterSwap', function(evt){
     if(evt && evt.detail && evt.detail.target){
       initPhoneMask(evt.detail.target);
+      syncSlotSelection(evt.detail.target);
     }
   });
 })();

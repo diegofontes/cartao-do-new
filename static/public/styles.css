@@ -78,6 +78,11 @@ button{cursor:pointer}
 .panel{margin-top:var(--gap-4)}
 
 .link-btn{display:block;width:100%;text-align:center;padding:14px 16px;border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);margin-bottom:12px}
+.slot-option{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elev);cursor:pointer;transition:border-color .2s,box-shadow .2s,background-color .2s}
+.slot-option__radio{margin:0;accent-color:#16a34a}
+.slot-option__label{font-weight:600;color:var(--fg)}
+.slot-option.is-selected{border-color:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,0.15);background-color:rgba(22,163,74,0.08)}
+.slot-option.is-selected .slot-option__label{color:#166534}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--gap-3)}
 .svc-list{display:grid;gap:var(--gap-3);padding-left: 0px; list-style: none;}
 .svc-card{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elev)}

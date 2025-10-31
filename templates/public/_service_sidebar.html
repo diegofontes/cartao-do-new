@@ -31,6 +31,9 @@
         </div>
       </section>
     {% endif %}
+    <p class="muted" style="margin:0 0 var(--space-3)">
+      Preencha os dados para que possamos montar a solicitação com o serviço e horário ideais.
+    </p>
     <form id="booking-form"
           hx-post="{% url 'public_validate_booking' card.nickname service.id %}"
           hx-trigger="change from:#booking-form, keyup changed delay:1000ms"
@@ -38,30 +41,36 @@
           class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
       {% csrf_token %}
       <input type="hidden" name="service" value="{{ service.id }}" />
-      <label class="field" style="grid-column:1/-1"><span>Nome</span>
+      <label class="field" style="grid-column:1/-1"><span>Nome Cliente:</span>
         <input class="input" name="name" required />
+        <small class="muted">Informe como deseja ser chamado na confirmação.</small>
       </label>
-      <label class="field" style="grid-column:1/-1"><span>E-mail (opcional)</span>
+      <label class="field" style="grid-column:1/-1"><span>E-mail:</span>
         <input class="input" type="email" name="email" />
+        <small class="muted">Usamos o e-mail apenas para enviar atualizações sobre a reserva.</small>
       </label>
       <fieldset class="box" style="grid-column:1/-1">
-        <label class="field"><span>Telefone (BR)</span>
+        <label class="field"><span>Validação Telefone (BR)</span>
           <input class="input" name="phone" id="phone" inputmode="tel" placeholder="+55 (11) 9XXXX-XXXX" data-phone-mask required />
         </label>
+        <small class="muted">Digite um celular com DDD para receber o código de confirmação via SMS.</small>
         <div id="verify-block"
              hx-post="{% url 'public_send_code' card.nickname service.id %}"
              hx-trigger="click from:#send-sms"
              hx-include="#booking-form"
              hx-target="#verify-block" hx-swap="outerHTML">
-          <button type="button" id="send-sms" class="btn">Enviar código</button>
+          <button type="button" id="send-sms" class="btn primary">Enviar código</button>
         </div>
       </fieldset>
-      <label class="field" style="grid-column:1/-1"><span>Data</span>
+      <label class="field" style="grid-column:1/-1"><span>Data de Agendamento:</span>
         <input class="input" type="date" name="date"
                hx-get="{% url 'public_slots' card.nickname %}?service={{ service.id }}"
                hx-target="#slots" hx-swap="innerHTML" />
+        <small class="muted">Escolha a data desejada para mostrar os horários disponíveis.</small>
       </label>
-      <div id="slots" class="grid" style="grid-column:1/-1;grid-template-columns:1fr;gap:8px"></div>
+      <div id="slots" class="grid" style="grid-column:1/-1;grid-template-columns:1fr;gap:8px">
+        <p class="muted" style="margin:0">Selecione uma data para ver os horários livres.</p>
+      </div>
     </form>
   </div>
   <div id="dlg-footer" class="slideover-footer">
