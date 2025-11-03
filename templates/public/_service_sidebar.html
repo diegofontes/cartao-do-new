@@ -1,9 +1,10 @@
+{% load currency %}
 <div class="slideover" role="dialog" aria-modal="true" aria-labelledby="svc-title">
   <header class="slideover-header">
     <div class="row" style="justify-content:space-between;align-items:center">
       <div>
         <h2 id="svc-title" class="title" style="font-size:1.25rem;margin:0">{{ service.name }}</h2>
-        <p class="help">{{ service.type }} • {{ service.duration_minutes }}min • {{ service.timezone }}</p>
+        <p class="help">{{ service.type }} • {{ service.duration_minutes }}min • {{ service.timezone }} • {{ service.price_cents|brl_cents }}</p>
       </div>
       <button class="btn" data-close-slideover aria-label="Fechar">✕</button>
     </div>
@@ -38,7 +39,9 @@
           hx-post="{% url 'public_validate_booking' card.nickname service.id %}"
           hx-trigger="change from:#booking-form, keyup changed delay:1000ms"
           hx-target="#dlg-footer" hx-swap="outerHTML"
-          class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+          class="grid" style="grid-template-columns:1fr 1fr;gap:12px"
+          data-base-price="{{ service.price_cents }}"
+          data-base-duration="{{ service.duration_minutes }}">
       {% csrf_token %}
       <input type="hidden" name="service" value="{{ service.id }}" />
       <label class="field" style="grid-column:1/-1"><span>Nome Cliente:</span>
@@ -68,8 +71,44 @@
                hx-target="#slots" hx-swap="innerHTML" />
         <small class="muted">Escolha a data desejada para mostrar os horários disponíveis.</small>
       </label>
+      {% if service_options %}
+        <fieldset class="box" style="grid-column:1/-1">
+          <legend style="font-weight:600;margin-bottom:8px">Opções adicionais</legend>
+          <ul class="grid" style="grid-template-columns:1fr;gap:8px;margin:0;padding:0;list-style:none">
+            {% for opt in service_options %}
+              <li>
+                <label class="option-card" style="display:flex;gap:8px;align-items:flex-start">
+                  <input type="checkbox"
+                         name="options"
+                         value="{{ opt.id }}"
+                         data-price="{{ opt.price_delta_cents }}"
+                         data-duration="{{ opt.extra_duration_minutes }}"
+                         style="margin-top:4px" />
+                  <div>
+                    <div class="font-medium">{{ opt.name }}</div>
+                    <div class="muted" style="font-size:12px">
+                      {% if opt.price_delta_cents %}+{{ opt.price_delta_cents|brl_cents }}{% else %}Sem acréscimo{% endif %}
+                      {% if opt.extra_duration_minutes %} • +{{ opt.extra_duration_minutes }} min{% endif %}
+                    </div>
+                    {% if opt.description %}
+                      <p class="muted" style="margin:4px 0 0;font-size:12px">{{ opt.description }}</p>
+                    {% endif %}
+                  </div>
+                </label>
+              </li>
+            {% endfor %}
+          </ul>
+        </fieldset>
+      {% endif %}
       <div id="slots" class="grid" style="grid-column:1/-1;grid-template-columns:1fr;gap:8px">
         <p class="muted" style="margin:0">Selecione uma data para ver os horários livres.</p>
+      </div>
+      <div id="booking-summary" class="box" style="grid-column:1/-1">
+        <strong style="display:block;margin-bottom:4px">Resumo</strong>
+        <div class="muted" style="font-size:0.9rem">
+          Total estimado: <span data-summary-price>{{ service.price_cents|brl_cents }}</span><br/>
+          Duração estimada: <span data-summary-duration>{{ service.duration_minutes }}</span> min
+        </div>
       </div>
     </form>
   </div>
@@ -77,3 +116,36 @@
     {% include 'public/_footer.html' with form_valid=False nickname=card.nickname service_id=service.id %}
   </div>
 </div>
+<script>
+(function(){
+  const form = document.getElementById('booking-form');
+  if (!form) return;
+  const summary = document.getElementById('booking-summary');
+  if (!summary) return;
+  const basePrice = parseInt(form.dataset.basePrice || '0', 10);
+  const baseDuration = parseInt(form.dataset.baseDuration || '0', 10);
+  const priceLabel = summary.querySelector('[data-summary-price]');
+  const durationLabel = summary.querySelector('[data-summary-duration]');
+  const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  function updateSummary() {
+    let price = basePrice;
+    let duration = baseDuration;
+    form.querySelectorAll('input[name="options"]:checked').forEach((input) => {
+      price += parseInt(input.dataset.price || '0', 10);
+      duration += parseInt(input.dataset.duration || '0', 10);
+    });
+    if (priceLabel) {
+      priceLabel.textContent = fmt.format(price / 100);
+    }
+    if (durationLabel) {
+      durationLabel.textContent = duration;
+    }
+  }
+  form.addEventListener('change', (event) => {
+    if (event.target && event.target.name === 'options') {
+      updateSummary();
+    }
+  });
+  updateSummary();
+})();
+</script>

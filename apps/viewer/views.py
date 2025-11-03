@@ -249,6 +249,21 @@ def _appointment_context(ap: Appointment) -> dict[str, Any]:
     start_local = ap.start_at_utc.astimezone(tz)
     end_local = ap.end_at_utc.astimezone(tz)
     today_local = timezone.now().astimezone(tz).date()
+    options_snapshot = list(ap.options_snapshot_json or [])
+    options_display = []
+    for entry in options_snapshot:
+        delta = int(entry.get("price_delta_cents") or 0)
+        extra = int(entry.get("extra_duration_minutes") or 0)
+        options_display.append({
+            "name": entry.get("name", ""),
+            "description": entry.get("description", ""),
+            "price_delta_cents": delta,
+            "extra_duration_minutes": extra,
+            "delta_abs": abs(delta),
+            "delta_sign": 1 if delta >= 0 else -1,
+        })
+    options_delta_total = sum(item["price_delta_cents"] for item in options_display)
+    options_extra_duration = sum(item["extra_duration_minutes"] for item in options_display)
     pending_request = (
         ap.reschedule_requests.filter(status="requested").order_by("-created_at").first()
     )
@@ -283,6 +298,11 @@ def _appointment_context(ap: Appointment) -> dict[str, Any]:
         "can_reschedule": ap.status in {"pending", "confirmed"},
         "pending_requested_slot": pending_request.requested_start_at_utc.astimezone(tz) if pending_request and pending_request.requested_start_at_utc else None,
         "reschedule_min_date": today_local.isoformat(),
+        "appointment_base_price": int(ap.base_price_cents or 0),
+        "appointment_total_price": int(ap.price_cents or 0),
+        "appointment_options": options_display,
+        "appointment_options_delta": int(options_delta_total),
+        "appointment_options_extra_minutes": int(options_extra_duration),
     }
 
 

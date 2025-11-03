@@ -3,12 +3,12 @@ import json
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, render
 from django.utils.dateparse import parse_date
-from .models import SchedulingService, Appointment, ServiceAvailability
+from .models import SchedulingService, Appointment, ServiceAvailability, ServiceOption
 from django.utils import timezone
 import datetime as dt
 from zoneinfo import ZoneInfo
-from .slots import generate_slots
-from .forms import SchedulingServiceForm, ServiceAvailabilityForm
+from .slots import generate_slots, prepare_booking
+from .forms import SchedulingServiceForm, ServiceAvailabilityForm, ServiceOptionForm
 from apps.cards.models import Card
 from django.core.exceptions import ValidationError
 from apps.notifications.api import enqueue
@@ -36,6 +36,7 @@ def create_appointment(request, id):
     service = get_object_or_404(SchedulingService, id=id, card__owner=request.user)
     start = request.POST.get("start_at_utc")
     end = request.POST.get("end_at_utc")
+    option_ids = request.POST.getlist("options")
     if not (start and end):
         return HttpResponseBadRequest("start_at_utc and end_at_utc required")
     try:
@@ -44,19 +45,26 @@ def create_appointment(request, id):
     except ValueError:
         return HttpResponseBadRequest("invalid datetime format")
     # Basic validation: must match a generated slot
-    valid_pairs = {(slot["start_at_utc"], slot["end_at_utc"]) for slot in generate_slots(service, s.date())}
-    if (start, end) not in valid_pairs:
-        return HttpResponseBadRequest("slot not available")
+    try:
+        booking = prepare_booking(service, s, option_ids)
+    except ValidationError as exc:
+        return HttpResponseBadRequest(str(exc))
+    # Ensure client-sent end matches expected window
+    if e != booking["end_at"]:
+        return HttpResponseBadRequest("slot duration mismatch")
     appt = Appointment.objects.create(
         service=service,
         user_name=request.POST.get("user_name", ""),
         user_email=request.POST.get("user_email", ""),
         user_phone=request.POST.get("user_phone", ""),
         start_at_utc=s,
-        end_at_utc=e,
+        end_at_utc=booking["end_at"],
         timezone=request.POST.get("timezone", service.timezone),
         location_choice=request.POST.get("location_choice", service.type),
         form_answers_json={},
+        options_snapshot_json=booking["options_snapshot"],
+        base_price_cents=booking["base_price_cents"],
+        price_cents=booking["price_cents"],
         status="pending",
     )
     # Notify card owner via SMS (best effort)
@@ -152,6 +160,65 @@ def service_delete(request, card_id, id):
     svc.delete()
     services = SchedulingService.objects.filter(card=card).order_by("-created_at")
     return render(request, "scheduling/_services.html", {"card": card, "services": services})
+
+
+# ---------- Service Options HTMX CRUD ----------
+
+
+@login_required
+def options_partial(request, card_id, service_id):
+    card = get_object_or_404(Card, id=card_id, owner=request.user)
+    svc = get_object_or_404(SchedulingService, id=service_id, card=card)
+    items = ServiceOption.objects.filter(service=svc).order_by("order", "name")
+    return render(request, "scheduling/_options.html", {"card": card, "service": svc, "items": items})
+
+
+@login_required
+def option_form(request, card_id, service_id, id=None):
+    card = get_object_or_404(Card, id=card_id, owner=request.user)
+    svc = get_object_or_404(SchedulingService, id=service_id, card=card)
+    if id:
+        opt = get_object_or_404(ServiceOption, id=id, service=svc)
+    else:
+        opt = None
+    form = ServiceOptionForm(instance=opt)
+    return render(request, "scheduling/_option_form.html", {"card": card, "service": svc, "form": form, "item": opt})
+
+
+@login_required
+def option_save(request, card_id, service_id, id=None):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required")
+    card = get_object_or_404(Card, id=card_id, owner=request.user)
+    svc = get_object_or_404(SchedulingService, id=service_id, card=card)
+    if id:
+        opt = get_object_or_404(ServiceOption, id=id, service=svc)
+        form = ServiceOptionForm(request.POST, instance=opt)
+    else:
+        form = ServiceOptionForm(request.POST)
+    if form.is_valid():
+        opt = form.save(commit=False)
+        opt.service = svc
+        opt.save()
+        items = ServiceOption.objects.filter(service=svc).order_by("order", "name")
+        resp = render(request, "scheduling/_options.html", {"card": card, "service": svc, "items": items})
+        resp["HX-Trigger"] = json.dumps({"flash": {"type": "success", "title": "Salvo", "message": "Opção atualizada."}})
+        return resp
+    res = render(request, "scheduling/_option_form.html", {"card": card, "service": svc, "form": form, "item": id and opt})
+    res.status_code = 422
+    return res
+
+
+@login_required
+def option_delete(request, card_id, service_id, id):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required")
+    card = get_object_or_404(Card, id=card_id, owner=request.user)
+    svc = get_object_or_404(SchedulingService, id=service_id, card=card)
+    opt = get_object_or_404(ServiceOption, id=id, service=svc)
+    opt.delete()
+    items = ServiceOption.objects.filter(service=svc).order_by("order", "name")
+    return render(request, "scheduling/_options.html", {"card": card, "service": svc, "items": items})
 
 
 # ---------- Availability HTMX CRUD ----------

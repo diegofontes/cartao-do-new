@@ -1,13 +1,21 @@
 from django.contrib import admin
 
-from .models import SchedulingService, ServiceAvailability, Appointment, RescheduleRequest
+from .models import SchedulingService, ServiceAvailability, Appointment, RescheduleRequest, ServiceOption
 
 
 @admin.register(SchedulingService)
 class SchedulingServiceAdmin(admin.ModelAdmin):
-    list_display = ("name", "card", "timezone", "duration_minutes", "is_active", "created_at")
+    list_display = ("name", "card", "timezone", "duration_minutes", "is_active", "price_cents", "created_at")
     list_filter = ("is_active", "timezone", "card")
     search_fields = ("name", "card__title", "card__nickname")
+
+
+@admin.register(ServiceOption)
+class ServiceOptionAdmin(admin.ModelAdmin):
+    list_display = ("name", "service", "price_delta_cents", "extra_duration_minutes", "is_active", "order")
+    list_filter = ("is_active", "service__card")
+    search_fields = ("name", "service__name", "service__card__title")
+    ordering = ("service", "order", "name")
 
 
 @admin.register(ServiceAvailability)
@@ -19,7 +27,7 @@ class ServiceAvailabilityAdmin(admin.ModelAdmin):
 
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ("user_name", "service", "start_at_utc", "end_at_utc", "status", "public_code", "created_at")
+    list_display = ("user_name", "service", "start_at_utc", "end_at_utc", "status", "price_cents", "public_code", "created_at")
     list_filter = ("status", "service__card", "service")
     search_fields = ("user_name", "user_email", "user_phone", "public_code")
     readonly_fields = ("created_at", "updated_at", "public_code", "token")

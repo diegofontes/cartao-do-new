@@ -1,4 +1,5 @@
 {% load static %}
+{% load currency %}
 <section class="card">
   <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
     <h2 style="margin:0">Serviços</h2>
@@ -13,7 +14,9 @@
         <div class="row" style="justify-content:space-between;align-items:center">
           <div>
             <div class="font-medium">{{ s.name }}</div>
-            <div class="muted" style="font-size:12px">{{ s.duration_minutes }} min • {{ s.type }} • {{ s.timezone }}</div>
+            <div class="muted" style="font-size:12px">
+              {{ s.duration_minutes }} min • {{ s.type }} • {{ s.timezone }}{% if s.price_cents %} • {{ s.price_cents|brl_cents }}{% endif %}
+            </div>
           </div>
           <details class="dropdown mobile-viewer">
             <summary class="btn" aria-haspopup="menu" aria-expanded="false" aria-label="Mais ações">
@@ -21,6 +24,7 @@
             </summary>
             <div class="menu" role="menu">
               <a role="menuitem" hx-get="{% url 'scheduling:service_form_edit' card.id s.id %}" hx-target="#service-form">Editar</a>
+              <a role="menuitem" hx-get="{% url 'scheduling:options_partial' card.id s.id %}" hx-target="#options">Opções</a>
               <button role="menuitem" hx-post="{% url 'scheduling:service_delete' card.id s.id %}"
                       hx-confirm="Confirmar exclusão do serviço?"
                       hx-target="#services">Excluir</button>
@@ -34,5 +38,6 @@
     {% endfor %}
   </ul>
   <div id="service-form" style="margin-top:var(--space-4)"></div>
+  <div id="options" style="margin-top:var(--space-6)"></div>
   <div id="availability" style="margin-top:var(--space-6)"></div>
 </section>

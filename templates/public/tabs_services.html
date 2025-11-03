@@ -1,16 +1,22 @@
 <div id="panel-services" role="tabpanel" class="panel">
+{% load currency %}
   <ul class="svc-list">
-    {% for s in services %}
-    <li class="svc-card">
-      <div class="svc-info">
-        <strong>{{ s.name }}</strong>
-        <span class="nickname">{{ s.type }} • {{ s.duration_minutes }}min</span>
-      </div>
-      <button class="tab" hx-get="{% url 'public_service_sidebar' card.nickname s.id %}" hx-target="#slideover" hx-swap="innerHTML">Agendar</button>
+    {% for item in services %}
+    {% with svc=item.service thumb_url=item.thumbnail_url thumb_alt=item.thumbnail_alt price=item.price_cents %}
+    <li class="svc-card"  hx-get="{% url 'public_service_sidebar' card.nickname svc.id %}" hx-target="#slideover" hx-swap="innerHTML">
+        {% if thumb_url %}
+          <figure class="svc-thumb">
+            <img src="{{ thumb_url }}" alt="{{ thumb_alt|default:'Imagem do serviço' }}" loading="lazy" />
+          </figure>
+        {% endif %}
+        <div class="svc-info">
+          <strong>{{ svc.name }}</strong>
+          <span class="nickname">{{ svc.type }} • {{ svc.duration_minutes }}min{% if price %} • {{ price|brl_cents }}{% endif %}</span>
+        </div>
     </li>
+    {% endwith %}
     {% empty %}
     <li class="nickname">Sem serviços.</li>
     {% endfor %}
   </ul>
 </div>
-

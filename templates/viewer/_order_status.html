@@ -11,6 +11,10 @@
       <dd>{{ appointment.service.name }}</dd>
     </div>
     <div>
+      <dt>Preço</dt>
+      <dd>{{ appointment_total_price|brl_cents }}</dd>
+    </div>
+    <div>
       <dt>Data</dt>
       <dd>{{ start_local|date:"d/m/Y" }}</dd>
     </div>
@@ -19,6 +23,36 @@
       <dd>{{ start_local|date:"H:i" }} — {{ end_local|date:"H:i" }} ({{ appointment.timezone }})</dd>
     </div>
   </dl>
+
+  {% if appointment_options %}
+    <section class="viewer-options">
+      <h3>Opções selecionadas</h3>
+      <ul class="viewer-items__list">
+        {% for opt in appointment_options %}
+          <li class="viewer-item">
+            <div class="viewer-item__row">
+              <div class="viewer-item__info">
+                <span class="viewer-item__name">{{ opt.name }}</span>
+                {% if opt.description %}
+                  <div class="viewer-item__note">{{ opt.description }}</div>
+                {% endif %}
+                {% if opt.extra_duration_minutes %}
+                  <div class="viewer-item__note">+{{ opt.extra_duration_minutes }} min</div>
+                {% endif %}
+              </div>
+              {% if opt.price_delta_cents %}
+                <span class="price">
+                  {% if opt.delta_sign >= 0 %}+{% else %}-{% endif %}{{ opt.delta_abs|brl_cents }}
+                </span>
+              {% else %}
+                <span class="price muted">R$ 0,00</span>
+              {% endif %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
 
   <div class="viewer-actions">
     {% if can_cancel %}

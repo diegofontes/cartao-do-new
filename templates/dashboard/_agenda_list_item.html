@@ -1,3 +1,4 @@
+{% load currency %}
 <li class="node" role="listitem" id="appt-{{ it.id }}" data-day="{{ it.day_iso }}" data-appt-id="{{ it.id }}" data-start="{{ it.start_iso }}">
   <div class="card appt" data-status="{{ it.status }}" data-action-needed="{{ it.reschedule_action_needed|yesno:'true,false' }}">
     <div class="row" style="align-items:center;gap:12px;flex-wrap:wrap;">
@@ -17,11 +18,25 @@
     <div class="title">{{ it.customer_name }}{% if it.phone %} <span class="muted">({{ it.phone }})</span>{% endif %}</div>
     <div class="row">
       <div>
-        {{ it.service_name }} • @{{ it.card_nick }} • {{ it.channel_label }} {% if it.address_or_link %}• {{ it.address_or_link }}{% endif %}
+        {{ it.service_name }} • @{{ it.card_nick }} • {{ it.channel_label }}{% if it.address_or_link %} • {{ it.address_or_link }}{% endif %} • {{ it.price_cents|brl_cents }}
       </div>
       <div>
       <button class="btn ghost" hx-get="{% url 'dashboard:agenda_event_sidebar' it.id %}" hx-target="#agenda-sidebar" hx-swap="innerHTML">Detalhes</button>
       </div>
     </div>
+    {% if it.options %}
+      <ul class="muted" style="margin:6px 0 0;font-size:12px;padding-left:18px;list-style:disc">
+        {% for opt in it.options %}
+          <li>
+            {{ opt.name }}
+            {% if opt.extra_duration_minutes %} · +{{ opt.extra_duration_minutes }} min{% endif %}
+            {% if opt.price_delta_cents %}
+              · {% if opt.delta_sign >= 0 %}+{% else %}-{% endif %}{{ opt.delta_abs|brl_cents }}
+            {% endif %}
+            {% if opt.description %} <span class="muted" style="font-style:italic">{{ opt.description }}</span>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
   </div>
 </li>

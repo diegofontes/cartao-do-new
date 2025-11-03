@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+from typing import Any
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -477,37 +478,8 @@ def agenda_list_partial(request):
             if current_day_max_end_local_user is None or end_local_user > current_day_max_end_local_user:
                 current_day_max_end_local_user = end_local_user
 
-        duration_min = int((e_local - s_local).total_seconds() // 60)
-        show_contact = (ap.status == "confirmed")
-        items_this_day.append({
-            "id": ap.id,
-            "start_label": s_local.strftime("%H:%M"),
-            "end_label": e_local.strftime("%H:%M"),
-            "duration_min": duration_min,
-            "status": ap.status,
-            "status_label": ap.status.capitalize(),
-            "customer_name": ap.user_name,
-            "phone": ap.user_phone if show_contact else "",
-            "email": ap.user_email if show_contact else "",
-            "service_name": ap.service.name,
-            "card_nick": getattr(ap.service.card, "nickname", "") or "",
-            "channel": ap.location_choice,
-            "channel_label": {
-                "local": "Local",
-                "remote": "Remoto",
-                "onsite": "Visita",
-            }.get(ap.location_choice, ap.location_choice),
-            "address_or_link": _fmt_address_or_link(ap),
-            "reschedule_action_needed": res_meta["has_pending"],
-        "reschedule_pending_id": res_meta["pending_request_id"],
-        "reschedule_pending_requested": res_meta["pending_requested_local"],
-        "reschedule_pending_requested_label": res_meta["pending_requested_label"],
-        "reschedule_pending_reason": pending_request.reason if pending_request else "",
-            "reschedule_latest_status": res_meta["latest_status"],
-            "reschedule_latest_label": res_meta["latest_label"],
-            "day_iso": d.isoformat(),
-            "start_iso": ap.start_at_utc.isoformat(),
-        })
+        dto = _item_dto(ap, res_meta=res_meta)
+        items_this_day.append(dto)
 
     # If we broke early due to DAYS_WINDOW, compute next_cursor
     if last_day_end_local is None:
@@ -675,16 +647,58 @@ def agenda_list_cancel(request, id):
     return resp
 
 
-def _item_dto(ap: Appointment) -> dict:
+def _appointment_options_summary(ap: Appointment) -> dict:
+    raw_opts = list(ap.options_snapshot_json or [])
+    items: list[dict[str, Any]] = []
+    delta_total = 0
+    extra_total = 0
+    for entry in raw_opts:
+        delta = int(entry.get("price_delta_cents") or 0)
+        extra = int(entry.get("extra_duration_minutes") or 0)
+        delta_total += delta
+        extra_total += extra
+        items.append({
+            "name": entry.get("name") or "Opção",
+            "description": entry.get("description") or "",
+            "price_delta_cents": delta,
+            "extra_duration_minutes": extra,
+            "delta_sign": 1 if delta > 0 else (-1 if delta < 0 else 0),
+            "delta_abs": abs(delta),
+        })
+    base_price = int(ap.base_price_cents or 0)
+    total_price = int(ap.price_cents or 0)
+    if base_price <= 0:
+        inferred = total_price - delta_total
+        if inferred > 0:
+            base_price = inferred
+        else:
+            base_price = int(getattr(ap.service, "price_cents", 0) or 0)
+    if total_price <= 0:
+        total_price = base_price + delta_total
+    delta_sign = 1 if delta_total > 0 else (-1 if delta_total < 0 else 0)
+    return {
+        "items": items,
+        "delta_total": delta_total,
+        "delta_abs": abs(delta_total),
+        "delta_sign": delta_sign,
+        "extra_minutes": extra_total,
+        "base_price": max(base_price, 0),
+        "total_price": max(total_price, 0),
+    }
+
+
+def _item_dto(ap: Appointment, *, res_meta: dict | None = None) -> dict:
     ap_tz = _appointment_tz(ap)
     s_local = ap.start_at_utc.astimezone(ap_tz)
     e_local = ap.end_at_utc.astimezone(ap_tz)
     duration_min = int((e_local - s_local).total_seconds() // 60)
     show_contact = (ap.status == "confirmed")
-    res_meta = _reschedule_meta(ap)
+    if res_meta is None:
+        res_meta = _reschedule_meta(ap)
     pending_request = res_meta["pending_request"]
     day_iso = s_local.date().isoformat()
     start_iso = ap.start_at_utc.isoformat()
+    opt_summary = _appointment_options_summary(ap)
     return {
         "id": ap.id,
         "start_label": s_local.strftime("%H:%M"),
@@ -713,6 +727,13 @@ def _item_dto(ap: Appointment) -> dict:
         "reschedule_latest_label": res_meta["latest_label"],
         "day_iso": day_iso,
         "start_iso": start_iso,
+        "price_cents": opt_summary["total_price"],
+        "base_price_cents": opt_summary["base_price"],
+        "options": opt_summary["items"],
+        "options_delta_cents": opt_summary["delta_total"],
+        "options_delta_abs": opt_summary["delta_abs"],
+        "options_delta_sign": opt_summary["delta_sign"],
+        "options_extra_minutes": opt_summary["extra_minutes"],
     }
 
 
@@ -720,6 +741,7 @@ def _agenda_sidebar_context(ap: Appointment, *, request=None, res_meta: dict | N
     tz = _appointment_tz(ap)
     start_local = ap.start_at_utc.astimezone(tz)
     end_local = ap.end_at_utc.astimezone(tz)
+    opt_summary = _appointment_options_summary(ap)
     if res_meta is None:
         reqs = list(ap.reschedule_requests.order_by("-created_at"))
         res_meta = _reschedule_meta(ap, reqs)
@@ -768,6 +790,13 @@ def _agenda_sidebar_context(ap: Appointment, *, request=None, res_meta: dict | N
         "reschedule_context_value": context_value,
         "reschedule_hx_target": hx_target,
         "reschedule_hx_swap": hx_swap,
+        "price_total_cents": opt_summary["total_price"],
+        "price_base_cents": opt_summary["base_price"],
+        "options_display": opt_summary["items"],
+        "options_delta_cents": opt_summary["delta_total"],
+        "options_delta_abs": opt_summary["delta_abs"],
+        "options_delta_sign": opt_summary["delta_sign"],
+        "options_extra_minutes": opt_summary["extra_minutes"],
     }
 
 

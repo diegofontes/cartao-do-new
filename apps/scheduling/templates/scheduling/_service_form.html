@@ -15,6 +15,11 @@
       {{ form.name.errors }}
     </label>
     <label class="field">
+      <span>Preço base (R$)</span>
+      {{ form.price_cents }}
+      {{ form.price_cents.errors }}
+    </label>
+    <label class="field">
       <span>Timezone</span>
       {{ form.timezone }}
       {{ form.timezone.errors }}

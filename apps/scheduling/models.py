@@ -11,6 +11,7 @@ class SchedulingService(BaseModel):
 
     card = models.ForeignKey("cards.Card", on_delete=models.CASCADE, related_name="services")
     name = models.CharField(max_length=120)
+    price_cents = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     description = models.TextField(blank=True)
     timezone = models.CharField(max_length=64)
     duration_minutes = models.PositiveIntegerField(default=30)
@@ -25,6 +26,23 @@ class SchedulingService(BaseModel):
 
     class Meta:
         indexes = [models.Index(fields=["card", "is_active"])]
+
+
+class ServiceOption(BaseModel):
+    service = models.ForeignKey(SchedulingService, on_delete=models.CASCADE, related_name="options")
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    price_delta_cents = models.IntegerField(default=0)
+    extra_duration_minutes = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
+
+    class Meta:
+        ordering = ("order", "name")
+        indexes = [
+            models.Index(fields=["service", "order"]),
+            models.Index(fields=["service", "is_active"]),
+        ]
 
 
 class ServiceGalleryItem(BaseModel):
@@ -76,6 +94,9 @@ class Appointment(BaseModel):
     location_choice = models.CharField(max_length=10, choices=LOC_CHOICES, default="remote")
     address_json = models.JSONField(default=dict, blank=True)
     form_answers_json = models.JSONField(default=dict, blank=True)
+    options_snapshot_json = models.JSONField(default=list, blank=True)
+    base_price_cents = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    price_cents = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
 

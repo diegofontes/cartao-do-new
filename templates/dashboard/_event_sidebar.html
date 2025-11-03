@@ -1,3 +1,4 @@
+{% load currency %}
 <div class="slideover" id="slideover-{{ ap.id }}" {% if oob %}hx-swap-oob="true"{% endif %} role="dialog" aria-modal="true" aria-labelledby="ev-title">
   <header>
     <div>
@@ -19,6 +20,21 @@
       <li class="row" style="flex-direction: row;gap:8px;align-items:center">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span><strong>Status:</strong> {{ ap.status }}</span>
+      </li>
+      <li class="row" style="flex-direction: row;gap:8px;align-items:center">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01M16 14h.01M12 14h.01M8 18h.01M16 18h.01M12 18h.01"/></svg>
+        <span>
+          <strong>Valor:</strong> {{ price_total_cents|brl_cents }}
+          {% if options_delta_cents %}
+            <span class="muted">
+              (Base {{ price_base_cents|brl_cents }}
+              {% if options_delta_sign >= 0 %}+{% else %}-{% endif %}{{ options_delta_abs|brl_cents }} em opções)
+            </span>
+          {% endif %}
+          {% if options_extra_minutes %}
+            <span class="muted">• Duração extra: +{{ options_extra_minutes }} min</span>
+          {% endif %}
+        </span>
       </li>
 
       {% if ap.status == 'confirmed' %}
@@ -51,6 +67,26 @@
         <li class="row" style="flex-direction: row;gap:8px;align-items:flex-start">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/></svg>
           <pre class="muted" style="white-space:pre-wrap;margin:0">{{ ap.form_answers_json }}</pre>
+        </li>
+      {% endif %}
+      {% if options_display %}
+        <li class="row" style="flex-direction: row;gap:8px;align-items:flex-start">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h7M7 16h4"/></svg>
+          <div>
+            <strong>Opções selecionadas</strong>
+            <ul class="muted" style="margin:4px 0 0;padding-left:18px;list-style:disc">
+              {% for opt in options_display %}
+                <li>
+                  {{ opt.name }}
+                  {% if opt.extra_duration_minutes %} · +{{ opt.extra_duration_minutes }} min{% endif %}
+                  {% if opt.price_delta_cents %}
+                    · {% if opt.delta_sign >= 0 %}+{% else %}-{% endif %}{{ opt.delta_abs|brl_cents }}
+                  {% endif %}
+                  {% if opt.description %}<span class="muted" style="font-style:italic"> — {{ opt.description }}</span>{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
         </li>
       {% endif %}
     </ul>

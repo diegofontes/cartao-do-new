@@ -1,0 +1,48 @@
+<section class="card" style="max-width:640px">
+  <h3 style="margin-top:0">{{ item|default_if_none:"Nova opção" }}</h3>
+  <form
+    method="post"
+    hx-post="{% if item %}{% url 'scheduling:option_save' card.id service.id item.id %}{% else %}{% url 'scheduling:option_create' card.id service.id %}{% endif %}"
+    hx-target="#options"
+    hx-swap="innerHTML"
+    class="grid grid-2col-mobile"
+    style="gap:12px"
+  >
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <label class="field" style="grid-column:1/-1">
+      <span>Nome</span>
+      {{ form.name }}
+      {{ form.name.errors }}
+    </label>
+    <label class="field" style="grid-column:1/-1">
+      <span>Descrição</span>
+      {{ form.description }}
+      {{ form.description.errors }}
+    </label>
+    <label class="field">
+      <span>Variação de preço (R$)</span>
+      {{ form.price_delta_cents }}
+      {{ form.price_delta_cents.errors }}
+    </label>
+    <label class="field">
+      <span>Minutos extras</span>
+      {{ form.extra_duration_minutes }}
+      {{ form.extra_duration_minutes.errors }}
+    </label>
+    <label class="field">
+      <span>Ordenação</span>
+      {{ form.order }}
+      {{ form.order.errors }}
+    </label>
+    <label class="row" style="align-items:center;gap:6px">
+      <span>Ativa</span>
+      {{ form.is_active }}
+      {{ form.is_active.errors }}
+    </label>
+    <div class="row" style="grid-column:1/-1;justify-content:flex-end;margin-top:var(--space-2)">
+      <button class="btn primary">Salvar</button>
+      <button type="button" class="btn" hx-get="{% url 'scheduling:options_partial' card.id service.id %}" hx-target="#options">Cancelar</button>
+    </div>
+  </form>
+</section>

@@ -1,3 +1,4 @@
+import random
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.urls import reverse
@@ -28,7 +29,7 @@ def card_public(request, nickname: str):
     links = LinkButton.objects.filter(card=card).order_by("order", "created_at")
     socials = SocialLink.objects.filter(card=card, is_active=True).order_by("order", "created_at")
     gallery = GalleryItem.objects.filter(card=card, visible_in_gallery=True).order_by("importance", "order", "created_at")
-    services = SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at") if card.mode != "delivery" else []
+    services = _services_with_media(card) if card.mode != "delivery" else []
     about_html = ""
     about_enabled = False
     if has_about_content(card.about_markdown):
@@ -101,5 +102,39 @@ def tabs_services(request, nickname: str):
         # Services tab not available for delivery-mode cards
         from django.http import Http404
         raise Http404()
-    services = SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at")
+    services = _services_with_media(card)
     return render(request, "public/tabs_services.html", {"card": card, "services": services})
+
+
+def _services_with_media(card: Card) -> list[dict[str, object]]:
+    services = list(SchedulingService.objects.filter(card=card, is_active=True).order_by("-created_at"))
+    if not services:
+        return []
+    service_ids = [svc.id for svc in services]
+    gallery_map: dict[str, list[GalleryItem]] = {sid: [] for sid in service_ids}
+    for item in GalleryItem.objects.filter(service_id__in=service_ids).order_by("order", "created_at"):
+        gallery_map.setdefault(item.service_id, []).append(item)
+    decorated: list[dict[str, object]] = []
+    for svc in services:
+        gallery_items = gallery_map.get(svc.id) or []
+        thumb = None
+        thumb_url = None
+        thumb_alt = None
+        if gallery_items:
+            min_order = min(g.order for g in gallery_items)
+            tied = [g for g in gallery_items if g.order == min_order]
+            thumb = random.choice(tied) if len(tied) > 1 else tied[0]
+            for field_name in ("thumb_w256", "thumb_w128", "file"):
+                field = getattr(thumb, field_name, None)
+                if field and getattr(field, "name", None):
+                    thumb_url = reverse("media:image_public", kwargs={"path": field.name})
+                    break
+            thumb_alt = thumb.caption or svc.name
+        decorated.append({
+            "service": svc,
+            "thumbnail": thumb,
+            "thumbnail_url": thumb_url,
+            "thumbnail_alt": thumb_alt,
+            "price_cents": int(getattr(svc, "price_cents", 0) or 0),
+        })
+    return decorated

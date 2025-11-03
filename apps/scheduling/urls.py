@@ -13,6 +13,13 @@ urlpatterns = [
     path("cards/<uuid:card_id>/services/<uuid:id>/edit", views.service_form, name="service_form_edit"),
     path("cards/<uuid:card_id>/services/<uuid:id>/save", views.service_save, name="service_save"),
     path("cards/<uuid:card_id>/services/<uuid:id>/delete", views.service_delete, name="service_delete"),
+    # Service options CRUD
+    path("cards/<uuid:card_id>/services/<uuid:service_id>/options", views.options_partial, name="options_partial"),
+    path("cards/<uuid:card_id>/services/<uuid:service_id>/options/new", views.option_form, name="option_form_new"),
+    path("cards/<uuid:card_id>/services/<uuid:service_id>/options/create", views.option_save, name="option_create"),
+    path("cards/<uuid:card_id>/services/<uuid:service_id>/options/<uuid:id>/edit", views.option_form, name="option_form_edit"),
+    path("cards/<uuid:card_id>/services/<uuid:service_id>/options/<uuid:id>/save", views.option_save, name="option_save"),
+    path("cards/<uuid:card_id>/services/<uuid:service_id>/options/<uuid:id>/delete", views.option_delete, name="option_delete"),
     # Availability CRUD
     path("cards/<uuid:card_id>/services/<uuid:service_id>/availability", views.availability_partial, name="availability_partial"),
     path("cards/<uuid:card_id>/services/<uuid:service_id>/availability/new", views.availability_form, name="availability_form_new"),

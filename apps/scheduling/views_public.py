@@ -9,13 +9,14 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from apps.cards.models import Card, GalleryItem
-from .models import SchedulingService, Appointment
-from .slots import generate_slots
+from .models import SchedulingService, Appointment, ServiceOption
+from .slots import generate_slots, prepare_booking
 from django.core.cache import cache
 from django.utils import timezone
 from apps.common.phone import to_e164, gen_code, hash_code
 from apps.notifications.api import enqueue
 from apps.common.urls import viewer_order_url
+from django.core.exceptions import ValidationError
 
 log = logging.getLogger(__name__)
 
@@ -64,6 +65,7 @@ def public_create_appointment(request, nickname: str):
     name = (request.POST.get("name") or "").strip()
     email = (request.POST.get("email") or "").strip()
     phone_raw = (request.POST.get("phone") or "").strip()
+    option_ids = request.POST.getlist("options")
     if not (svc_id and start and name and phone_raw and request.session.get("phone_verified")):
         return HttpResponseBadRequest("missing fields")
     service = get_object_or_404(SchedulingService, id=svc_id, card=card, is_active=True)
@@ -76,7 +78,11 @@ def public_create_appointment(request, nickname: str):
         sdt = dt.datetime.fromisoformat(start)
     except ValueError:
         return HttpResponseBadRequest("invalid start")
-    edt = sdt + dt.timedelta(minutes=service.duration_minutes)
+    try:
+        booking = prepare_booking(service, sdt, option_ids)
+    except ValidationError as exc:
+        return HttpResponseBadRequest(str(exc))
+    edt = booking["end_at"]
     # normalize phone
     try:
         phone = to_e164(phone_raw)
@@ -92,6 +98,9 @@ def public_create_appointment(request, nickname: str):
         timezone=service.timezone,
         location_choice=service.type,
         form_answers_json={},
+        options_snapshot_json=booking["options_snapshot"],
+        base_price_cents=booking["base_price_cents"],
+        price_cents=booking["price_cents"],
         status="pending",
     )
     # clear verification flag
@@ -145,7 +154,8 @@ def public_book_modal(request, nickname: str):
     card = _card(nickname)
     svc_id = request.GET.get("service")
     service = get_object_or_404(SchedulingService, id=svc_id, card=card, is_active=True)
-    return render(request, "public/_appointment_modal.html", {"card": card, "service": service})
+    options = ServiceOption.objects.filter(service=service, is_active=True).order_by("order", "name")
+    return render(request, "public/_appointment_modal.html", {"card": card, "service": service, "options": options})
 
 def public_service_sidebar(request, nickname: str, id: str):
     card = _card(nickname)
@@ -158,10 +168,18 @@ def public_service_sidebar(request, nickname: str, id: str):
         if len(group_list) > 1:
             random.shuffle(group_list)
         grouped_items.extend(group_list)
+    options = ServiceOption.objects.filter(service=service, is_active=True).order_by("order", "name")
+    thumbnail = grouped_items[0] if grouped_items else None
     return render(
         request,
         "public/_service_sidebar.html",
-        {"card": card, "service": service, "service_gallery": grouped_items},
+        {
+            "card": card,
+            "service": service,
+            "service_gallery": grouped_items,
+            "service_options": options,
+            "service_thumbnail": thumbnail,
+        },
     )
 
 
