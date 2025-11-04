@@ -8,7 +8,14 @@
     {% endif %}
     <div>
       <h1 style="margin:0">{{ card.title }}</h1>
-      <div class="muted">Status: {{ card.status }} {% if card.deactivation_marked %}<span class="badge">Marcado para desativação</span>{% endif %}</div>
+      <div class="muted">
+        Status:
+        <span class="status-indicator" title="{{ card.get_status_display }}">
+          <span class="status-dot" data-status="{{ card.status }}" aria-hidden="true"></span>
+          <span class="sr-only">{{ card.get_status_display }}</span>
+        </span>
+        {% if card.deactivation_marked %}<span class="badge">Marcado para desativação</span>{% endif %}
+      </div>
     </div>
   </div>
   <!-- Ações desktop -->

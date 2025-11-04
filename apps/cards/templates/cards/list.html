@@ -4,16 +4,19 @@
 {% block content %}
 <section class="card">
   <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
-    <h1 style="margin:0">Meus Cards</h1>
+    <h1 style="margin:0">Meus Cartões</h1>
     <div class="row" style="gap:8px;align-items:center">
       {% if show_archived %}
-        <a href="{% url 'cards:list' %}" class="btn ghost">Ocultar arquivados</a>
+        <a href="{% url 'cards:list' %}" class="btn ghost">
+          <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-archive"></use></svg>
+        </a>
       {% else %}
-        <a href="{% url 'cards:list' %}?show_archived=1" class="btn ghost">Visualizar arquivados</a>
+        <a href="{% url 'cards:list' %}?show_archived=1" class="btn ghost">
+          <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-archive"></use></svg>
+        </a>
       {% endif %}
       <a href="{% url 'cards:create' %}" class="btn">
         <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-plus"></use></svg>
-        Novo Card
       </a>
     </div>
   </div>
@@ -28,7 +31,10 @@
           {% endif %}
           <div>
             <a href="{% url 'cards:detail' c.id %}" class="underline">{{ c.title }}</a>
-            <span class="muted">({{ c.status }})</span>
+            <span class="status-indicator" title="{{ c.get_status_display }}">
+              <span class="status-dot" data-status="{{ c.status }}" aria-hidden="true"></span>
+              <span class="sr-only">{{ c.get_status_display }}</span>
+            </span>
             {% if c.deactivation_marked %}
               <span class="badge" style="margin-left:8px">Marcado para desativação</span>
             {% endif %}

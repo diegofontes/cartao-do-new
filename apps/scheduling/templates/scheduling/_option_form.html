@@ -1,5 +1,8 @@
 <section class="card" style="max-width:640px">
   <h3 style="margin-top:0">{{ item|default_if_none:"Nova opção" }}</h3>
+  <p class="help" style="margin-bottom:var(--space-3)">
+    Use opções para adicionar complementos pagos, tempo extra ou variações do serviço principal.
+  </p>
   <form
     method="post"
     hx-post="{% if item %}{% url 'scheduling:option_save' card.id service.id item.id %}{% else %}{% url 'scheduling:option_create' card.id service.id %}{% endif %}"
@@ -13,31 +16,37 @@
     <label class="field" style="grid-column:1/-1">
       <span>Nome</span>
       {{ form.name }}
+      <small class="help">Identificação mostrada ao cliente na etapa de escolha.</small>
       {{ form.name.errors }}
     </label>
     <label class="field" style="grid-column:1/-1">
       <span>Descrição</span>
       {{ form.description }}
+      <small class="help">Explique o que muda ao selecionar esta opção (opcional).</small>
       {{ form.description.errors }}
     </label>
     <label class="field">
       <span>Variação de preço (R$)</span>
       {{ form.price_delta_cents }}
+      <small class="help">Valor adicional ou desconto aplicado sobre o preço base.</small>
       {{ form.price_delta_cents.errors }}
     </label>
     <label class="field">
       <span>Minutos extras</span>
       {{ form.extra_duration_minutes }}
+      <small class="help">Adiciona tempo ao atendimento quando a opção for escolhida.</small>
       {{ form.extra_duration_minutes.errors }}
     </label>
     <label class="field">
       <span>Ordenação</span>
       {{ form.order }}
+      <small class="help">Controla a posição da opção na lista (1 é o topo).</small>
       {{ form.order.errors }}
     </label>
     <label class="row" style="align-items:center;gap:6px">
       <span>Ativa</span>
       {{ form.is_active }}
+      <small class="help">Desative para ocultar a opção sem removê-la.</small>
       {{ form.is_active.errors }}
     </label>
     <div class="row" style="grid-column:1/-1;justify-content:flex-end;margin-top:var(--space-2)">

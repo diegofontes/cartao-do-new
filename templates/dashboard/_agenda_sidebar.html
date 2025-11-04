@@ -18,11 +18,11 @@
         </li>
         <li class="row" style="gap:8px;align-items:center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span><strong>Cliente:</strong> {{ ap.user_name }}</span>
+          <span ><strong>Cliente:</strong> {{ ap.user_name }}</span>
         </li>
         <li class="row" style="gap:8px;align-items:center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span><strong>Status:</strong> {{ ap.status }}</span>
+          <span ><strong class="row">Status: <span class="status-dot" style="display: flex;" data-status="{{ ap.status }}" aria-hidden="true"></span></strong></span>
         </li>
         <li class="row" style="gap:8px;align-items:center;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01M16 14h.01M12 14h.01M8 18h.01M16 18h.01M12 18h.01"/></svg>

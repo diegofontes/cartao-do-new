@@ -9,10 +9,10 @@ from apps.common.models import BaseModel
 
 class Card(BaseModel):
     STATUS_CHOICES = [
-        ("draft", "Draft"),
-        ("ready", "Ready"),
-        ("published", "Published"),
-        ("archived", "Archived"),
+        ("draft", "Rascunho"),
+        ("ready", "Pronto"),
+        ("published", "Publicado"),
+        ("archived", "Arquivado"),
     ]
     MODE_CHOICES = [
         ("appointment", "Appointment"),

@@ -14,7 +14,7 @@
       <li style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg)">
         <div class="row" style="justify-content:space-between;align-items:center">
           <div>
-            <div class="font-medium">{{ it.rule_type }}{% if it.rule_type == 'weekly' %} • {{ it.weekday|weekday_name }}{% endif %}{% if it.date %} • {{ it.date }}{% endif %}</div>
+            <div class="font-medium">{{ it.rule_type|availability_label }}{% if it.rule_type == 'weekly' %} • {{ it.weekday|weekday_name }}{% endif %}{% if it.date %} • {{ it.date }}{% endif %}</div>
             <div class="muted" style="font-size:12px">
               {% if it.start_time and it.end_time %} {{ it.start_time }} - {{ it.end_time }} {% else %}dia inteiro{% endif %}
               {% if it.timezone %} • {{ it.timezone }} {% endif %}

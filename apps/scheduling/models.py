@@ -56,7 +56,11 @@ class ServiceGalleryItem(BaseModel):
 
 
 class ServiceAvailability(BaseModel):
-    RULE_CHOICES = [("weekly", "Weekly"), ("date_override", "Date Override"), ("holiday", "Holiday")]
+    RULE_CHOICES = [
+        ("weekly", "Semanal"),
+        ("date_override", "Sobreposição de data"),
+        ("holiday", "Feriado"),
+    ]
     service = models.ForeignKey(SchedulingService, on_delete=models.CASCADE, related_name="availability")
     rule_type = models.CharField(max_length=20, choices=RULE_CHOICES)
     weekday = models.PositiveSmallIntegerField(blank=True, null=True)  # 0=Mon .. 6=Sun

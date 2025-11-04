@@ -118,6 +118,17 @@ hr{border:0;border-top:1px solid var(--border)}
   .row.stack-mobile{flex-direction:column;align-items:stretch}
   .row.stack-mobile > *{width:100%}
 }
+.status-indicator{display:inline-flex;align-items:center;gap:6px;margin-left:4px}
+.status-dot{width:10px;height:10px;border-radius:999px;background:var(--muted);box-shadow:0 0 0 1px var(--border)}
+.status-dot[data-status="published"]{background:#16a34a}
+.status-dot[data-status="draft"]{background:#f97316}
+.status-dot[data-status="archived"]{background:#ef4444}
+.status-dot[data-status="ready"]{background:#3b82f6}
+.status-dot[data-status="pending"]{background:#f97316}
+.status-dot[data-status="confirmed"]{background:#16a34a}
+.status-dot[data-status="cancelled"]{background:#ef4444}
+.status-dot[data-status="no_show"]{background:#3b82f6}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .muted{color:var(--fg-muted)}
 .pill{border:1px solid var(--border);padding:4px 10px;border-radius:999px;background:var(--bg-elev)}
 .shadow{box-shadow:var(--shadow)}

@@ -12,6 +12,12 @@ WEEKDAY_NAMES_PT = [
     "Dom",
 ]
 
+RULE_LABELS_PT = {
+    "weekly": "Semanal",
+    "date_override": "Sobrepor data",
+    "holiday": "Feriado",
+}
+
 
 @register.filter
 def weekday_name(value):
@@ -23,3 +29,7 @@ def weekday_name(value):
         return WEEKDAY_NAMES_PT[i]
     return value
 
+
+@register.filter
+def availability_label(value):
+    return RULE_LABELS_PT.get(value, value)

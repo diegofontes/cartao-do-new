@@ -1,5 +1,8 @@
 <section class="card" style="max-width:720px">
   <h3 style="margin-top:0">{{ service|default_if_none:"Novo serviço" }}</h3>
+  <p class="help" style="margin-bottom:var(--space-3)">
+    Preencha os detalhes que os clientes verão ao agendar e ajuste buffers para controlar janelas de atendimento.
+  </p>
   <form 
     method="post" 
     hx-post="{% if service %}{% url 'scheduling:service_save' card.id service.id %}{% else %}{% url 'scheduling:service_create' card.id %}{% endif %}" 
@@ -12,61 +15,74 @@
     <label class="field">
       <span>Nome</span>
       {{ form.name }}
+      <small class="help">Título exibido para o cliente durante o agendamento.</small>
       {{ form.name.errors }}
     </label>
     <label class="field">
       <span>Preço base (R$)</span>
       {{ form.price_cents }}
+      <small class="help">Deixe vazio para preço sob consulta ou informe o valor padrão cobrado.</small>
       {{ form.price_cents.errors }}
     </label>
     <label class="field">
       <span>Timezone</span>
       {{ form.timezone }}
+      <small class="help">Define o fuso horário usado para disponibilidade e confirmações.</small>
       {{ form.timezone.errors }}
     </label>
     <label class="field">
       <span>Duração (min)</span>
       {{ form.duration_minutes }}
+      <small class="help">Tempo total reservado no calendário para cada atendimento.</small>
       {{ form.duration_minutes.errors }}
     </label>
     <label class="field">
       <span>Tipo</span>
       {{ form.type }}
+      <small class="help">Classificação interna (ex.: online, presencial) apresentada no painel.</small>
       {{ form.type.errors }}
     </label>
     <label class="field" style="grid-column:1/-1">
       <span>Descrição</span>
       {{ form.description }}
+      <small class="help">Resumo opcional com instruções ou informações adicionais.</small>
       {{ form.description.errors }}
     </label>
     <label class="field" style="grid-column:1/-1">
       <span>Link de vídeo (template)</span>
       {{ form.video_link_template }}
+      <small class="help">Use placeholders como &#123;&#123; meeting_id &#125;&#125; para gerar links automáticos (opcional).</small>
       {{ form.video_link_template.errors }}
     </label>
     <label class="field">
       <span>Buffer antes (min)</span>
       {{ form.buffer_before }}
+      <small class="help">Tempo bloqueado antes do atendimento para preparação.</small>
     </label>
     <label class="field">
       <span>Buffer depois (min)</span>
       {{ form.buffer_after }}
+      <small class="help">Tempo bloqueado após o atendimento para fechamento.</small>
     </label>
     <label class="field">
       <span>Lead time (min)</span>
       {{ form.lead_time_min }}
+      <small class="help">Antecedência mínima para novos agendamentos.</small>
     </label>
     <label class="field">
       <span>Cancelamento (min)</span>
       {{ form.cancel_min }}
+      <small class="help">Limite para que o cliente cancele sozinho sem contato manual.</small>
     </label>
     <label class="field">
       <span>Reagendamento (min)</span>
       {{ form.resched_min }}
+      <small class="help">Antecedência mínima para o cliente mover o horário.</small>
     </label>
     <label class="row" style="align-items:center;gap:6px">
       <span>Ativo</span>
       {{ form.is_active }}
+      <small class="help">Desative temporariamente para esconder o serviço do público.</small>
     </label>
     <div class="row" style="grid-column:1/-1;justify-content:flex-end;margin-top:var(--space-2)">
       <button class="btn primary">Salvar</button>

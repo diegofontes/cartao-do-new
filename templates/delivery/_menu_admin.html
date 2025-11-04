@@ -4,6 +4,10 @@
     <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
       <h2 style="margin:0">Formulários</h2>
     </div>
+    <p class="help" style="margin-bottom:var(--space-3)">
+      Cadastre grupos, itens e modificadores para montar o cardápio exibido no checkout.
+      Cada formulário atualiza a lista à direita automaticamente.
+    </p>
     <div class="stack" style="gap:12px">
     <!-- Novo grupo -->
     <form hx-post="{% url 'delivery:add_group' card.id %}" hx-target="#menu" hx-swap="innerHTML" class="stack" style="gap:6px">
@@ -11,6 +15,7 @@
       <div class="field">
         <span>Novo grupo</span>
         <input type="text" name="name" placeholder="Nome do grupo" aria-label="Nome do grupo" class="input" required />
+        <small class="help">Use grupos para separar categorias (por exemplo, Pizzas, Bebidas, Sobremesas).</small>
       </div>
       <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn primary">Adicionar</button></div>
     </form>
@@ -25,18 +30,22 @@
           <option value="{{ g.id }}">{{ g.name }}</option>
           {% endfor %}
         </select>
+        <small class="help">Escolha em qual grupo o item será exibido.</small>
       </div>
       <div class="field">
         <span>Nome</span>
         <input type="text" name="name" placeholder="Nome" class="input" required />
+        <small class="help">Título visível para o cliente.</small>
       </div>
       <div class="field">
         <span>Preço (centavos)</span>
         <input type="number" name="base_price_cents" placeholder="Preço (centavos)" class="input" min="0" required />
+        <small class="help">Informe em centavos (ex.: 1590 = R$ 15,90).</small>
       </div>
       <div class="field">
         <span>Imagem (JPEG/PNG até 2MB)</span>
         <input type="file" name="image" accept="image/jpeg,image/png" class="input" />
+        <small class="help">Opcional, ajuda na vitrine do cardápio.</small>
       </div>
       <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn">Adicionar</button></div>
     </form>
@@ -53,10 +62,12 @@
             {% endfor %}
           {% endfor %}
         </select>
+        <small class="help">Vincule o grupo de modificadores a um item específico.</small>
       </div>
       <div class="field">
         <span>Nome do grupo</span>
         <input type="text" name="name" placeholder="Nome do grupo" class="input" required />
+        <small class="help">Exemplo: Tamanho, Adicionais, Observações.</small>
       </div>
       <div class="field">
         <span>Tipo</span>
@@ -65,16 +76,20 @@
           <option value="multi">Múltipla</option>
           <option value="text">Texto</option>
         </select>
+        <small class="help">“Única” permite uma escolha; “Múltipla” aceita várias; “Texto” captura observações.</small>
       </div>
       <div class="field">
         <span>Mínimo de escolhas</span>
         <input type="number" name="min_choices" placeholder="Mín." class="input" min="0" />
+        <small class="help">Obrigue o cliente a selecionar pelo menos X opções (para combos, por exemplo).</small>
       </div>
       <div class="field">
         <span>Máximo de escolhas</span>
         <input type="number" name="max_choices" placeholder="Máx." class="input" min="0" />
+        <small class="help">Limite o número de escolhas quando necessário.</small>
       </div>
       <label class="row" style="gap:4px;align-items:center"><input type="checkbox" name="required" /> obrigatório</label>
+      <small class="help">Marque para impedir que o cliente finalize sem responder.</small>
       <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn">Adicionar</button></div>
     </form>
     <!-- Nova opção de modificador -->
@@ -92,14 +107,17 @@
             {% endfor %}
           {% endfor %}
         </select>
+        <small class="help">Escolha o grupo onde a opção ficará disponível.</small>
       </div>
       <div class="field">
         <span>Rótulo</span>
         <input type="text" name="label" placeholder="Rótulo" class="input" required />
+        <small class="help">Texto apresentado ao cliente (ex.: “Mais queijo”).</small>
       </div>
       <div class="field">
         <span>Delta (centavos)</span>
         <input type="number" name="price_delta_cents" placeholder="Delta (centavos)" class="input" />
+        <small class="help">Valor adicional ou desconto ao escolher a opção (deixe vazio se não houver).</small>
       </div>
       <div class="actions" style="display:flex;justify-content:flex-end"><button class="btn">Adicionar</button></div>
     </form>

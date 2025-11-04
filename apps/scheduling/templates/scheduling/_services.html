@@ -5,7 +5,6 @@
     <h2 style="margin:0">Serviços</h2>
     <a hx-get="{% url 'scheduling:service_form_new' card.id %}" hx-target="#service-form" class="btn">
       <svg aria-hidden="true" width="16" height="16"><use href="{% static 'ui/icons.svg' %}#icon-plus"></use></svg>
-      Novo serviço
     </a>
   </div>
   <ul class="grid" style="grid-template-columns:1fr;gap:10px">

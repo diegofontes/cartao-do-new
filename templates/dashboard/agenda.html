@@ -17,7 +17,7 @@
     #now-line{position:absolute;left:0;right:0;height:2px;background:var(--accent);opacity:.75;pointer-events:none}
     .event{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px;box-shadow:var(--shadow);cursor:pointer;overflow:hidden}
     .event.pending{border-style:dashed}
-    .event.confirmed{background:#f2f3f4}
+    .event.confirmed{border:2px solid #3ccf72;}
     .event.denied{opacity:.55;text-decoration:line-through}
     /* Sidebar (slideover) for event details */
     .slideover{position:fixed;inset:0 0 0 auto;width:min(420px,100%);background:var(--bg);border-left:1px solid var(--border);box-shadow:var(--shadow);padding:var(--space-4);z-index:1000;display:flex;flex-direction:column;gap:12px}
@@ -59,6 +59,11 @@
     .day-group{margin-bottom:20px;}
     .day-group h3{margin-bottom:8px;}
     [data-role="reschedule-note"]{font-size:0.85rem;}
+    .filters-form {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
     @media(max-width:720px){ 
         aside .row{flex-direction:row;align-items:flex-start} 
         .agenda .row{flex-direction:row;align-items:flex-start}
@@ -67,6 +72,7 @@
         #filters {width: 100%;}
         .card .row{display: flex;flex-direction: row;}
         section .col{padding-left: 0;}
+        .filters-form{display: flex; flex-direction: column; justify-content: stretch; align-items: stretch;}
       }
   </style>
   {% endif %}
@@ -92,7 +98,7 @@
       {% endif %}
     </div>
     <div class="row">
-    <form id="filters" class="row{% if not request.GET.status and not request.GET.name and not request.GET.contact and not request.GET.start and not request.GET.end and not request.GET.needs_action %} is-hidden{% endif %}" role="search" aria-label="Filtros de agenda"
+    <form id="filters" class="{% if not request.GET.status and not request.GET.name and not request.GET.contact and not request.GET.start and not request.GET.end and not request.GET.needs_action %} is-hidden{% endif %} filters-form" role="search" aria-label="Filtros de agenda"
           hx-get="{% url 'dashboard:agenda_list_partial' %}"
           hx-trigger="submit"
           hx-target="#list" hx-swap="innerHTML" hx-push-url="true">
@@ -143,7 +149,6 @@
     </div>
     <div class="row">
       <select class="select" name="view" hx-trigger="change" hx-get="{% url 'dashboard:agenda' %}?date={{ anchor }}" hx-target="#agenda-page" hx-swap="outerHTML" hx-select="#agenda-page">
-        <option value="list" {% if view == 'list' %}selected{% endif %}>Lista</option>
         <option value="day" {% if view == 'day' %}selected{% endif %}>Dia</option>
         <option value="week" {% if view == 'week' %}selected{% endif %}>Semana</option>
         <option value="month" {% if view == 'month' %}selected{% endif %}>Mês</option>

@@ -1,5 +1,8 @@
 <section class="card" style="max-width:720px">
   <h4 style="margin-top:0">{{ item|default_if_none:"Nova regra" }}</h4>
+  <p class="help" style="margin-bottom:var(--space-3)">
+    Combine regras semanais e datas específicas para abrir horários extras ou bloquear exceções no calendário.
+  </p>
   <form 
     method="post"
     hx-post="{% if item %}{% url 'scheduling:availability_save' card.id service.id item.id %}{% else %}{% url 'scheduling:availability_create' card.id service.id %}{% endif %}"
