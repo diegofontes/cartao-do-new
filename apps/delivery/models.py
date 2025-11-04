@@ -44,7 +44,7 @@ class MenuItem(BaseModel):
 
 
 class ModifierGroup(BaseModel):
-    TYPE_CHOICES = [("single", "Single"), ("multi", "Multi"), ("text", "Text")]
+    TYPE_CHOICES = [("single", "Única"), ("multi", "Múltipla"), ("text", "Texto")]
 
     item = models.ForeignKey(MenuItem, on_delete=models.CASCADE, related_name="modifier_groups")
     name = models.CharField(max_length=120)
@@ -71,16 +71,16 @@ class ModifierOption(BaseModel):
 
 class Order(BaseModel):
     STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("accepted", "Accepted"),
-        ("rejected", "Rejected"),
-        ("preparing", "Preparing"),
-        ("ready", "Ready"),
-        ("shipped", "Shipped"),
-        ("completed", "Completed"),
-        ("cancelled", "Cancelled"),
+        ("pending", "Pendente"),
+        ("accepted", "Aceito"),
+        ("rejected", "Recusado"),
+        ("preparing", "Preparando"),
+        ("ready", "Pronto"),
+        ("shipped", "Enviado"),
+        ("completed", "Concluído"),
+        ("cancelled", "Cancelado"),
     ]
-    FULFILLMENT_CHOICES = [("delivery", "Delivery"), ("pickup", "Pickup")]
+    FULFILLMENT_CHOICES = [("delivery", "Entrega"), ("pickup", "Retirada")]
 
     card = models.ForeignKey("cards.Card", on_delete=models.CASCADE, related_name="orders")
     code = models.CharField(max_length=12, db_index=True)
