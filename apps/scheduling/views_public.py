@@ -1,5 +1,6 @@
 import datetime as dt
 import logging
+import pprint
 import random
 from itertools import groupby
 from zoneinfo import ZoneInfo
@@ -238,6 +239,7 @@ def public_verify_code(request, nickname: str, id: str):
     pv_key = f"pv:data:{sk}:{phone}"
     log.info("Verificando: %s", pv_key)
     data = cache.get(pv_key)
+    pprint.pprint(data)
     if not data:
         log.info("No pv data found")
         return render(request, "public/_verify_block.html", {"error": "Código expirado. Reenvie.", "card": card, "service": service})
@@ -245,6 +247,7 @@ def public_verify_code(request, nickname: str, id: str):
         return render(request, "public/_verify_block.html", {"error": "Muitas tentativas. Reenvie.", "card": card, "service": service})
     if data["code"] != hash_code(code):
         data["attempts"] -= 1
+        pprint.pprint(data)
         cache.set(pv_key, data, 300)
         return render(request, "public/_verify_block.html", {"phone": phone, "error": "Código incorreto.", "card": card, "service": service})
     request.session["phone_verified"] = True
