@@ -13,15 +13,15 @@
     /* :root{--bg:#fff;--fg:#111;--muted:#666;--border:#e6e6e8;--shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08);--r:14px;} */
     body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;}
     .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px;}
-    .card{max-width:560px;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:28px;text-align:center;}
+    .card-404{max-width:560px;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);padding:28px;text-align:center;}
     h1{font-size:2rem;margin:.25em 0}
     p{color:var(--muted)}
-    a.btn{display:inline-block;margin-top:16px;border:1px solid var(--border);border-radius:12px;padding:10px 16px;text-decoration:none;color:var(--fg);background:#fff}
+    a.btn{display:inline-block;margin-top:16px;border:1px solid var(--border);border-radius:12px;padding:10px 16px;text-decoration:none;color:var(--fg);background:var(--bg)}
   </style>
   </head>
   <body>
-    <main class="auth-shell">
-      <section class="card" role="alert">
+    <main class="wrap">
+      <section class="card-404" role="alert">
           <img id="logo"
                src="{% static 'img/logo-cap-v1.png' %}"
                data-logo-light="{% static 'img/logo-cap-v1-dark.png' %}"
