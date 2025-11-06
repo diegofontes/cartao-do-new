@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+from apps.common.nickname_blacklist import build_reserved_nicknames
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
@@ -124,7 +126,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Reserved nicknames
-RESERVED_NICKNAMES = {"admin","api","static","media","img","assets","robots","sitemap"}
+RESERVED_NICKNAMES = build_reserved_nicknames({"admin","api","static","media","img","assets","robots","sitemap"})
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

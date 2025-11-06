@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+from apps.common.nickname_blacklist import build_reserved_nicknames
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
@@ -197,7 +199,7 @@ LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/auth/login"
 
 # Nickname reservations (also used in viewer settings)
-RESERVED_NICKNAMES = {"admin", "api", "static", "media", "img", "assets", "robots", "sitemap"}
+RESERVED_NICKNAMES = build_reserved_nicknames({"cartao.do", "cartao",})
 
 # Logging (prints our app logs at INFO level to console)
 LOGGING = {
