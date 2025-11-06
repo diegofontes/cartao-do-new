@@ -215,6 +215,8 @@ def public_send_code(request, nickname: str, id: str):
     except Exception as e:
         log.warning("failed to enqueue SMS verify: %s", e)
     pv_key = f"pv:data:{sk}:{phone}"
+    log.info("Session key: %s", sk)
+    log.info("Verificando: %s", pv_key)
     cache.set(pv_key, {"code": hash_code(code), "attempts": 5, "exp": timezone.now() + dt.timedelta(minutes=5)}, 300)
     cache.set(cooldown_key, 1, 60)
     request.session["phone_verified"] = False
@@ -232,9 +234,12 @@ def public_verify_code(request, nickname: str, id: str):
     except Exception as e:
         return render(request, "public/_verify_block.html", {"error": str(e), "card": card, "service": service})
     sk = _session_key(request)
+    log.info("Session key: %s", sk)
     pv_key = f"pv:data:{sk}:{phone}"
+    log.info("Verificando: %s", pv_key)
     data = cache.get(pv_key)
     if not data:
+        log.info("No pv data found")
         return render(request, "public/_verify_block.html", {"error": "Código expirado. Reenvie.", "card": card, "service": service})
     if data["attempts"] <= 0:
         return render(request, "public/_verify_block.html", {"error": "Muitas tentativas. Reenvie.", "card": card, "service": service})

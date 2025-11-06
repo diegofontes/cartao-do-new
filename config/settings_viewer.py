@@ -151,7 +151,7 @@ LOGGING = {
         "console": {"class": "logging.StreamHandler", "formatter": "simple"}
     },
     "loggers": {
-        "apps": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "apps": {"handlers": ["console"], "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"), "propagate": False},
         "django": {"handlers": ["console"], "level": "WARNING", "propagate": False},
     },
 }

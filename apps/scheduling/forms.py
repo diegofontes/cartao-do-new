@@ -1,16 +1,14 @@
-from decimal import Decimal
 from django import forms
 from django.conf import settings
 from .models import SchedulingService, ServiceAvailability, ServiceOption
 
 
 class SchedulingServiceForm(forms.ModelForm):
-    price_cents = forms.DecimalField(
-        label="Preço base (R$)",
-        max_digits=9,
-        decimal_places=2,
-        min_value=Decimal("0.00"),
-        widget=forms.NumberInput(attrs={"class": "input", "step": "0.01"}),
+    price_cents = forms.IntegerField(
+        label="Preço base (centavos)",
+        min_value=0,
+        widget=forms.NumberInput(attrs={"class": "input", "step": "1"}),
+        required=False,
     )
 
     class Meta:
@@ -63,11 +61,13 @@ class SchedulingServiceForm(forms.ModelForm):
         choices = sorted({(tz, tz) for tz in common_tzs}, key=lambda x: x[0])
         self.fields["timezone"] = forms.ChoiceField(choices=choices, initial=inst_tz or getattr(settings, "TIME_ZONE", "UTC"))
         price = getattr(getattr(self, "instance", None), "price_cents", 0) or 0
-        self.fields["price_cents"].initial = Decimal(price) / Decimal(100)
+        self.fields["price_cents"].initial = price
 
     def clean_price_cents(self):
-        value = self.cleaned_data.get("price_cents") or Decimal("0.00")
-        return int((value * 100).quantize(Decimal("1")))
+        value = self.cleaned_data.get("price_cents")
+        if value in (None, ""):
+            return 0
+        return int(value)
 
 
 class ServiceAvailabilityForm(forms.ModelForm):
@@ -134,12 +134,10 @@ class ServiceAvailabilityForm(forms.ModelForm):
 
 
 class ServiceOptionForm(forms.ModelForm):
-    price_delta_cents = forms.DecimalField(
-        label="Variação de preço (R$)",
-        max_digits=9,
-        decimal_places=2,
-        min_value=Decimal("0.00"),
-        widget=forms.NumberInput(attrs={"class": "input", "step": "0.01"}),
+    price_delta_cents = forms.IntegerField(
+        label="Variação de preço (centavos)",
+        min_value=0,
+        widget=forms.NumberInput(attrs={"class": "input", "step": "1"}),
         required=False,
     )
 
@@ -164,10 +162,10 @@ class ServiceOptionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         price = getattr(getattr(self, "instance", None), "price_delta_cents", 0) or 0
-        self.fields["price_delta_cents"].initial = Decimal(price) / Decimal(100)
+        self.fields["price_delta_cents"].initial = price
 
     def clean_price_delta_cents(self):
         value = self.cleaned_data.get("price_delta_cents")
         if value is None:
             return 0
-        return int((Decimal(value) * 100).quantize(Decimal("1")))
+        return int(value)
